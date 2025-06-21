@@ -18,83 +18,73 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 ## 🎯 Yêu cầu chức năng
 
 ### User Management Service
-- Đăng ký, đăng nhập, đăng xuất người dùng (Buyer, Seller, Admin)
-- Quản lý thông tin profile (Customer, Vendor, Delivery Partner)
-- Xác thực và phân quyền (JWT, OAuth2)
-- Reset password, verify email
-- Quản lý địa chỉ giao hàng multiple addresses
+- Đăng ký, đăng nhập (JWT)
+- Quên mật khẩu (OTP, email)
+- Đổi mật khẩu 
+- Đăng xuất 
+- Phân quyền (User, Shipper)
+- CRUD profile
+- Địa chỉ giao hàng (Nhiều địa chỉ)
 
-### Vendor/Seller Service
-- Đăng ký shop/store mới
-- Quản lý thông tin shop (tên, mô tả, logo, banner)
-- Quản lý sản phẩm và inventory
+
+### Search & Recommendation Service
+- Gợi ý sản phẩm khi người dùng đăng nhập (tương tác hành vi người dùng)
+- Advanced search với filters
+- Auto-complete và search suggestions
+- Personalized recommendations
+- Recently viewed products
+- Trending products 
+- Price comparison và similar products
+
+
+### Product Catalog Service
+- CRUD shop
+- Quản lý thông tin profile shop 
+- Báo cáo doanh thu và analytics theo shop 
 - Xử lý đơn hàng và order fulfillment
-- Báo cáo doanh thu và analytics
-- Upload hình ảnh sản phẩm và shop
+- Quản lý khuyến mãi, tạo discount campaigns 
 
-### Product Service
-- Quản lý catalog sản phẩm
-- Phân loại sản phẩm theo categories/subcategories
-- Quản lý giá cả, khuyến mãi và discount campaigns
-- Tìm kiếm và lọc sản phẩm (price, rating, location, category)
+- CRUD product
+- Quản lý catalog sản phẩm (title, description, media, brand, model)
+- Quản lý giá cả sản phẩm 
 - Quản lý stock và inventory
-- Product variations (size, color, model)
+- Phân loại sản phẩm theo categories/subcategories
+- Tìm kiếm và lọc sản phẩm (price, rating, location, category)
 - Bulk import/export sản phẩm
 
 ### Shopping Cart Service
 - Quản lý giỏ hàng của user
-- Add/remove/update items
-- Calculate total với taxes và shipping
-- Save for later functionality
-- Cross-selling suggestions
+- Thêm, sửa, xóa sản phẩm
+- Tính tổng tiền 
+- Lưu lại giỏ hàng
 
 ### Order Service
-- Tạo đơn hàng mới từ multiple vendors
+- Tạo đơn hàng mới từ giỏ hàng 
 - Quản lý trạng thái đơn hàng (pending, confirmed, shipped, delivered, cancelled)
 - Tính toán tổng tiền (product price, shipping fee, taxes, discount)
 - Hủy đơn hàng và return/refund processing
-- Order splitting theo vendor
 - Lịch sử mua hàng
 
 ### Payment Service
 - Xử lý thanh toán (Credit Card, E-wallet, Bank Transfer, COD)
 - Tích hợp payment gateway (Stripe, PayPal, VNPay, Momo)
 - Quản lý refund và chargeback
-- Split payment cho multiple vendors
 - Escrow service cho buyer protection
 - Payment history và transaction logs
 
-### Shipping & Delivery Service
-- Quản lý shipping partners và delivery methods
-- Tích hợp với 3rd party logistics (Giao Hàng Nhanh, Giao Hàng Tiết Kiệm)
+### Shipping Service
+- Quản lý shipper
 - Tracking đơn hàng real-time
 - Tính toán shipping cost theo distance và weight
-- Delivery time estimation
 - Address validation và geocoding
-- Proof of delivery (POD)
-
-### Notification Service
-- Push notification cho mobile app
-- Email notification
-- SMS notification
-- In-app notification
 
 ### Review Service
 - Đánh giá sản phẩm và vendor/shop
 - Đánh giá delivery service
 - Upload hình ảnh và video review
-- Q&A section cho sản phẩm
 - Quản lý comments và rating
-- Báo cáo review spam/inappropriate
 - Verified purchase reviews
 
-### Search & Recommendation Service
-- Advanced search với filters
-- Auto-complete và search suggestions
-- Personalized recommendations
-- Recently viewed products
-- Trending products và bestsellers
-- Price comparison và similar products
 
 ## ⚡ Yêu cầu phi chức năng
 
