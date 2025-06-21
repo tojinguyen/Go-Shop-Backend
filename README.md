@@ -1,6 +1,6 @@
-# Go-Food - Microservice Food Delivery Application
+# Go-Shop - Microservice E-commerce Delivery Platform
 
-Ứng dụng giao đồ ăn được xây dựng theo kiến trúc microservice sử dụng Go (Golang).
+Nền tảng thương mại điện tử và giao hàng được xây dựng theo kiến trúc microservice sử dụng Go (Golang), tương tự như Shopee.
 
 ## 📋 Mục lục
 
@@ -18,44 +18,60 @@
 ## 🎯 Yêu cầu chức năng
 
 ### User Management Service
-- Đăng ký, đăng nhập, đăng xuất người dùng
-- Quản lý thông tin profile (Customer, Restaurant Owner, Delivery Driver)
+- Đăng ký, đăng nhập, đăng xuất người dùng (Buyer, Seller, Admin)
+- Quản lý thông tin profile (Customer, Vendor, Delivery Partner)
 - Xác thực và phân quyền (JWT, OAuth2)
 - Reset password, verify email
+- Quản lý địa chỉ giao hàng multiple addresses
 
-### Restaurant Service
-- Quản lý thông tin nhà hàng
-- Đăng ký nhà hàng mới
-- Cập nhật menu, giá cả, thời gian hoạt động
-- Quản lý đánh giá và rating
-- Upload hình ảnh nhà hàng và món ăn
+### Vendor/Seller Service
+- Đăng ký shop/store mới
+- Quản lý thông tin shop (tên, mô tả, logo, banner)
+- Quản lý sản phẩm và inventory
+- Xử lý đơn hàng và order fulfillment
+- Báo cáo doanh thu và analytics
+- Upload hình ảnh sản phẩm và shop
 
-### Menu Service
-- Quản lý danh sách món ăn
-- Phân loại món ăn (categories)
-- Quản lý giá cả và khuyến mãi
-- Tìm kiếm và lọc món ăn
-- Quản lý tính khả dụng của món ăn
+### Product Service
+- Quản lý catalog sản phẩm
+- Phân loại sản phẩm theo categories/subcategories
+- Quản lý giá cả, khuyến mãi và discount campaigns
+- Tìm kiếm và lọc sản phẩm (price, rating, location, category)
+- Quản lý stock và inventory
+- Product variations (size, color, model)
+- Bulk import/export sản phẩm
+
+### Shopping Cart Service
+- Quản lý giỏ hàng của user
+- Add/remove/update items
+- Calculate total với taxes và shipping
+- Save for later functionality
+- Cross-selling suggestions
 
 ### Order Service
-- Tạo đơn hàng mới
-- Quản lý trạng thái đơn hàng
-- Tính toán tổng tiền (bao gồm tax, delivery fee)
-- Hủy đơn hàng
-- Lịch sử đặt hàng
+- Tạo đơn hàng mới từ multiple vendors
+- Quản lý trạng thái đơn hàng (pending, confirmed, shipped, delivered, cancelled)
+- Tính toán tổng tiền (product price, shipping fee, taxes, discount)
+- Hủy đơn hàng và return/refund processing
+- Order splitting theo vendor
+- Lịch sử mua hàng
 
 ### Payment Service
-- Xử lý thanh toán (Credit Card, E-wallet, COD)
-- Tích hợp payment gateway
-- Quản lý refund
-- Lưu trữ payment history
+- Xử lý thanh toán (Credit Card, E-wallet, Bank Transfer, COD)
+- Tích hợp payment gateway (Stripe, PayPal, VNPay, Momo)
+- Quản lý refund và chargeback
+- Split payment cho multiple vendors
+- Escrow service cho buyer protection
+- Payment history và transaction logs
 
-### Delivery Service
-- Quản lý delivery drivers
+### Shipping & Delivery Service
+- Quản lý shipping partners và delivery methods
+- Tích hợp với 3rd party logistics (Giao Hàng Nhanh, Giao Hàng Tiết Kiệm)
 - Tracking đơn hàng real-time
-- Tính toán route tối ưu
-- Cập nhật trạng thái giao hàng
-- Ước tính thời gian giao hàng
+- Tính toán shipping cost theo distance và weight
+- Delivery time estimation
+- Address validation và geocoding
+- Proof of delivery (POD)
 
 ### Notification Service
 - Push notification cho mobile app
@@ -64,10 +80,21 @@
 - In-app notification
 
 ### Review Service
-- Đánh giá nhà hàng và món ăn
+- Đánh giá sản phẩm và vendor/shop
 - Đánh giá delivery service
+- Upload hình ảnh và video review
+- Q&A section cho sản phẩm
 - Quản lý comments và rating
 - Báo cáo review spam/inappropriate
+- Verified purchase reviews
+
+### Search & Recommendation Service
+- Advanced search với filters
+- Auto-complete và search suggestions
+- Personalized recommendations
+- Recently viewed products
+- Trending products và bestsellers
+- Price comparison và similar products
 
 ## ⚡ Yêu cầu phi chức năng
 
@@ -114,13 +141,25 @@
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    API Gateway (Kong/Nginx)                 │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
 ┌─────────────┬─────────────┬─────────────┬─────────────────────┐
-│   User      │ Restaurant  │   Menu      │      Order          │
-│  Service    │  Service    │  Service    │     Service         │
+│   User      │   Vendor/   │  Product    │   Shopping Cart     │
+│  Service    │   Seller    │  Service    │     Service         │
+│             │  Service    │             │                     │
 └─────────────┴─────────────┴─────────────┴─────────────────────┘
 ┌─────────────┬─────────────┬─────────────┬─────────────────────┐
-│  Payment    │  Delivery   │Notification │     Review          │
-│  Service    │  Service    │  Service    │     Service         │
+│    Order    │  Payment    │ Shipping &  │  Notification       │
+│   Service   │  Service    │ Delivery    │    Service          │
+│             │             │  Service    │                     │
+└─────────────┴─────────────┴─────────────┴─────────────────────┘
+┌─────────────┬─────────────┬─────────────┬─────────────────────┐
+│   Review    │ Search &    │   Admin     │    Analytics        │
+│  Service    │ Recommend   │  Service    │    Service          │
+│             │  Service    │             │                     │
 └─────────────┴─────────────┴─────────────┴─────────────────────┘
                               │
                               ▼
@@ -155,24 +194,40 @@ GET    /api/v1/users/{id}
 DELETE /api/v1/users/{id}
 ```
 
-### Restaurant APIs
+### Vendor/Seller APIs
 ```
-GET    /api/v1/restaurants
-POST   /api/v1/restaurants
-GET    /api/v1/restaurants/{id}
-PUT    /api/v1/restaurants/{id}
-DELETE /api/v1/restaurants/{id}
-GET    /api/v1/restaurants/search?location={lat,lng}&radius={km}
+GET    /api/v1/vendors
+POST   /api/v1/vendors
+GET    /api/v1/vendors/{id}
+PUT    /api/v1/vendors/{id}
+DELETE /api/v1/vendors/{id}
+GET    /api/v1/vendors/search?location={lat,lng}&category={category}
+GET    /api/v1/vendors/{id}/products
+GET    /api/v1/vendors/{id}/orders
+GET    /api/v1/vendors/{id}/analytics
 ```
 
-### Menu APIs
+### Product APIs
 ```
-GET    /api/v1/restaurants/{restaurant_id}/menu
-POST   /api/v1/restaurants/{restaurant_id}/menu/items
-GET    /api/v1/menu/items/{id}
-PUT    /api/v1/menu/items/{id}
-DELETE /api/v1/menu/items/{id}
-GET    /api/v1/menu/search?q={query}&category={category}
+GET    /api/v1/products
+POST   /api/v1/products
+GET    /api/v1/products/{id}
+PUT    /api/v1/products/{id}
+DELETE /api/v1/products/{id}
+GET    /api/v1/products/search?q={query}&category={category}&price_min={min}&price_max={max}
+GET    /api/v1/products/categories
+GET    /api/v1/products/{id}/reviews
+GET    /api/v1/products/{id}/related
+```
+
+### Shopping Cart APIs
+```
+GET    /api/v1/cart
+POST   /api/v1/cart/items
+PUT    /api/v1/cart/items/{id}
+DELETE /api/v1/cart/items/{id}
+DELETE /api/v1/cart/clear
+GET    /api/v1/cart/summary
 ```
 
 ### Order APIs
@@ -183,6 +238,8 @@ GET    /api/v1/orders/{id}
 PUT    /api/v1/orders/{id}/status
 DELETE /api/v1/orders/{id}
 GET    /api/v1/orders/{id}/tracking
+POST   /api/v1/orders/{id}/return
+POST   /api/v1/orders/{id}/cancel
 ```
 
 ### Payment APIs
@@ -191,34 +248,52 @@ POST   /api/v1/payments
 GET    /api/v1/payments/{id}
 POST   /api/v1/payments/{id}/refund
 GET    /api/v1/payments/history
+GET    /api/v1/payments/methods
+POST   /api/v1/payments/escrow/release
 ```
 
-### Delivery APIs
+### Shipping & Delivery APIs
 ```
-GET    /api/v1/delivery/drivers/available
-POST   /api/v1/delivery/assign
-GET    /api/v1/delivery/{order_id}/tracking
-PUT    /api/v1/delivery/{order_id}/status
+GET    /api/v1/shipping/methods
+POST   /api/v1/shipping/calculate
+GET    /api/v1/shipping/{order_id}/tracking
+PUT    /api/v1/shipping/{order_id}/status
+GET    /api/v1/shipping/providers
+POST   /api/v1/shipping/labels
+```
+
+### Search & Recommendation APIs
+```
+GET    /api/v1/search?q={query}&filters={filters}
+GET    /api/v1/search/suggestions?q={partial_query}
+GET    /api/v1/recommendations/products
+GET    /api/v1/recommendations/vendors
+GET    /api/v1/trending/products
+GET    /api/v1/recent/products
 ```
 
 ## 📁 Cấu trúc thư mục
 
 ```
-go-food/
+go-shop/
 ├── api/                          # API Gateway & Shared API specs
 │   ├── gateway/
 │   ├── proto/                    # Protocol buffer definitions
 │   └── openapi/                  # OpenAPI specifications
-├── services/                     # Microservices
-│   ├── user-service/
-│   ├── restaurant-service/
-│   ├── menu-service/
-│   ├── order-service/
-│   ├── payment-service/
-│   ├── delivery-service/
-│   ├── notification-service/
-│   └── review-service/
-├── shared/                       # Shared libraries
+├── internal/
+│   └── services/                 # Microservices
+│       ├── user-service/
+│       ├── vendor-service/
+│       ├── product-service/
+│       ├── cart-service/
+│       ├── order-service/
+│       ├── payment-service/
+│       ├── shipping-service/
+│       ├── notification-service/
+│       ├── review-service/
+│       ├── search-service/
+│       └── admin-service/
+├── pkg/                          # Shared libraries
 │   ├── auth/
 │   ├── config/
 │   ├── database/
@@ -262,15 +337,20 @@ go-food/
 ## 🗄️ Database Schema
 
 ### Các bảng chính:
-- **users**: Thông tin người dùng
-- **restaurants**: Thông tin nhà hàng
-- **menu_items**: Món ăn và thông tin
+- **users**: Thông tin người dùng (buyers, sellers, admins)
+- **vendors**: Thông tin shop/seller
+- **products**: Catalog sản phẩm và thông tin chi tiết
+- **product_variants**: Biến thể sản phẩm (size, color, etc.)
+- **categories**: Danh mục sản phẩm
+- **shopping_carts**: Giỏ hàng của user
+- **cart_items**: Chi tiết sản phẩm trong giỏ hàng
 - **orders**: Đơn hàng
-- **order_items**: Chi tiết món ăn trong đơn hàng
+- **order_items**: Chi tiết sản phẩm trong đơn hàng
 - **payments**: Thông tin thanh toán
-- **deliveries**: Thông tin giao hàng
-- **reviews**: Đánh giá và nhận xét
+- **shipping**: Thông tin vận chuyển
+- **reviews**: Đánh giá sản phẩm và vendor
 - **notifications**: Thông báo
+- **addresses**: Địa chỉ giao hàng của user
 
 ## 🎯 Microservices
 
@@ -300,15 +380,17 @@ go-food/
 ### Setup môi trường development
 ```bash
 # Clone repository
-git clone https://github.com/your-username/go-food.git
-cd go-food
+git clone https://github.com/your-username/go-shop.git
+cd go-shop
 
 # Start infrastructure services
-docker-compose up -d postgres redis rabbitmq
+docker-compose up -d postgres redis rabbitmq elasticsearch
 
 # Run individual services
 make run-user-service
-make run-restaurant-service
+make run-vendor-service
+make run-product-service
+make run-cart-service
 # ...
 ```
 
@@ -338,11 +420,14 @@ kubectl apply -f deployments/kubernetes/
 
 ## 📈 Roadmap
 
-- [ ] Phase 1: Core services (User, Restaurant, Menu, Order)
-- [ ] Phase 2: Payment integration
-- [ ] Phase 3: Real-time tracking và delivery
-- [ ] Phase 4: Advanced features (recommendations, analytics)
-- [ ] Phase 5: Mobile app development
+- [ ] Phase 1: Core services (User, Vendor, Product, Cart, Order)
+- [ ] Phase 2: Payment integration và escrow service
+- [ ] Phase 3: Shipping integration và tracking
+- [ ] Phase 4: Search & recommendation engine
+- [ ] Phase 5: Advanced features (live chat, flash sales, affiliate program)
+- [ ] Phase 6: Mobile app development
+- [ ] Phase 7: Seller analytics dashboard
+- [ ] Phase 8: International expansion features
 
 ## 🤝 Contributing
 
