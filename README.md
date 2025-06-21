@@ -127,27 +127,28 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    API Gateway (Kong/Nginx)                 │
+│                 Load Balancer (Nginx/HAProxy)               │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    API Gateway (Kong/Nginx)                 │
+│              API Gateway (Kong/Nginx) + Rate Limiting       │
+│                    Authentication & Authorization           │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────┬─────────────┬─────────────┬─────────────────────┐
-│   User      │   Vendor/   │  Product    │   Shopping Cart     │
-│  Service    │   Seller    │  Service    │     Service         │
-│             │  Service    │             │                     │
+│   User      │   Menu      │ Restaurant  │   Shopping Cart     │
+│  Service    │  Service    │  Service    │     Service         │
+│             │ (Product)   │ (Vendor)    │                     │
 └─────────────┴─────────────┴─────────────┴─────────────────────┘
 ┌─────────────┬─────────────┬─────────────┬─────────────────────┐
-│    Order    │  Payment    │ Shipping &  │  Notification       │
-│   Service   │  Service    │ Delivery    │    Service          │
-│             │             │  Service    │                     │
+│    Order    │  Payment    │  Delivery   │  Notification       │
+│   Service   │  Service    │  Service    │    Service          │
+│             │             │ (Shipping)  │                     │
 └─────────────┴─────────────┴─────────────┴─────────────────────┘
 ┌─────────────┬─────────────┬─────────────┬─────────────────────┐
-│   Review    │ Search &    │   Admin     │    Analytics        │
+│   Review    │ Search &    │   Media     │    Analytics        │
 │  Service    │ Recommend   │  Service    │    Service          │
 │             │  Service    │             │                     │
 └─────────────┴─────────────┴─────────────┴─────────────────────┘
@@ -155,13 +156,27 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              Message Broker (RabbitMQ/Kafka)               │
+│            Event-driven Architecture & Async Processing    │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────┬─────────────┬─────────────┬─────────────────────┐
 │ PostgreSQL  │   MongoDB   │    Redis    │    Elasticsearch    │
-│ (Primary)   │ (Logs/Docs) │  (Cache)    │     (Search)        │
+│ (Primary)   │ (Logs/Media)│  (Cache)    │   (Search/Index)    │
 └─────────────┴─────────────┴─────────────┴─────────────────────┘
+                              │
+                              ▼
+┌─────────────┬─────────────┬─────────────┬─────────────────────┐
+│ Monitoring  │   Logging   │   Security  │    External APIs    │
+│(Prometheus) │(ELK Stack)  │ (Vault)     │   (Payment/Maps)    │
+└─────────────┴─────────────┴─────────────┴─────────────────────┘
+
+### Service Communication Patterns
+- **Synchronous**: gRPC for internal services, REST for external APIs
+- **Asynchronous**: Event-driven via Message Broker
+- **Service Discovery**: Consul/Etcd for dynamic service registration
+- **Circuit Breaker**: Hystrix pattern for resilience
+- **API Versioning**: Version-aware routing at gateway level
 ```
 
 ## 🔗 Thiết kế API
@@ -265,39 +280,189 @@ GET    /api/v1/recent/products
 ## 📁 Cấu trúc thư mục
 
 ```
-go-shop/
+go-food/
 ├── api/                          # API Gateway & Shared API specs
-│   ├── gateway/
+│   ├── gateway/                  # Kong/Nginx configurations
+│   │   ├── plugins/
+│   │   ├── routes/
+│   │   └── middleware/
 │   ├── proto/                    # Protocol buffer definitions
+│   │   ├── user/
+│   │   ├── restaurant/
+│   │   ├── menu/
+│   │   ├── order/
+│   │   ├── payment/
+│   │   ├── delivery/
+│   │   └── common/
 │   └── openapi/                  # OpenAPI specifications
+│       ├── user-service.yaml
+│       ├── restaurant-service.yaml
+│       ├── menu-service.yaml
+│       ├── order-service.yaml
+│       ├── payment-service.yaml
+│       ├── delivery-service.yaml
+│       └── gateway.yaml
 ├── internal/
 │   └── services/                 # Microservices
 │       ├── user-service/
-│       ├── vendor-service/
-│       ├── product-service/
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   │   ├── handler/
+│       │   │   ├── service/
+│       │   │   ├── repository/
+│       │   │   └── domain/
+│       │   ├── migrations/
+│       │   └── configs/
+│       ├── restaurant-service/   # Vendor/Seller service
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   ├── migrations/
+│       │   └── configs/
+│       ├── menu-service/         # Product catalog service
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   ├── migrations/
+│       │   └── configs/
 │       ├── cart-service/
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   └── configs/
 │       ├── order-service/
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   ├── migrations/
+│       │   └── configs/
 │       ├── payment-service/
-│       ├── shipping-service/
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   │   ├── gateway/      # Payment gateway integrations
+│       │   │   ├── escrow/
+│       │   │   └── webhook/
+│       │   ├── migrations/
+│       │   └── configs/
+│       ├── delivery-service/     # Shipping service
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   │   ├── tracking/
+│       │   │   ├── routing/
+│       │   │   └── shipper/
+│       │   ├── migrations/
+│       │   └── configs/
 │       ├── notification-service/
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   │   ├── email/
+│       │   │   ├── sms/
+│       │   │   ├── push/
+│       │   │   └── websocket/
+│       │   └── configs/
 │       ├── review-service/
-│       ├── search-service/
-│       └── admin-service/
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   ├── migrations/
+│       │   └── configs/
+│       ├── search-service/       # Search & recommendation
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   │   ├── elasticsearch/
+│       │   │   ├── recommendation/
+│       │   │   └── indexing/
+│       │   └── configs/
+│       ├── media-service/        # File upload & processing
+│       │   ├── cmd/
+│       │   ├── internal/
+│       │   │   ├── upload/
+│       │   │   ├── processing/
+│       │   │   └── cdn/
+│       │   └── configs/
+│       └── analytics-service/    # Business intelligence
+│           ├── cmd/
+│           ├── internal/
+│           │   ├── aggregation/
+│           │   ├── reporting/
+│           │   └── dashboard/
+│           └── configs/
 ├── pkg/                          # Shared libraries
-│   ├── auth/
-│   ├── config/
-│   ├── database/
-│   ├── middleware/
-│   ├── models/
-│   └── utils/
+│   ├── auth/                     # JWT, OAuth2 utilities
+│   ├── config/                   # Configuration management
+│   ├── database/                 # Database utilities
+│   │   ├── postgres/
+│   │   ├── mongodb/
+│   │   ├── redis/
+│   │   └── migrations/
+│   ├── middleware/               # HTTP middleware
+│   │   ├── cors/
+│   │   ├── rate-limit/
+│   │   ├── validation/
+│   │   └── logging/
+│   ├── models/                   # Shared domain models
+│   │   ├── user/
+│   │   ├── restaurant/
+│   │   ├── menu/
+│   │   ├── order/
+│   │   └── common/
+│   ├── messaging/                # Message broker utilities
+│   │   ├── rabbitmq/
+│   │   ├── kafka/
+│   │   └── events/
+│   ├── external/                 # External service clients
+│   │   ├── payment/
+│   │   ├── maps/
+│   │   ├── email/
+│   │   └── sms/
+│   └── utils/                    # Common utilities
+│       ├── crypto/
+│       ├── validator/
+│       ├── logger/
+│       └── http/
 ├── deployments/                  # Deployment configurations
 │   ├── docker/
+│   │   ├── Dockerfile.user-service
+│   │   ├── Dockerfile.restaurant-service
+│   │   ├── Dockerfile.menu-service
+│   │   ├── Dockerfile.order-service
+│   │   ├── Dockerfile.payment-service
+│   │   ├── Dockerfile.delivery-service
+│   │   ├── docker-compose.yml
+│   │   └── docker-compose.prod.yml
 │   ├── kubernetes/
+│   │   ├── namespace.yaml
+│   │   ├── services/
+│   │   ├── deployments/
+│   │   ├── configmaps/
+│   │   ├── secrets/
+│   │   └── ingress/
 │   └── terraform/
+│       ├── aws/
+│       ├── gcp/
+│       └── azure/
 ├── scripts/                      # Build and deployment scripts
+│   ├── build.sh
+│   ├── deploy.sh
+│   ├── test.sh
+│   └── migrate.sh
 ├── docs/                         # Documentation
+│   ├── api/                      # API documentation
+│   ├── architecture/             # Architecture diagrams
+│   ├── deployment/               # Deployment guides
+│   └── development/              # Development guides
 ├── tests/                        # Integration tests
-└── tools/                        # Development tools
+│   ├── e2e/                      # End-to-end tests
+│   ├── integration/              # Service integration tests
+│   └── load/                     # Performance tests
+├── tools/                        # Development tools
+│   ├── proto-gen/                # Protocol buffer generation
+│   ├── mock-gen/                 # Mock generation
+│   └── migrate/                  # Database migration tools
+├── monitoring/                   # Monitoring configurations
+│   ├── prometheus/
+│   ├── grafana/
+│   ├── jaeger/
+│   └── elk/
+├── Makefile                      # Build automation
+├── go.mod
+├── go.sum
+└── README.md
 ```
 
 ## 🛠️ Tech Stack
@@ -326,37 +491,212 @@ go-shop/
 
 ## 🗄️ Database Schema
 
-### Các bảng chính:
-- **users**: Thông tin người dùng (buyers, sellers, admins)
-- **vendors**: Thông tin shop/seller
-- **products**: Catalog sản phẩm và thông tin chi tiết
-- **product_variants**: Biến thể sản phẩm (size, color, etc.)
-- **categories**: Danh mục sản phẩm
-- **shopping_carts**: Giỏ hàng của user
-- **cart_items**: Chi tiết sản phẩm trong giỏ hàng
-- **orders**: Đơn hàng
-- **order_items**: Chi tiết sản phẩm trong đơn hàng
-- **payments**: Thông tin thanh toán
-- **shipping**: Thông tin vận chuyển
-- **reviews**: Đánh giá sản phẩm và vendor
-- **notifications**: Thông báo
-- **addresses**: Địa chỉ giao hàng của user
+### Core Tables (PostgreSQL)
+
+#### User Management
+- **users**: User profiles (customers, restaurant owners, delivery drivers)
+- **user_addresses**: Multiple delivery addresses per user
+- **user_sessions**: Active user sessions and JWT tokens
+- **user_preferences**: Food preferences, dietary restrictions
+
+#### Restaurant Management
+- **restaurants**: Restaurant/vendor information and business details
+- **restaurant_owners**: Ownership relationships
+- **restaurant_hours**: Operating hours and availability
+- **restaurant_areas**: Delivery coverage areas
+
+#### Menu & Products
+- **categories**: Food categories (appetizers, mains, desserts, etc.)
+- **menu_items**: Food items with pricing and descriptions
+- **menu_item_variants**: Size, spice level, customizations
+- **menu_item_options**: Add-ons and modifiers
+- **menu_availability**: Time-based availability of items
+
+#### Orders & Shopping
+- **shopping_carts**: User shopping cart state
+- **cart_items**: Items in cart with customizations
+- **orders**: Order header information
+- **order_items**: Detailed order line items
+- **order_status_history**: Order state tracking
+
+#### Payment & Financial
+- **payments**: Payment transaction records
+- **payment_methods**: Stored payment methods
+- **refunds**: Refund processing records
+- **restaurant_payouts**: Earnings distribution to restaurants
+- **transaction_fees**: Platform commission tracking
+
+#### Delivery & Logistics
+- **delivery_drivers**: Driver profiles and vehicle info
+- **delivery_assignments**: Order-driver assignments
+- **delivery_tracking**: Real-time location updates
+- **delivery_routes**: Optimized delivery routes
+- **delivery_fees**: Dynamic pricing for delivery
+
+#### Reviews & Ratings
+- **reviews**: Restaurant and food reviews
+- **review_media**: Review photos and videos
+- **review_votes**: Helpful/unhelpful votes
+- **driver_reviews**: Delivery service ratings
+
+#### Notifications & Communication
+- **notifications**: User notification history
+- **notification_preferences**: User notification settings
+- **push_tokens**: Device tokens for push notifications
+
+### Document Storage (MongoDB)
+
+#### Analytics & Logs
+- **user_behavior_logs**: Click streams, search patterns
+- **order_analytics**: Aggregated order metrics
+- **restaurant_analytics**: Business intelligence data
+- **system_logs**: Application and error logs
+- **audit_trails**: Security and compliance logs
+
+#### Media & Content
+- **menu_images**: Food photos and restaurant images
+- **review_media**: User-uploaded review content
+- **promotional_content**: Marketing materials and banners
+
+### Cache Layer (Redis)
+
+#### Session Management
+- **user_sessions**: Active user sessions
+- **cart_cache**: Real-time shopping cart state
+- **driver_locations**: Live driver position tracking
+
+#### Performance Optimization
+- **menu_cache**: Frequently accessed menu data
+- **restaurant_cache**: Popular restaurant information
+- **search_cache**: Search results and suggestions
+- **recommendation_cache**: Personalized recommendations
+
+#### Rate Limiting & Security
+- **api_rate_limits**: Request throttling per user/IP
+- **login_attempts**: Failed login tracking
+- **otp_codes**: Temporary verification codes
+
+### Search Index (Elasticsearch)
+
+#### Search Optimization
+- **restaurant_index**: Restaurant search with location-based queries
+- **menu_item_index**: Food search with filters (cuisine, price, dietary)
+- **review_index**: Review content for sentiment analysis
+- **user_preference_index**: Personalization data
+
+### Database Relationships
+
+#### Key Foreign Keys
+- users ↔ user_addresses (1:N)
+- restaurants ↔ menu_items (1:N)
+- menu_items ↔ menu_item_variants (1:N)
+- users ↔ orders (1:N)
+- orders ↔ order_items (1:N)
+- orders ↔ payments (1:1)
+- orders ↔ delivery_assignments (1:1)
+- restaurants ↔ reviews (1:N)
+- delivery_drivers ↔ delivery_assignments (1:N)
+
+#### Indexing Strategy
+- **Geospatial**: Restaurant locations, delivery areas
+- **Composite**: User + restaurant for order history
+- **Text**: Menu item names and descriptions
+- **Time-based**: Order timestamps, delivery windows
 
 ## 🎯 Microservices
 
-### Service Discovery
-- Consul/Etcd cho service registration và discovery
-- Health check endpoints cho tất cả services
+### Core Services
 
-### Inter-service Communication
-- gRPC cho internal communication
-- REST API cho external clients
-- Message queue cho async operations
+#### 1. User Management Service
+- **Chức năng**: Authentication, authorization, profile management
+- **Database**: PostgreSQL (user profiles, addresses)
+- **Cache**: Redis (sessions, tokens)
+- **Communication**: gRPC + REST API
 
-### Data Management
-- Database per service pattern
-- Event-driven architecture
-- CQRS pattern cho complex queries
+#### 2. Restaurant Service (Vendor/Seller)
+- **Chức năng**: Restaurant/shop management, analytics, order fulfillment
+- **Database**: PostgreSQL (restaurant info, business data)
+- **Communication**: gRPC for internal, REST for dashboard
+
+#### 3. Menu Service (Product Catalog)
+- **Chức năng**: Food items, categories, pricing, inventory
+- **Database**: PostgreSQL (menu items, categories)
+- **Search**: Elasticsearch indexing
+- **Media**: MongoDB (images, descriptions)
+
+#### 4. Shopping Cart Service
+- **Chức năng**: Cart management, temporary storage
+- **Cache**: Redis (cart state, session-based)
+- **Database**: PostgreSQL (persistent carts)
+
+#### 5. Order Service
+- **Chức năng**: Order lifecycle, status tracking, history
+- **Database**: PostgreSQL (orders, order_items)
+- **Events**: Order state changes via message broker
+
+#### 6. Payment Service
+- **Chức năng**: Payment processing, refunds, escrow
+- **Database**: PostgreSQL (payment records, transactions)
+- **External**: Payment gateways (Stripe, VNPay, Momo)
+- **Security**: PCI compliance, encryption
+
+#### 7. Delivery Service (Shipping)
+- **Chức năng**: Delivery assignment, tracking, route optimization
+- **Database**: PostgreSQL (delivery info, shipper data)
+- **Real-time**: WebSocket for live tracking
+- **External**: Maps API for geocoding
+
+#### 8. Notification Service
+- **Chức năng**: Real-time notifications, push notifications
+- **Message Queue**: RabbitMQ/Kafka for async messaging
+- **Channels**: Email, SMS, push, in-app notifications
+
+#### 9. Review Service
+- **Chức năng**: Ratings, reviews, feedback management
+- **Database**: PostgreSQL (reviews, ratings)
+- **Media**: MongoDB (review images/videos)
+
+#### 10. Search & Recommendation Service
+- **Chức năng**: Search, filters, personalized recommendations
+- **Search Engine**: Elasticsearch (full-text search, filters)
+- **ML**: Recommendation algorithms, user behavior tracking
+- **Cache**: Redis (search results, suggestions)
+
+#### 11. Media Service
+- **Chức năng**: File upload, image processing, CDN
+- **Storage**: AWS S3/MinIO for file storage
+- **Processing**: Image resizing, compression
+- **CDN**: CloudFront for global delivery
+
+#### 12. Analytics Service
+- **Chức năng**: Business intelligence, reporting, metrics
+- **Database**: MongoDB (analytics data, logs)
+- **Processing**: Real-time data aggregation
+- **Visualization**: Dashboard APIs for reporting
+
+### Service Communication Patterns
+
+#### Synchronous Communication
+- **gRPC**: Internal service-to-service calls
+- **REST API**: External client communications
+- **GraphQL**: Unified API layer (optional)
+
+#### Asynchronous Communication
+- **Event Sourcing**: Domain events for state changes
+- **Message Queues**: Background job processing
+- **Pub/Sub**: Real-time notifications and updates
+
+#### Data Management
+- **Database per Service**: Each service owns its data
+- **Event-driven Architecture**: Services communicate via events
+- **CQRS**: Separate read/write models for complex queries
+- **Saga Pattern**: Distributed transaction management
+
+#### Service Discovery & Load Balancing
+- **Service Registry**: Consul/Etcd for service registration
+- **Load Balancer**: Nginx/HAProxy for traffic distribution
+- **Health Checks**: Automatic service health monitoring
+- **Circuit Breaker**: Fault tolerance and resilience
 
 ## 🚀 Development
 
