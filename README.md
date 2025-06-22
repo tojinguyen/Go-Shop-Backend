@@ -12,7 +12,8 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 - [Development](#development)
 - [Deployment](#deployment)
 
-## 🎯 Yêu cầu chức năng
+<details>
+<summary><h2>🎯 Yêu cầu chức năng</h2></summary>
 
 ### User Management Service
 - Đăng ký, đăng nhập (JWT)
@@ -81,8 +82,10 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 - Quản lý comments và rating
 - Verified purchase reviews
 
+</details>
 
-## 🔗 Thiết kế API
+<details>
+<summary><h2>🔗 Thiết kế API</h2></summary>
 
 ### Authentication APIs
 ```
@@ -438,7 +441,10 @@ WS     /api/v1/orders/{id}/live-updates
 WS     /api/v1/shipping/{order_id}/live-tracking
 ```
 
-## 🏗️ Kiến trúc hệ thống
+</details>
+
+<details>
+<summary><h2>🏗️ Kiến trúc hệ thống</h2></summary>
 
 ### Tổng quan kiến trúc
 
@@ -686,7 +692,10 @@ Database Connections:
 └── InfluxDB: 8086 (Time series metrics)
 ```
 
-## 🛠️ Tech Stack
+</details>
+
+<details>
+<summary><h2>🛠️ Tech Stack</h2></summary>
 
 ### Backend
 - **Language**: Go (Golang) 1.21+
@@ -710,7 +719,10 @@ Database Connections:
 - **Code Quality**: golangci-lint, SonarQube
 - **Documentation**: Swagger/OpenAPI
 
-## 🎯 Microservices
+</details>
+
+<details>
+<summary><h2>🎯 Microservices</h2></summary>
 
 ### Core Services
 
@@ -943,7 +955,10 @@ Database Connections:
 - **Audit Logging**: Distributed tracing với Jaeger
 - **Monitoring**: Prometheus metrics với Grafana dashboards
 
-## 🚀 Development
+</details>
+
+<details>
+<summary><h2>🚀 Development</h2></summary>
 
 ### Yêu cầu hệ thống
 - Go 1.21+
@@ -969,7 +984,10 @@ make run-cart-service
 # ...
 ```
 
-## 🚀 Deployment
+</details>
+
+<details>
+<summary><h2>🚀 Deployment</h2></summary>
 
 ### Docker Deployment
 ```bash
@@ -991,9 +1009,12 @@ kubectl apply -f deployments/kubernetes/
 - Sử dụng Kubernetes secrets cho production
 - Configure external services (databases, message queues)
 
+</details>
+
 ---
 
-## 📈 Roadmap
+<details>
+<summary><h2>📈 Roadmap</h2></summary>
 
 - [ ] Phase 1: Core services (User, Vendor, Product, Cart, Order)
 - [ ] Phase 2: Payment integration và escrow service
@@ -1004,7 +1025,10 @@ kubectl apply -f deployments/kubernetes/
 - [ ] Phase 7: Seller analytics dashboard
 - [ ] Phase 8: International expansion features
 
-## 🤝 Contributing
+</details>
+
+<details>
+<summary><h2>🤝 Contributing</h2></summary>
 
 1. Fork repository
 2. Tạo feature branch
@@ -1012,6 +1036,11 @@ kubectl apply -f deployments/kubernetes/
 4. Push to branch  
 5. Tạo Pull Request
 
-## 📄 License
+</details>
+
+<details>
+<summary><h2>📄 License</h2></summary>
 
 This project is licensed under the MIT License.
+
+</details>
