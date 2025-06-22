@@ -538,7 +538,7 @@ WS     /api/v1/shipping/{order_id}/live-tracking
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                            Complete Order Flow                                 │
+│                            Complete Order Flow                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
 1. User Authentication Flow:
@@ -553,9 +553,9 @@ WS     /api/v1/shipping/{order_id}/live-tracking
 
 2. Product Search Flow:
    ┌─────────┐   HTTP GET      ┌─────────────┐   Elasticsearch  ┌─────────────┐
-   │ Client  │ ──────────────► │Search Svc   │ ──────────────► │Elasticsearch│
-   │         │ /products/search│Port: 8007   │                 │Index        │
-   └─────────┘                 └─────┬───────┘                 └─────────────┘
+   │ Client  │ ──────────────► │Search Svc   │ ──────────────►  │Elasticsearch│
+   │         │ /products/search│Port: 8007   │                  │Index        │
+   └─────────┘                 └─────┬───────┘                  └─────────────┘
         ▲                            │
         │         Results            ▼ gRPC Call
         └────────────────────┌─────────────┐
@@ -644,64 +644,64 @@ WS     /api/v1/shipping/{order_id}/live-tracking
 ┌─────────────────┬──────────────────────────────────────────────────────────────┐
 │    Service      │                    Dependencies                              │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ User Service    │ • PostgreSQL (users_db)                                     │
-│                 │ • Redis (sessions, OTP)                                     │
-│                 │ • SMTP (email service)                                      │
+│ User Service    │ • PostgreSQL (users_db)                                      │
+│                 │ • Redis (sessions, OTP)                                      │
+│                 │ • SMTP (email service)                                       │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ Shop Service    │ • PostgreSQL (shops_db)                                     │
-│                 │ • User Service (gRPC - owner validation)                    │
-│                 │ • Analytics Service (gRPC - metrics)                        │
+│ Shop Service    │ • PostgreSQL (shops_db)                                      │
+│                 │ • User Service (gRPC - owner validation)                     │
+│                 │ • Analytics Service (gRPC - metrics)                         │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ Product Service │ • PostgreSQL (products_db)                                  │
-│                 │ • Elasticsearch (product indexing)                          │
-│                 │ • Shop Service (gRPC - shop validation)                     │
-│                 │ • Media Service (gRPC - image processing)                   │
+│ Product Service │ • PostgreSQL (products_db)                                   │
+│                 │ • Elasticsearch (product indexing)                           │
+│                 │ • Shop Service (gRPC - shop validation)                      │
+│                 │ • Media Service (gRPC - image processing)                    │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ Cart Service    │ • Redis (cart data)                                         │
-│                 │ • Product Service (gRPC - inventory check)                  │
-│                 │ • User Service (gRPC - user validation)                     │
+│ Cart Service    │ • Redis (cart data)                                          │
+│                 │ • Product Service (gRPC - inventory check)                   │
+│                 │ • User Service (gRPC - user validation)                      │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ Order Service   │ • PostgreSQL (orders_db)                                    │
-│                 │ • Cart Service (gRPC - get cart)                           │
-│                 │ • Product Service (gRPC - reserve inventory)               │
-│                 │ • RabbitMQ (publish order events)                          │
+│ Order Service   │ • PostgreSQL (orders_db)                                     │
+│                 │ • Cart Service (gRPC - get cart)                             │
+│                 │ • Product Service (gRPC - reserve inventory)                 │
+│                 │ • RabbitMQ (publish order events)                            │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ Payment Service │ • PostgreSQL (payments_db)                                  │
-│                 │ • External APIs (Stripe, VNPay, Momo)                      │
-│                 │ • Order Service (gRPC - order details)                     │
-│                 │ • RabbitMQ (publish payment events)                        │
+│ Payment Service │ • PostgreSQL (payments_db)                                   │
+│                 │ • External APIs (Stripe, VNPay, Momo)                        │
+│                 │ • Order Service (gRPC - order details)                       │
+│                 │ • RabbitMQ (publish payment events)                          │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ Shipping Service│ • PostgreSQL (shipping_db)                                  │
-│                 │ • Maps API (geocoding, routing)                            │
-│                 │ • Order Service (gRPC - delivery address)                  │
-│                 │ • RabbitMQ (subscribe order events)                        │
-│                 │ • WebSocket (real-time tracking)                           │
+│ Shipping Service│ • PostgreSQL (shipping_db)                                   │
+│                 │ • Maps API (geocoding, routing)                              │
+│                 │ • Order Service (gRPC - delivery address)                    │
+│                 │ • RabbitMQ (subscribe order events)                          │
+│                 │ • WebSocket (real-time tracking)                             │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│Search & Rec Svc │ • Elasticsearch (search index)                              │
-│                 │ • Redis (cache results)                                     │
-│                 │ • Product Service (gRPC - product data)                     │
-│                 │ • Analytics Service (gRPC - user behavior)                  │
-│                 │ • ML Models (recommendation engine)                         │
+│Search & Rec Svc │ • Elasticsearch (search index)                               │
+│                 │ • Redis (cache results)                                      │
+│                 │ • Product Service (gRPC - product data)                      │
+│                 │ • Analytics Service (gRPC - user behavior)                   │
+│                 │ • ML Models (recommendation engine)                          │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ Review Service  │ • PostgreSQL (reviews_db)                                   │
-│                 │ • Order Service (gRPC - verify purchase)                   │
-│                 │ • Media Service (gRPC - upload images)                     │
-│                 │ • Notification Service (gRPC - notify shop)                │
+│ Review Service  │ • PostgreSQL (reviews_db)                                    │
+│                 │ • Order Service (gRPC - verify purchase)                     │
+│                 │ • Media Service (gRPC - upload images)                       │
+│                 │ • Notification Service (gRPC - notify shop)                  │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│Notification Svc │ • RabbitMQ (consume all events)                            │
-│                 │ • Redis (notification preferences)                          │
-│                 │ • SMTP (email), SMS Gateway, FCM (push)                    │
-│                 │ • WebSocket (real-time notifications)                      │
+│Notification Svc │ • RabbitMQ (consume all events)                              │
+│                 │ • Redis (notification preferences)                           │
+│                 │ • SMTP (email), SMS Gateway, FCM (push)                      │
+│                 │ • WebSocket (real-time notifications)                        │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│ Media Service   │ • S3/MinIO (file storage)                                  │
-│                 │ • Redis (upload sessions)                                   │
-│                 │ • CDN (content delivery)                                    │
-│                 │ • Image Processing (resize, compress)                       │
+│ Media Service   │ • S3/MinIO (file storage)                                    │
+│                 │ • Redis (upload sessions)                                    │
+│                 │ • CDN (content delivery)                                     │
+│                 │ • Image Processing (resize, compress)                        │
 ├─────────────────┼──────────────────────────────────────────────────────────────┤
-│Analytics Service│ • MongoDB (analytics data)                                  │
-│                 │ • InfluxDB (time series metrics)                           │
-│                 │ • Kafka (event streaming)                                   │
-│                 │ • All Services (gRPC - collect metrics)                    │
+│Analytics Service│ • MongoDB (analytics data)                                   │
+│                 │ • InfluxDB (time series metrics)                             │
+│                 │ • Kafka (event streaming)                                    │
+│                 │ • All Services (gRPC - collect metrics)                      │
 └─────────────────┴──────────────────────────────────────────────────────────────┘
 ```
 
@@ -709,7 +709,7 @@ WS     /api/v1/shipping/{order_id}/live-tracking
 
 ```
 ┌─────────────────┬──────────┬──────────┬─────────────────────────────────────────┐
-│    Service      │HTTP Port │gRPC Port │            Protocols Used              │
+│    Service      │HTTP Port │gRPC Port │            Protocols Used               │
 ├─────────────────┼──────────┼──────────┼─────────────────────────────────────────┤
 │ API Gateway     │   8000   │    -     │ HTTP/HTTPS, WebSocket                   │
 │ User Service    │   8001   │   9001   │ HTTP, gRPC, SMTP                        │
@@ -717,12 +717,12 @@ WS     /api/v1/shipping/{order_id}/live-tracking
 │ Product Service │   8003   │   9003   │ HTTP, gRPC                              │
 │ Cart Service    │   8004   │   9004   │ HTTP, gRPC, Redis Protocol              │
 │ Order Service   │   8005   │   9005   │ HTTP, gRPC, AMQP                        │
-│ Payment Service │   8006   │   9006   │ HTTP, gRPC, AMQP, HTTPS (Gateways)     │
+│ Payment Service │   8006   │   9006   │ HTTP, gRPC, AMQP, HTTPS (Gateways)      │
 │ Search Service  │   8007   │   9007   │ HTTP, gRPC, Elasticsearch API           │
-│ Notification    │   8008   │   9008   │ gRPC, AMQP, WebSocket, SMTP, SMS       │
-│ Shipping Service│   8009   │   9009   │ HTTP, gRPC, AMQP, WebSocket, Maps API  │
-│ Media Service   │   8010   │   9010   │ HTTP, gRPC, S3 API                     │
-│ Analytics       │   8011   │   9011   │ gRPC, Kafka, MongoDB, InfluxDB         │
+│ Notification    │   8008   │   9008   │ gRPC, AMQP, WebSocket, SMTP, SMS        │
+│ Shipping Service│   8009   │   9009   │ HTTP, gRPC, AMQP, WebSocket, Maps API   │
+│ Media Service   │   8010   │   9010   │ HTTP, gRPC, S3 API                      │
+│ Analytics       │   8011   │   9011   │ gRPC, Kafka, MongoDB, InfluxDB          │
 │ Review Service  │   8012   │   9012   │ HTTP, gRPC                              │
 └─────────────────┴──────────┴──────────┴─────────────────────────────────────────┘
 
