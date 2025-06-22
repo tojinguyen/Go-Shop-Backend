@@ -441,7 +441,692 @@ WS     /api/v1/shipping/{order_id}/live-tracking
 ```
 
 ## 🏗️ Kiến trúc hệ thống
-- Coming Soon
+
+### Tổng quan kiến trúc
+
+```
+                        ┌─────────────────────────────────────┐
+                        │           Frontend Layer            │
+                        │                                     │
+                ┌───────┼──────┐ ┌────────┼────────┐  ┌───────┼─────┐
+                │  Web Client  │ │  Mobile Apps    │  │ Admin Panel │
+                │   (React)    │ │ (React Native)  │  │  (Vue.js)   │
+                └──────────────┘ └─────────────────┘  └─────────────┘
+                        │                 │                   │
+                        └─────────────────┼───────────────────┘
+                                          │
+                                ┌─────────▼─────────┐
+                                │   Load Balancer   │
+                                │  (Nginx/HAProxy)  │
+                                │  - SSL/TLS        │
+                                │  - Static Content │
+                                └─────────┬─────────┘
+                                          │
+                                ┌─────────▼─────────┐
+                                │   API Gateway     │
+                                │   (Kong/Nginx)    │
+                                │   - Rate Limiting │
+                                │   - Authentication│
+                                │   - Request Routing│
+                                │   - Circuit Breaker│
+                                └─────────┬─────────┘
+                                          │
+                        ┌─────────────────┼─────────────────┐
+                        │                 │                 │
+              ┌─────────▼─────────┐ ┌─────▼─────┐ ┌─────────▼─────────┐
+              │  Authentication   │ │ Business  │ │   Data Layer      │
+              │    Services       │ │ Services  │ │    Services       │
+              │                   │ │           │ │                   │
+              │ - User Management │ │ - Products│ │ - PostgreSQL      │
+              │ - JWT Validation  │ │ - Orders  │ │ - Redis Cache     │
+              │ - Role Management │ │ - Payment │ │ - Elasticsearch   │
+              └───────────────────┘ │ - Shipping│ │ - MongoDB         │
+                                    │ - Reviews │ │ - RabbitMQ        │
+                                    └───────────┘ └───────────────────┘
+```
+
+### Microservices Architecture Detail
+
+#### Service Communication & Data Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              API Gateway (Kong/Nginx)                          │
+│                          Port: 8000 (HTTP/HTTPS)                               │
+└─────────────────────┬───────────────────────────────────────────────────────────┘
+                      │ HTTP/REST
+                      │
+        ┌─────────────┼─────────────┐
+        │             │             │
+        ▼             ▼             ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│User Service │ │Shop Service │ │Product Svc  │
+│Port: 8001   │ │Port: 8002   │ │Port: 8003   │
+└─────┬───────┘ └─────┬───────┘ └─────┬───────┘
+      │               │               │
+      │ gRPC          │ gRPC          │ gRPC
+      │ :9001         │ :9002         │ :9003
+      │               │               │
+      └───────────────┼───────────────┼──────────────┐
+                      │               │              │
+                      ▼               ▼              ▼
+            ┌─────────────────────────────────────────────┐
+            │         Message Bus (RabbitMQ)              │
+            │              Port: 5672                     │
+            └─────────────┬───────────────────────────────┘
+                          │ AMQP
+                          │
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+        ▼                 ▼                 ▼
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│Cart Service │   │Order Service│   │Payment Svc  │
+│Port: 8004   │   │Port: 8005   │   │Port: 8006   │
+└─────┬───────┘   └─────┬───────┘   └─────┬───────┘
+      │                 │                 │
+      │ Redis           │ PostgreSQL      │ External APIs
+      │ :6379           │ :5432           │ (Stripe, VNPay)
+      │                 │                 │
+      ▼                 ▼                 ▼
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│Redis Cache  │   │PostgreSQL   │   │Payment      │
+│             │   │Database     │   │Gateways     │
+└─────────────┘   └─────────────┘   └─────────────┘
+```
+
+#### Detailed Service Interaction Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            Complete Order Flow                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+1. User Authentication Flow:
+   ┌─────────┐    HTTP POST     ┌─────────────┐    SQL Query    ┌─────────────┐
+   │ Client  │ ───────────────► │User Service │ ──────────────► │ PostgreSQL  │
+   │         │    /auth/login   │Port: 8001   │                 │ Users DB    │
+   └─────────┘                  └─────┬───────┘                 └─────────────┘
+        ▲                             │
+        │         JWT Token           ▼
+        └─────────────────────── Redis Cache
+                                  Session Store
+
+2. Product Search Flow:
+   ┌─────────┐   HTTP GET      ┌─────────────┐   Elasticsearch  ┌─────────────┐
+   │ Client  │ ──────────────► │Search Svc   │ ──────────────► │Elasticsearch│
+   │         │ /products/search│Port: 8007   │                 │Index        │
+   └─────────┘                 └─────┬───────┘                 └─────────────┘
+        ▲                            │
+        │         Results            ▼ gRPC Call
+        └────────────────────┌─────────────┐
+                             │Product Svc  │
+                             │Port: 8003   │
+                             └─────────────┘
+
+3. Add to Cart Flow:
+   ┌─────────┐   HTTP POST     ┌─────────────┐    gRPC         ┌─────────────┐
+   │ Client  │ ──────────────► │Cart Service │ ──────────────► │Product Svc  │
+   │         │ /cart/items     │Port: 8004   │ Check Inventory │Port: 8003   │
+   └─────────┘                 └─────┬───────┘                 └─────────────┘
+                                     │
+                                     ▼ Redis SET
+                               ┌─────────────┐
+                               │Redis Cache  │
+                               │Cart Data    │
+                               └─────────────┘
+
+4. Order Creation Flow:
+   ┌─────────┐   HTTP POST     ┌─────────────┐    gRPC         ┌─────────────┐
+   │ Client  │ ──────────────► │Order Service│ ──────────────► │Cart Service │
+   │         │   /orders       │Port: 8005   │  Get Cart       │Port: 8004   │
+   └─────────┘                 └─────┬───────┘                 └─────────────┘
+                                     │
+                                     ▼ SQL INSERT
+                               ┌─────────────┐
+                               │PostgreSQL   │
+                               │Orders DB    │
+                               └─────┬───────┘
+                                     │
+                                     ▼ Publish Event
+                               ┌─────────────┐
+                               │RabbitMQ     │
+                               │order.created│
+                               └─────┬───────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    ▼                ▼                ▼
+            ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+            │Payment Svc  │  │Notification │  │Analytics    │
+            │Subscribe    │  │Service      │  │Service      │
+            │Port: 8006   │  │Port: 8008   │  │Port: 8010   │
+            └─────────────┘  └─────────────┘  └─────────────┘
+
+5. Payment Processing Flow:
+   ┌─────────────┐   Process     ┌─────────────┐   HTTP POST   ┌─────────────┐
+   │Payment Svc  │ ────────────► │External     │ ────────────► │Stripe API   │
+   │Port: 8006   │   Payment     │Gateway      │   Payment     │             │
+   └─────┬───────┘               └─────────────┘               └─────┬───────┘
+         │                                                           │
+         ▼ SQL INSERT                                                 ▼ Webhook
+   ┌─────────────┐                                             ┌─────────────┐
+   │PostgreSQL   │                                             │Payment      │
+   │Payments DB  │                                             │Confirmation │
+   └─────┬───────┘                                             └─────┬───────┘
+         │                                                           │
+         ▼ Publish Event                                             ▼
+   ┌─────────────┐                                             ┌─────────────┐
+   │RabbitMQ     │ ◄───────────────────────────────────────────│Update Order │
+   │payment.done │                                             │Status       │
+   └─────────────┘                                             └─────────────┘
+
+6. Shipping Assignment Flow:
+   ┌─────────────┐   Subscribe   ┌─────────────┐   gRPC Call   ┌─────────────┐
+   │Shipping Svc │ ────────────► │RabbitMQ     │               │Order Service│
+   │Port: 8009   │  payment.done │             │ ◄─────────────│Get Order    │
+   └─────┬───────┘               └─────────────┘               │Details      │
+         │                                                     └─────────────┘
+         ▼ Find Available Shipper
+   ┌─────────────┐
+   │PostgreSQL   │
+   │Shippers DB  │
+   └─────┬───────┘
+         │
+         ▼ Assign & Notify
+   ┌─────────────┐   WebSocket   ┌─────────────┐
+   │Notification │ ────────────► │Shipper App  │
+   │Service      │   Real-time   │             │
+   └─────────────┘               └─────────────┘
+```
+
+#### Service Dependencies Matrix
+
+```
+┌─────────────────┬──────────────────────────────────────────────────────────────┐
+│    Service      │                    Dependencies                              │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ User Service    │ • PostgreSQL (users_db)                                     │
+│                 │ • Redis (sessions, OTP)                                     │
+│                 │ • SMTP (email service)                                      │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ Shop Service    │ • PostgreSQL (shops_db)                                     │
+│                 │ • User Service (gRPC - owner validation)                    │
+│                 │ • Analytics Service (gRPC - metrics)                        │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ Product Service │ • PostgreSQL (products_db)                                  │
+│                 │ • Elasticsearch (product indexing)                          │
+│                 │ • Shop Service (gRPC - shop validation)                     │
+│                 │ • Media Service (gRPC - image processing)                   │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ Cart Service    │ • Redis (cart data)                                         │
+│                 │ • Product Service (gRPC - inventory check)                  │
+│                 │ • User Service (gRPC - user validation)                     │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ Order Service   │ • PostgreSQL (orders_db)                                    │
+│                 │ • Cart Service (gRPC - get cart)                           │
+│                 │ • Product Service (gRPC - reserve inventory)               │
+│                 │ • RabbitMQ (publish order events)                          │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ Payment Service │ • PostgreSQL (payments_db)                                  │
+│                 │ • External APIs (Stripe, VNPay, Momo)                      │
+│                 │ • Order Service (gRPC - order details)                     │
+│                 │ • RabbitMQ (publish payment events)                        │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ Shipping Service│ • PostgreSQL (shipping_db)                                  │
+│                 │ • Maps API (geocoding, routing)                            │
+│                 │ • Order Service (gRPC - delivery address)                  │
+│                 │ • RabbitMQ (subscribe order events)                        │
+│                 │ • WebSocket (real-time tracking)                           │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│Search & Rec Svc │ • Elasticsearch (search index)                              │
+│                 │ • Redis (cache results)                                     │
+│                 │ • Product Service (gRPC - product data)                     │
+│                 │ • Analytics Service (gRPC - user behavior)                  │
+│                 │ • ML Models (recommendation engine)                         │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ Review Service  │ • PostgreSQL (reviews_db)                                   │
+│                 │ • Order Service (gRPC - verify purchase)                   │
+│                 │ • Media Service (gRPC - upload images)                     │
+│                 │ • Notification Service (gRPC - notify shop)                │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│Notification Svc │ • RabbitMQ (consume all events)                            │
+│                 │ • Redis (notification preferences)                          │
+│                 │ • SMTP (email), SMS Gateway, FCM (push)                    │
+│                 │ • WebSocket (real-time notifications)                      │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│ Media Service   │ • S3/MinIO (file storage)                                  │
+│                 │ • Redis (upload sessions)                                   │
+│                 │ • CDN (content delivery)                                    │
+│                 │ • Image Processing (resize, compress)                       │
+├─────────────────┼──────────────────────────────────────────────────────────────┤
+│Analytics Service│ • MongoDB (analytics data)                                  │
+│                 │ • InfluxDB (time series metrics)                           │
+│                 │ • Kafka (event streaming)                                   │
+│                 │ • All Services (gRPC - collect metrics)                    │
+└─────────────────┴──────────────────────────────────────────────────────────────┘
+```
+
+#### Communication Protocols & Ports
+
+```
+┌─────────────────┬──────────┬──────────┬─────────────────────────────────────────┐
+│    Service      │HTTP Port │gRPC Port │            Protocols Used              │
+├─────────────────┼──────────┼──────────┼─────────────────────────────────────────┤
+│ API Gateway     │   8000   │    -     │ HTTP/HTTPS, WebSocket                   │
+│ User Service    │   8001   │   9001   │ HTTP, gRPC, SMTP                        │
+│ Shop Service    │   8002   │   9002   │ HTTP, gRPC                              │
+│ Product Service │   8003   │   9003   │ HTTP, gRPC                              │
+│ Cart Service    │   8004   │   9004   │ HTTP, gRPC, Redis Protocol              │
+│ Order Service   │   8005   │   9005   │ HTTP, gRPC, AMQP                        │
+│ Payment Service │   8006   │   9006   │ HTTP, gRPC, AMQP, HTTPS (Gateways)     │
+│ Search Service  │   8007   │   9007   │ HTTP, gRPC, Elasticsearch API           │
+│ Notification    │   8008   │   9008   │ gRPC, AMQP, WebSocket, SMTP, SMS       │
+│ Shipping Service│   8009   │   9009   │ HTTP, gRPC, AMQP, WebSocket, Maps API  │
+│ Media Service   │   8010   │   9010   │ HTTP, gRPC, S3 API                     │
+│ Analytics       │   8011   │   9011   │ gRPC, Kafka, MongoDB, InfluxDB         │
+│ Review Service  │   8012   │   9012   │ HTTP, gRPC                              │
+└─────────────────┴──────────┴──────────┴─────────────────────────────────────────┘
+
+Database Connections:
+├── PostgreSQL: 5432 (User, Shop, Product, Order, Payment, Shipping, Review)
+├── Redis: 6379 (Cache, Sessions, Cart, Pub/Sub)
+├── MongoDB: 27017 (Analytics, Media metadata, Logs)
+├── Elasticsearch: 9200 (Search indices)
+├── RabbitMQ: 5672 (Message queues)
+└── InfluxDB: 8086 (Time series metrics)
+```
+
+### Service Communication Flow
+
+#### 1. User Registration & Authentication Flow
+```
+Mobile/Web Client
+       │
+       ▼
+   API Gateway ──────────┐
+       │                │
+       ▼                ▼
+User Management    Rate Limiting
+   Service             │
+       │               ▼
+       ▼         Request Validation
+  PostgreSQL           │
+   (Users DB)          ▼
+       │         JWT Generation
+       ▼               │
+   Redis Cache         ▼
+  (Sessions)      Response to Client
+```
+
+#### 2. Product Search & Discovery Flow
+```
+Client Request
+       │
+       ▼
+   API Gateway
+       │
+       ▼
+Search & Recommendation Service
+       │
+       ├─────────┬─────────────┐
+       ▼         ▼             ▼
+ Elasticsearch Product      User Behavior
+  (Indexing)   Catalog      Analytics
+       │       Service           │
+       ▼         │               ▼
+   Results       ▼           MongoDB
+     │     PostgreSQL        (Analytics)
+     │    (Products DB)          │
+     ▼         │                 ▼
+   Redis       ▼             Recommendation
+  (Cache)   Product Info      Engine (ML)
+     │         │                 │
+     └─────────┼─────────────────┘
+               ▼
+        Aggregated Response
+```
+
+#### 3. Order Processing Flow
+```
+Shopping Cart ────────┐
+       │              │
+       ▼              ▼
+   Cart Service   Order Service
+       │              │
+       ▼              ▼
+   Redis Cache    PostgreSQL
+  (Cart Data)    (Orders DB)
+       │              │
+       ▼              ▼
+Product Catalog   Payment Service
+   Service            │
+       │              ▼
+       ▼         Payment Gateway
+Inventory Check   (Stripe/VNPay)
+       │              │
+       ▼              ▼
+Stock Update     Payment Result
+       │              │
+       ▼              ▼
+   Message Queue ──▶ Order Status
+  (RabbitMQ)         Update
+       │              │
+       ▼              ▼
+Notification     Shipping Service
+  Service            │
+       │              ▼
+       ▼         Shipper Assignment
+Email/SMS/Push       │
+Notifications        ▼
+                Real-time Tracking
+```
+
+### Database Design per Service
+
+#### 1. User Management Service
+```sql
+-- PostgreSQL Schema
+DATABASES:
+- users_db
+  - users (id, email, password_hash, role, created_at, updated_at)
+  - user_profiles (user_id, full_name, phone, avatar_url, date_of_birth)
+  - addresses (id, user_id, address_line, city, state, postal_code, is_default)
+  - user_sessions (user_id, session_token, expires_at)
+
+-- Redis Cache
+CACHE KEYS:
+- user:session:{session_id} -> user data (TTL: 24h)
+- user:otp:{phone/email} -> OTP code (TTL: 5min)
+- user:reset_token:{token} -> user_id (TTL: 1h)
+```
+
+#### 2. Shop Management Service
+```sql
+-- PostgreSQL Schema
+DATABASES:
+- shops_db
+  - shops (id, owner_id, name, description, location, status, created_at)
+  - shop_profiles (shop_id, business_license, tax_id, contact_info)
+  - promotions (id, shop_id, type, value, start_date, end_date, status)
+  - shop_analytics (shop_id, date, revenue, orders_count, avg_rating)
+```
+
+#### 3. Product Catalog Service
+```sql
+-- PostgreSQL Schema
+DATABASES:
+- products_db
+  - categories (id, name, parent_id, slug, description)
+  - products (id, shop_id, category_id, name, description, status)
+  - product_variants (id, product_id, sku, price, stock_quantity)
+  - product_images (id, product_id, image_url, alt_text, sort_order)
+  - price_history (id, product_id, old_price, new_price, changed_at)
+
+-- Elasticsearch Index
+INDICES:
+- products_index: {id, name, description, category, price, rating, location}
+- shops_index: {id, name, location, category, rating}
+
+-- MongoDB Collections
+COLLECTIONS:
+- product_media: {product_id, media_type, url, metadata}
+- product_analytics: {product_id, views, clicks, conversions}
+```
+
+#### 4. Order Management Service
+```sql
+-- PostgreSQL Schema
+DATABASES:
+- orders_db
+  - orders (id, user_id, shop_id, status, total_amount, created_at)
+  - order_items (id, order_id, product_id, quantity, unit_price)
+  - order_status_history (id, order_id, status, changed_at, notes)
+  - returns (id, order_id, reason, status, refund_amount)
+```
+
+#### 5. Payment Service
+```sql
+-- PostgreSQL Schema
+DATABASES:
+- payments_db
+  - payments (id, order_id, amount, currency, status, gateway)
+  - payment_methods (id, user_id, type, provider, token, is_default)
+  - transactions (id, payment_id, type, amount, status, gateway_response)
+  - refunds (id, payment_id, amount, reason, status, processed_at)
+  - escrow_accounts (id, payment_id, amount, status, release_date)
+```
+
+### Infrastructure Architecture
+
+#### Container Orchestration (Kubernetes)
+```yaml
+# Kubernetes Cluster Layout
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: go-shop
+
+# Services Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: go-shop
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    spec:
+      containers:
+      - name: user-service
+        image: go-shop/user-service:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: REDIS_HOST
+          value: "redis-service"
+```
+
+#### Service Mesh (Istio) - Optional
+```yaml
+# Traffic Management
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: user-service
+spec:
+  hosts:
+  - user-service
+  http:
+  - match:
+    - headers:
+        version:
+          exact: v2
+    route:
+    - destination:
+        host: user-service
+        subset: v2
+  - route:
+    - destination:
+        host: user-service
+        subset: v1
+```
+
+#### Monitoring & Observability
+```yaml
+# Prometheus Monitoring
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+spec:
+  ports:
+  - port: 9090
+    name: web
+  selector:
+    app: prometheus
+
+# Grafana Dashboard
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+data:
+  go-shop-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Go-Shop Microservices",
+        "panels": [
+          {
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])"
+              }
+            ]
+          }
+        ]
+      }
+    }
+```
+
+### Security Architecture
+
+#### API Gateway Security
+```
+┌─────────────────────────────────────────────┐
+│            API Gateway Security             │
+├─────────────────────────────────────────────┤
+│  1. SSL/TLS Termination                    │
+│  2. Rate Limiting (Redis-based)            │
+│  3. JWT Token Validation                   │
+│  4. Request/Response Logging               │
+│  5. CORS Configuration                     │
+│  6. API Key Management                     │
+│  7. IP Whitelisting/Blacklisting           │
+└─────────────────────────────────────────────┘
+```
+
+#### Service-to-Service Security
+```
+┌─────────────────────────────────────────────┐
+│        Inter-Service Communication          │
+├─────────────────────────────────────────────┤
+│  1. mTLS (Mutual TLS)                      │
+│  2. Service Accounts                       │
+│  3. Network Policies                       │
+│  4. JWT Propagation                        │
+│  5. Circuit Breaker Pattern                │
+│  6. Retry with Exponential Backoff         │
+└─────────────────────────────────────────────┘
+```
+
+### Deployment Strategy
+
+#### Multi-Environment Setup
+```
+Development Environment:
+├── docker-compose.dev.yml
+├── Local databases (Docker containers)
+├── Mock external services
+└── Hot reloading enabled
+
+Staging Environment:
+├── Kubernetes cluster (Minikube/Kind)
+├── Shared databases
+├── Real external service integration
+└── Performance testing
+
+Production Environment:
+├── Multi-zone Kubernetes cluster
+├── Managed databases (AWS RDS, ElastiCache)
+├── CDN integration (CloudFront)
+├── Auto-scaling enabled
+└── Full monitoring & alerting
+```
+
+#### CI/CD Pipeline
+```
+Code Push → GitHub Actions
+     │
+     ▼
+Unit Tests & Linting
+     │
+     ▼
+Build Docker Images
+     │
+     ▼
+Push to Container Registry
+     │
+     ▼
+Deploy to Staging
+     │
+     ▼
+Integration Tests
+     │
+     ▼
+Manual Approval
+     │
+     ▼
+Deploy to Production
+     │
+     ▼
+Health Checks & Monitoring
+```
+
+### Scalability & Performance
+
+#### Horizontal Scaling Strategy
+```
+Service Scaling Policies:
+┌─────────────────┬──────────────┬─────────────────┐
+│    Service      │   Min Pods   │   Max Pods      │
+├─────────────────┼──────────────┼─────────────────┤
+│ User Service    │      2       │       10        │
+│ Product Service │      3       │       15        │
+│ Order Service   │      2       │       12        │
+│ Payment Service │      2       │        8        │
+│ Search Service  │      2       │       20        │
+└─────────────────┴──────────────┴─────────────────┘
+
+Auto-scaling Triggers:
+- CPU utilization > 70%
+- Memory utilization > 80%
+- Request rate > 1000 RPS
+- Response time > 500ms
+```
+
+#### Caching Strategy
+```
+Multi-Level Caching:
+┌─────────────────────────────────────────────┐
+│ Level 1: CDN (CloudFront)                  │
+│ - Static assets (images, CSS, JS)          │
+│ - TTL: 24 hours                            │
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ Level 2: API Gateway Cache                 │
+│ - API responses                            │
+│ - TTL: 5 minutes                           │
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ Level 3: Redis Cache                       │
+│ - Session data, cart data                  │
+│ - TTL: Varies by data type                 │
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ Level 4: Database Query Cache              │
+│ - Frequent queries                         │
+│ - TTL: 1-15 minutes                        │
+└─────────────────────────────────────────────┘
+```
 
 ## 🛠️ Tech Stack
 
