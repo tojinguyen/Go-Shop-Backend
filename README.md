@@ -5,7 +5,6 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 ## 📋 Mục lục
 
 - [Yêu cầu chức năng](#yêu-cầu-chức-năng)
-- [Yêu cầu phi chức năng](#yêu-cầu-phi-chức-năng)
 - [Thiết kế API](#thiết-kế-api)
 - [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
 - [Cấu trúc thư mục](#cấu-trúc-thư-mục)
@@ -85,43 +84,6 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 - Quản lý comments và rating
 - Verified purchase reviews
 
-
-## ⚡ Yêu cầu phi chức năng
-
-### Performance
-- Hỗ trợ 10,000+ concurrent users
-- Response time < 200ms cho các API chính
-- Database query optimization
-- Caching strategy (Redis)
-- Load balancing
-
-### Scalability
-- Horizontal scaling cho các microservices
-- Auto-scaling based on traffic
-- Database sharding/partitioning
-- Message queue for async processing
-
-### Reliability
-- 99.9% uptime
-- Circuit breaker pattern
-- Retry mechanism
-- Graceful degradation
-- Health check endpoints
-
-### Security
-- Authentication & Authorization (JWT)
-- Data encryption (at rest và in transit)
-- API rate limiting
-- Input validation và sanitization
-- HTTPS only
-- SQL injection prevention
-
-### Monitoring & Logging
-- Centralized logging (ELK stack)
-- Metrics collection (Prometheus)
-- Distributed tracing (Jaeger)
-- Error tracking
-- Performance monitoring
 
 ## 🔗 Thiết kế API
 
