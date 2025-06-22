@@ -472,95 +472,233 @@ WS     /api/v1/shipping/{order_id}/live-tracking
 ### Core Services
 
 #### 1. User Management Service
-- **Chức năng**: Authentication, authorization, profile management
-- **Database**: PostgreSQL (user profiles, addresses)
-- **Cache**: Redis (sessions, tokens)
+- **API Endpoints**: Authentication (`/api/v1/auth/*`), User Profile (`/api/v1/users/*`)
+- **Chức năng**:
+  - Authentication & Authorization (JWT, OAuth2)
+  - User registration, login, logout, password management
+  - Profile management và address management
+  - Role management (User, Shipper registration)
+  - OTP verification và forgot password flow
+- **Database**: PostgreSQL (user profiles, addresses, roles)
+- **Cache**: Redis (JWT tokens, sessions, OTP)
+- **Security**: JWT tokens, bcrypt hashing, rate limiting
 - **Communication**: gRPC + REST API
 
-#### 2. Restaurant Service (Vendor/Seller)
-- **Chức năng**: Restaurant/shop management, analytics, order fulfillment
-- **Database**: PostgreSQL (restaurant info, business data)
+#### 2. Shop Management Service (Vendor/Seller)
+- **API Endpoints**: Shop Management (`/api/v1/shops/*`)
+- **Chức năng**:
+  - CRUD shop management và profile
+  - Shop product management và inventory
+  - Order fulfillment và status management  
+  - Revenue analytics và performance reports
+  - Promotion campaigns và discount management
+  - Location-based shop search
+- **Database**: PostgreSQL (shop info, business data, promotions)
+- **Analytics**: Revenue tracking, order analytics, product performance
 - **Communication**: gRPC for internal, REST for dashboard
 
-#### 3. Menu Service (Product Catalog)
-- **Chức năng**: Food items, categories, pricing, inventory
-- **Database**: PostgreSQL (menu items, categories)
-- **Search**: Elasticsearch indexing
-- **Media**: MongoDB (images, descriptions)
+#### 3. Product Catalog Service
+- **API Endpoints**: Product Management (`/api/v1/products/*`)
+- **Chức năng**:
+  - CRUD product management với media support
+  - Category và subcategory management
+  - Price management và price history
+  - Stock & inventory management với low-stock alerts
+  - Product variants và related products
+  - Advanced search với filters (price, rating, brand, location)
+  - Brand và model management
+- **Database**: PostgreSQL (products, categories, pricing, inventory)
+- **Search**: Elasticsearch indexing cho full-text search
+- **Media**: MongoDB (product images, descriptions)
+- **Cache**: Redis (popular products, search results)
 
 #### 4. Shopping Cart Service
-- **Chức năng**: Cart management, temporary storage
-- **Cache**: Redis (cart state, session-based)
-- **Database**: PostgreSQL (persistent carts)
+- **API Endpoints**: Cart Management (`/api/v1/cart/*`)
+- **Chức năng**:
+  - Real-time cart management (add, update, remove items)
+  - Cart persistence và saved carts
+  - Total calculation với shipping fees và taxes
+  - Coupon application và discount calculation
+  - Cart restoration và multiple saved carts
+- **Cache**: Redis (active cart state, session-based)
+- **Database**: PostgreSQL (persistent carts, saved carts)
+- **Real-time**: WebSocket cho cart updates
 
-#### 5. Order Service
-- **Chức năng**: Order lifecycle, status tracking, history
-- **Database**: PostgreSQL (orders, order_items)
+#### 5. Order Management Service
+- **API Endpoints**: Order Processing (`/api/v1/orders/*`)
+- **Chức năng**:
+  - Order creation từ shopping cart
+  - Order lifecycle management (pending → confirmed → shipped → delivered)
+  - Order status tracking và timeline
+  - Return và refund request processing
+  - Purchase history và repeat orders
+  - Order calculation với fees breakdown
+- **Database**: PostgreSQL (orders, order_items, status_history)
 - **Events**: Order state changes via message broker
+- **Integration**: Payment service, shipping service
 
 #### 6. Payment Service
-- **Chức năng**: Payment processing, refunds, escrow
-- **Database**: PostgreSQL (payment records, transactions)
-- **External**: Payment gateways (Stripe, VNPay, Momo)
-- **Security**: PCI compliance, encryption
+- **API Endpoints**: Payment Processing (`/api/v1/payments/*`)
+- **Chức năng**:
+  - Multi-gateway payment processing (Stripe, PayPal, VNPay, Momo)
+  - Payment method management
+  - Refund và chargeback handling
+  - Escrow service cho buyer protection
+  - Transaction history và receipt generation
+  - Webhook handling cho payment gateways
+- **Database**: PostgreSQL (payment records, transactions, refunds)
+- **External**: Payment gateways integration
+- **Security**: PCI compliance, payment encryption
 
-#### 7. Delivery Service (Shipping)
-- **Chức năng**: Delivery assignment, tracking, route optimization
-- **Database**: PostgreSQL (delivery info, shipper data)
-- **Real-time**: WebSocket for live tracking
-- **External**: Maps API for geocoding
+#### 7. Shipping & Delivery Service
+- **API Endpoints**: Shipping Management (`/api/v1/shipping/*`)
+- **Chức năng**:
+  - Shipper registration và management
+  - Shipping cost calculation based on distance/weight
+  - Order assignment to shippers
+  - Real-time tracking và location updates
+  - Address validation và geocoding
+  - Live tracking với WebSocket
+- **Database**: PostgreSQL (delivery info, shipper data, tracking)
+- **Real-time**: WebSocket cho live tracking
+- **External**: Maps API cho geocoding và route optimization
+- **Integration**: Order service cho delivery updates
 
-#### 8. Notification Service
-- **Chức năng**: Real-time notifications, push notifications
-- **Message Queue**: RabbitMQ/Kafka for async messaging
-- **Channels**: Email, SMS, push, in-app notifications
-
-#### 9. Review Service
-- **Chức năng**: Ratings, reviews, feedback management
-- **Database**: PostgreSQL (reviews, ratings)
-- **Media**: MongoDB (review images/videos)
-
-#### 10. Search & Recommendation Service
-- **Chức năng**: Search, filters, personalized recommendations
+#### 8. Search & Recommendation Service
+- **API Endpoints**: Search (`/api/v1/search/*`), Recommendations (`/api/v1/recommendations/*`)
+- **Chức năng**:
+  - Advanced search với filters và autocomplete
+  - Personalized recommendations based on behavior
+  - Trending products và popular searches
+  - User behavior tracking (view, click, search)
+  - Price comparison và similar products
+  - Price alerts và notifications
 - **Search Engine**: Elasticsearch (full-text search, filters)
-- **ML**: Recommendation algorithms, user behavior tracking
-- **Cache**: Redis (search results, suggestions)
+- **ML**: Recommendation algorithms, collaborative filtering
+- **Cache**: Redis (search results, suggestions, trending data)
+- **Analytics**: User behavior tracking và recommendation metrics
+
+#### 9. Review & Rating Service
+- **API Endpoints**: Reviews (`/api/v1/products/{id}/reviews`, `/api/v1/shops/{id}/reviews`)
+- **Chức năng**:
+  - Product và shop reviews với rating
+  - Delivery service reviews
+  - Media upload cho reviews (images, videos)
+  - Review moderation và spam detection
+  - Verified purchase reviews
+  - Sentiment analysis và rating distribution
+- **Database**: PostgreSQL (reviews, ratings, moderation)
+- **Media**: MongoDB (review images/videos)
+- **ML**: Sentiment analysis, spam detection
+
+#### 10. Notification Service
+- **API Endpoints**: Notifications (`/api/v1/notifications/*`)
+- **Chức năng**:
+  - Real-time notifications (order updates, delivery status)
+  - Multi-channel notifications (email, SMS, push, in-app)
+  - Notification preferences management
+  - Template management cho automated notifications
+  - WebSocket cho live notifications
+- **Message Queue**: RabbitMQ/Kafka cho async messaging
+- **Channels**: Email, SMS, push notifications, in-app
+- **Real-time**: WebSocket connections cho live updates
+
+#### Supporting Services
 
 #### 11. Media Service
-- **Chức năng**: File upload, image processing, CDN
-- **Storage**: AWS S3/MinIO for file storage
-- **Processing**: Image resizing, compression
-- **CDN**: CloudFront for global delivery
+- **Chức năng**: 
+  - File upload và image processing
+  - Image resizing, compression, watermarking
+  - CDN integration cho fast delivery
+  - Video processing cho review media
+- **Storage**: AWS S3/MinIO cho file storage
+- **Processing**: Image/video processing pipeline
+- **CDN**: CloudFront cho global content delivery
+- **Integration**: Product service, review service
 
 #### 12. Analytics Service
-- **Chức năng**: Business intelligence, reporting, metrics
+- **Chức năng**:
+  - Business intelligence và reporting
+  - Real-time metrics aggregation
+  - Shop performance analytics
+  - User behavior analytics
+  - Revenue tracking và forecasting
 - **Database**: MongoDB (analytics data, logs)
-- **Processing**: Real-time data aggregation
-- **Visualization**: Dashboard APIs for reporting
+- **Processing**: Real-time data aggregation với Apache Kafka
+- **Visualization**: Dashboard APIs cho business reporting
+- **Integration**: All services for data collection
 
 ### Service Communication Patterns
 
 #### Synchronous Communication
 - **gRPC**: Internal service-to-service calls
+  - User authentication validation
+  - Product inventory checks
+  - Payment processing
 - **REST API**: External client communications
+  - Mobile app integration
+  - Web dashboard
+  - Third-party integrations
 - **GraphQL**: Unified API layer (optional)
+  - Frontend data aggregation
+  - Flexible query capabilities
 
 #### Asynchronous Communication
-- **Event Sourcing**: Domain events for state changes
+- **Event Sourcing**: Domain events cho state changes
+  - Order status updates
+  - Payment confirmations
+  - Inventory changes
 - **Message Queues**: Background job processing
-- **Pub/Sub**: Real-time notifications and updates
+  - Email notifications
+  - Image processing
+  - Analytics data processing
+- **Pub/Sub**: Real-time notifications và updates
+  - Live order tracking
+  - Real-time notifications
+  - Price updates
+
+#### Inter-Service Communication Flow
+1. **Order Flow**:
+   ```
+   Cart Service → Order Service → Payment Service → Shipping Service
+                                ↓
+   Notification Service ← Analytics Service
+   ```
+
+2. **Search Flow**:
+   ```
+   Client → Search Service → Product Service → Shop Service
+          ↓
+   Recommendation Service → User Behavior Tracking
+   ```
+
+3. **Review Flow**:
+   ```
+   Client → Review Service → Media Service (for uploads)
+          ↓
+   Order Service (verify purchase) → Notification Service
+   ```
 
 #### Data Management
-- **Database per Service**: Each service owns its data
-- **Event-driven Architecture**: Services communicate via events
-- **CQRS**: Separate read/write models for complex queries
+- **Database per Service**: Mỗi service sở hữu data riêng
+- **Event-driven Architecture**: Services giao tiếp qua events
+- **CQRS**: Tách read/write models cho complex queries
 - **Saga Pattern**: Distributed transaction management
+- **Data Consistency**: Eventually consistent với compensation patterns
 
 #### Service Discovery & Load Balancing
-- **Service Registry**: Consul/Etcd for service registration
-- **Load Balancer**: Nginx/HAProxy for traffic distribution
+- **Service Registry**: Consul/Etcd cho service registration
+- **Load Balancer**: Nginx/HAProxy cho traffic distribution
 - **Health Checks**: Automatic service health monitoring
-- **Circuit Breaker**: Fault tolerance and resilience
+- **Circuit Breaker**: Fault tolerance và resilience patterns
+- **Rate Limiting**: API throttling và abuse prevention
+
+#### Security & Cross-cutting Concerns
+- **API Gateway**: Kong/Nginx cho unified entry point
+- **Authentication**: JWT token validation across services
+- **Authorization**: Role-based access control (RBAC)
+- **Audit Logging**: Distributed tracing với Jaeger
+- **Monitoring**: Prometheus metrics với Grafana dashboards
 
 ## 🚀 Development
 
