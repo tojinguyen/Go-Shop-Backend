@@ -63,3 +63,18 @@ type UserProfileResponse struct {
 	CreatedAt string `json:"created_at,omitempty"`
 	UpdatedAt string `json:"updated_at,omitempty"`
 }
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required" validate:"required,email"`
+}
+
+type ResetPasswordRequest struct {
+	Email string `json:"email" binding:"required" validate:"required,email"`
+}
+
+type ChangePasswordRequest struct {
+	Email           string `json:"email" binding:"required" validate:"required,email"`
+	CurrentPassword string `json:"current_password" binding:"required" validate:"required,min=8"`
+	NewPassword     string `json:"new_password" binding:"required" validate:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" binding:"required" validate:"required,eqfield=NewPassword"`
+}

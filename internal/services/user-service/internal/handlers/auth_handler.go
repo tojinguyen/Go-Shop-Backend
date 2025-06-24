@@ -7,7 +7,7 @@ import (
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/dto"
 	errorConstants "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/errors"
-	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/kwt"
+	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/pkg/response"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/pkg/validation"
 )
@@ -221,29 +221,6 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	response.Success(c, "Logout successful", nil)
 }
 
-// GetProfile returns the current user's profile
-func (h *AuthHandler) GetProfile(c *gin.Context) {
-	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
-		response.Unauthorized(c, "USER_NOT_AUTHENTICATED", "User not authenticated")
-		return
-	}
-
-	// Here you would typically fetch user details from database
-	// For demo purposes, we'll return mock data
-	user := &dto.UserInfo{
-		ID:        userID.(string),
-		Email:     "user@example.com",
-		FirstName: "John",
-		LastName:  "Doe",
-		Username:  "johndoe",
-		Role:      "user",
-	}
-
-	response.Success(c, "Profile retrieved successfully", user)
-}
-
 // ValidateToken validates the provided token
 func (h *AuthHandler) ValidateToken(c *gin.Context) {
 	// This endpoint is useful for other services to validate tokens
@@ -291,4 +268,75 @@ func (h *AuthHandler) ValidateToken(c *gin.Context) {
 	}
 
 	response.Success(c, "Token is valid", tokenInfo)
+}
+
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req dto.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	// Validate email format
+	if !validation.ValidateEmail(req.Email) {
+		response.BadRequest(c, "INVALID_EMAIL", "Invalid email format", "")
+		return
+	}
+
+	// Here you would typically:
+	// 1. Check if user exists by email
+	// 2. Generate a password reset token
+	// 3. Send reset link via email
+
+	response.Success(c, "Password reset link sent successfully", nil)
+}
+
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req dto.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	// Validate email format
+	if !validation.ValidateEmail(req.Email) {
+		response.BadRequest(c, "INVALID_EMAIL", "Invalid email format", "")
+		return
+	}
+
+	response.Success(c, "Password reset successfully", nil)
+}
+
+func (h *AuthHandler) ChangePassword(c *gin.Context) {
+	var req dto.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	// Validate current password
+	if req.CurrentPassword == "" {
+		response.BadRequest(c, "MISSING_CURRENT_PASSWORD", "Current password is required", "")
+		return
+	}
+
+	// Validate new password
+	isValidPassword, passwordErrors := validation.ValidatePassword(req.NewPassword)
+	if !isValidPassword {
+		response.BadRequest(c, "WEAK_PASSWORD", "New password does not meet requirements", strings.Join(passwordErrors, "; "))
+		return
+	}
+
+	// Check if new password matches confirmation
+	if req.NewPassword != req.ConfirmPassword {
+		response.BadRequest(c, "PASSWORD_MISMATCH", "New passwords do not match", "")
+		return
+	}
+
+	// Here you would typically:
+	// 1. Verify current password against stored hash
+	// 2. Hash the new password
+	// 3. Update user password in database
+
+	response.Success(c, "Password changed successfully", nil)
 }

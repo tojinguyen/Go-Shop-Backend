@@ -7,7 +7,7 @@ import (
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/handlers"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/middleware"
-	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/kwt"
+	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
 )
 
 // RouterConfig holds the configuration for the router
@@ -74,6 +74,7 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(jwtSvc, cfg)
+	profileHandler := handlers.NewProfileHandler(jwtSvc, cfg)
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -92,9 +93,12 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
-			auth.POST("/refresh", authHandler.RefreshToken)
-			auth.POST("/validate", authHandler.ValidateToken)
 			auth.POST("/logout", authHandler.Logout)
+			auth.POST("/refresh", authHandler.RefreshToken)
+			auth.POST("forgot-password", authHandler.ForgotPassword)
+			auth.POST("/reset-password", authHandler.ResetPassword)
+			auth.POST("/change-password", authHandler.ChangePassword)
+			auth.POST("/validate", authHandler.ValidateToken)
 		}
 
 		// Protected routes (authentication required)
@@ -104,7 +108,7 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 			// User profile routes
 			profile := protected.Group("/profile")
 			{
-				profile.GET("", authHandler.GetProfile)
+				profile.GET("", profileHandler.GetProfile)
 			}
 		}
 	}
