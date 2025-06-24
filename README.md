@@ -94,6 +94,7 @@ POST   /api/v1/auth/forgot-password
 POST   /api/v1/auth/reset-password
 POST   /api/v1/auth/change-password
 POST   /api/v1/auth/verify-otp
+POST   /api/v1/auth/validate-access-token
 ```
 
 ### User Management APIs

@@ -167,21 +167,18 @@ func ValidateRole(role string) bool {
 	return false
 }
 
-// SanitizeString removes potentially harmful characters and trims whitespace
-func SanitizeString(input string) string {
-	// Trim whitespace
-	input = strings.TrimSpace(input)
+func ValidateOTP(otp string) (bool, string) {
+	// Check if OTP is exactly 6 digits
+	if len(otp) != 6 {
+		return false, "OTP must be exactly 6 digits"
+	}
 
-	// Remove null bytes
-	input = strings.ReplaceAll(input, "\x00", "")
+	// Check if all characters are digits
+	for _, char := range otp {
+		if char < '0' || char > '9' {
+			return false, "OTP must contain only digits"
+		}
+	}
 
-	// Remove other control characters if needed
-	// input = strings.Map(func(r rune) rune {
-	//     if unicode.IsControl(r) && r != '\t' && r != '\n' && r != '\r' {
-	//         return -1
-	//     }
-	//     return r
-	// }, input)
-
-	return input
+	return true, ""
 }

@@ -98,7 +98,8 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 			auth.POST("forgot-password", authHandler.ForgotPassword)
 			auth.POST("/reset-password", authHandler.ResetPassword)
 			auth.POST("/change-password", authHandler.ChangePassword)
-			auth.POST("/validate", authHandler.ValidateToken)
+			auth.POST("/validate-access-token", authHandler.ValidateToken)
+			auth.POST("/verify-otp", authHandler.VerifyOTP)
 		}
 
 		// Protected routes (authentication required)
@@ -106,9 +107,12 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 		protected.Use(middleware.AuthMiddleware(jwtSvc))
 		{
 			// User profile routes
-			profile := protected.Group("/profile")
+			profile := protected.Group("/users/profile")
 			{
 				profile.GET("", profileHandler.GetProfile)
+				profile.PUT("", profileHandler.UpdateProfile)
+				profile.GET("/:id", profileHandler.GetProfileByID)
+				profile.DELETE("", profileHandler.DeleteProfile)
 			}
 		}
 	}
