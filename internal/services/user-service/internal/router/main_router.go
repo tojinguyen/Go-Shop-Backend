@@ -6,7 +6,6 @@ import (
 	"github.com/your-username/go-shop/internal/services/user-service/internal/handlers"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/middleware"
 	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/kwt"
-	redisService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/redis"
 )
 
 // RouterConfig holds the configuration for the router
@@ -46,8 +45,7 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	})
 
 	// Initialize services
-	redisService := redisService.NewMockRedisService() // In production, use real Redis
-	jwtSvc := jwtService.NewJwtService(cfg, redisService)
+	jwtSvc := jwtService.NewJwtService(cfg)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(jwtSvc, cfg)

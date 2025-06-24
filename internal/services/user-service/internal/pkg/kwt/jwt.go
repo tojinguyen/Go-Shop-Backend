@@ -2,22 +2,13 @@ package jwt
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
 	errorConstants "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/errors"
-	redisService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/redis"
 	timeUtils "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/time"
-)
-
-const (
-	tokenClaimsCacheKeyPrefix       = "token_claims:"
-	tokenClaimsCacheTTLExpiryFactor = 0.98
 )
 
 type CustomJwtClaims struct {
@@ -39,14 +30,12 @@ type JwtService interface {
 }
 
 type jwtService struct {
-	cfg          *config.Config
-	redisService redisService.RedisService
+	cfg *config.Config
 }
 
-func NewJwtService(cfg *config.Config, redis redisService.RedisService) JwtService {
+func NewJwtService(cfg *config.Config) JwtService {
 	return &jwtService{
-		cfg:          cfg,
-		redisService: redis,
+		cfg: cfg,
 	}
 }
 
@@ -91,7 +80,6 @@ func (s *jwtService) GenerateRefreshToken(input *GenerateTokenInput) (string, er
 }
 
 func (s *jwtService) ValidateAccessToken(ctx context.Context, tokenString string) (*CustomJwtClaims, error) {
-	cacheKey := s.generateTokenCacheKey(tokenString)
 	claims := &CustomJwtClaims{}
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
@@ -121,23 +109,6 @@ func (s *jwtService) ValidateAccessToken(ctx context.Context, tokenString string
 		return nil, errorConstants.ErrTokenInvalid
 	}
 
-	// 3. Lưu vào Cache
-	if s.redisService != nil {
-		// Tính TTL cho cache dựa trên thời gian hết hạn của token
-		ttl := time.Until(time.Unix(claims.ExpiresAt, 0))
-		if ttl > 0 { // Chỉ cache nếu token còn hạn
-			// Giảm TTL đi một chút để đảm bảo cache hết hạn trước hoặc cùng lúc với token
-			adjustedTTL := time.Duration(float64(ttl) * tokenClaimsCacheTTLExpiryFactor)
-			if adjustedTTL > 1*time.Second { // Đảm bảo TTL > 0
-				if err := s.redisService.Set(ctx, cacheKey, claims, adjustedTTL); err != nil {
-					log.Printf("Warning: Failed to cache access token claims (token: %s): %v\n", tokenString, err)
-				} else {
-					log.Println("Access token claims cached:", tokenString)
-				}
-			}
-		}
-	}
-
 	return claims, nil
 }
 
@@ -163,10 +134,4 @@ func (s *jwtService) ValidateRefreshToken(tokenString string) (*CustomJwtClaims,
 	}
 
 	return claims, nil
-}
-
-func (s *jwtService) generateTokenCacheKey(tokenString string) string {
-	hasher := sha256.New()
-	hasher.Write([]byte(tokenString))
-	return fmt.Sprintf("%s%s", tokenClaimsCacheKeyPrefix, hex.EncodeToString(hasher.Sum(nil)))
 }
