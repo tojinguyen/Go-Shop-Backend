@@ -90,10 +90,11 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 		// Public routes (no authentication required)
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/login", authHandler.Login)
 			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
 			auth.POST("/validate", authHandler.ValidateToken)
+			auth.POST("/logout", authHandler.Logout)
 		}
 
 		// Protected routes (authentication required)
@@ -105,9 +106,6 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 			{
 				profile.GET("", authHandler.GetProfile)
 			}
-
-			// Logout route
-			protected.POST("/auth/logout", authHandler.Logout)
 		}
 	}
 
