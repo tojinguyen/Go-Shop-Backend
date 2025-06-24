@@ -1,0 +1,105 @@
+# Makefile for Go-Shop Microservices
+
+.PHONY: help build run test clean install-deps
+
+# Default target
+help:
+	@echo "Available targets:"
+	@echo "  build          - Build all services"
+	@echo "  run-user       - Run user service"
+	@echo "  run-order      - Run order service" 
+	@echo "  run-payment    - Run payment service"
+	@echo "  run-notification - Run notification service"
+	@echo "  run-review     - Run review service"
+	@echo "  run-shipping   - Run shipping service"
+	@echo "  run-shop       - Run shop service"
+	@echo "  run-all        - Run all services concurrently"
+	@echo "  test           - Run tests for all services"
+	@echo "  clean          - Clean build artifacts"
+	@echo "  install-deps   - Install dependencies for all services"
+
+# Service directories
+USER_SERVICE = internal/services/user-service
+ORDER_SERVICE = internal/services/order-service
+PAYMENT_SERVICE = internal/services/payment-service
+NOTIFICATION_SERVICE = internal/services/notification-service
+REVIEW_SERVICE = internal/services/review-service
+SHIPPING_SERVICE = internal/services/shipping-service
+SHOP_SERVICE = internal/services/shop-service
+
+# Build all services
+build:
+	@echo "Building all services..."
+	cd $(USER_SERVICE) && go build -o bin/user-service main.go
+	cd $(ORDER_SERVICE) && go build -o bin/order-service main.go
+	cd $(PAYMENT_SERVICE) && go build -o bin/payment-service main.go
+	cd $(NOTIFICATION_SERVICE) && go build -o bin/notification-service main.go
+	cd $(REVIEW_SERVICE) && go build -o bin/review-service main.go
+	cd $(SHIPPING_SERVICE) && go build -o bin/shipping-service main.go
+	cd $(SHOP_SERVICE) && go build -o bin/shop-service main.go
+
+# Run individual services
+run-user:
+	cd $(USER_SERVICE) && go run main.go
+
+run-order:
+	cd $(ORDER_SERVICE) && go run main.go
+
+run-payment:
+	cd $(PAYMENT_SERVICE) && go run main.go
+
+run-notification:
+	cd $(NOTIFICATION_SERVICE) && go run main.go
+
+run-review:
+	cd $(REVIEW_SERVICE) && go run main.go
+
+run-shipping:
+	cd $(SHIPPING_SERVICE) && go run main.go
+
+run-shop:
+	cd $(SHOP_SERVICE) && go run main.go
+
+# Run all services concurrently (Windows PowerShell compatible)
+run-all:
+	@echo "Starting all services..."
+	start /b powershell -Command "cd $(USER_SERVICE); go run main.go"
+	start /b powershell -Command "cd $(ORDER_SERVICE); go run main.go"
+	start /b powershell -Command "cd $(PAYMENT_SERVICE); go run main.go"
+	start /b powershell -Command "cd $(NOTIFICATION_SERVICE); go run main.go"
+	start /b powershell -Command "cd $(REVIEW_SERVICE); go run main.go"
+	start /b powershell -Command "cd $(SHIPPING_SERVICE); go run main.go"
+	start /b powershell -Command "cd $(SHOP_SERVICE); go run main.go"
+
+# Install dependencies for all services
+install-deps:
+	@echo "Installing dependencies for all services..."
+	cd $(USER_SERVICE) && go mod tidy
+	cd $(ORDER_SERVICE) && go mod tidy
+	cd $(PAYMENT_SERVICE) && go mod tidy
+	cd $(NOTIFICATION_SERVICE) && go mod tidy
+	cd $(REVIEW_SERVICE) && go mod tidy
+	cd $(SHIPPING_SERVICE) && go mod tidy
+	cd $(SHOP_SERVICE) && go mod tidy
+
+# Run tests
+test:
+	@echo "Running tests for all services..."
+	cd $(USER_SERVICE) && go test ./...
+	cd $(ORDER_SERVICE) && go test ./...
+	cd $(PAYMENT_SERVICE) && go test ./...
+	cd $(NOTIFICATION_SERVICE) && go test ./...
+	cd $(REVIEW_SERVICE) && go test ./...
+	cd $(SHIPPING_SERVICE) && go test ./...
+	cd $(SHOP_SERVICE) && go test ./...
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	rm -f $(USER_SERVICE)/bin/*
+	rm -f $(ORDER_SERVICE)/bin/*
+	rm -f $(PAYMENT_SERVICE)/bin/*
+	rm -f $(NOTIFICATION_SERVICE)/bin/*
+	rm -f $(REVIEW_SERVICE)/bin/*
+	rm -f $(SHIPPING_SERVICE)/bin/*
+	rm -f $(SHOP_SERVICE)/bin/*
