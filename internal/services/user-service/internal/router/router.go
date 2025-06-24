@@ -1,6 +1,8 @@
 package router
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/handlers"
@@ -29,12 +31,35 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	// Global middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
-
-	// CORS middleware (you might want to use a proper CORS package)
+	// CORS middleware with configuration
 	router.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		origin := c.Request.Header.Get("Origin")
+
+		// Set allowed origins from config
+		for _, allowedOrigin := range cfg.CORS.AllowedOrigins {
+			if allowedOrigin == "*" {
+				c.Header("Access-Control-Allow-Origin", "*")
+				break
+			} else if allowedOrigin == origin {
+				c.Header("Access-Control-Allow-Origin", origin)
+				break
+			}
+		}
+
+		// Set other CORS headers from config
+		c.Header("Access-Control-Allow-Methods", strings.Join(cfg.CORS.AllowedMethods, ", "))
+		c.Header("Access-Control-Allow-Headers", strings.Join(cfg.CORS.AllowedHeaders, ", "))
+
+		// Set credentials header if configured
+		if cfg.CORS.AllowCredentials {
+			c.Header("Access-Control-Allow-Credentials", "true")
+		}
+
+		// Set max age for preflight cache
+		c.Header("Access-Control-Max-Age", "86400") // 24 hours
+
+		// Add expose headers for client access
+		c.Header("Access-Control-Expose-Headers", "Authorization, Content-Length, X-CSRF-Token")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
@@ -87,17 +112,4 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	}
 
 	return router
-}
-
-// SetupTestRoutes sets up routes for testing
-func SetupTestRoutes() *gin.Engine {
-	gin.SetMode(gin.TestMode)
-
-	// Load test configuration
-	cfg, err := config.Load()
-	if err != nil {
-		panic("Failed to load test configuration: " + err.Error())
-	}
-
-	return SetupRoutes(cfg)
 }
