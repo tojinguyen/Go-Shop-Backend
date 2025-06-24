@@ -21,12 +21,12 @@ func main() {
 	}
 
 	// Setup routes
-	r := router.SetupRoutes(cfg)
+	router := router.SetupRoutes(cfg)
 
 	// Configure HTTP server
 	server := &http.Server{
 		Addr:         cfg.Server.GetServerAddress(),
-		Handler:      r,
+		Handler:      router,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  cfg.Server.IdleTimeout,
