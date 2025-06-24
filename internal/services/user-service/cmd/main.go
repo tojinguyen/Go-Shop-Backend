@@ -3,22 +3,21 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
 )
 
 func main() {
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("Failed to load configuration:", err)
 	}
 
-	// Get port from environment or use default
-	port := os.Getenv("USER_SERVICE_PORT")
-	if port == "" {
-		port = "8000"
+	// Set Gin mode based on environment
+	if cfg.App.IsProduction() {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	// Create Gin router
@@ -27,7 +26,8 @@ func main() {
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"service": "user-service",
+			"service": cfg.App.Name,
+			"version": cfg.App.Version,
 			"status":  "healthy",
 		})
 	})
@@ -41,8 +41,9 @@ func main() {
 	r.GET("/users/:id/addresses", getUserAddresses)
 
 	// Start server
-	log.Printf("User Service starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
+	serverAddr := cfg.Server.GetServerAddress()
+	log.Printf("%s starting on %s", cfg.App.Name, serverAddr)
+	if err := r.Run(serverAddr); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
 }
