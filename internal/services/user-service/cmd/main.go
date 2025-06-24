@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
+	"github.com/your-username/go-shop/internal/services/user-service/internal/router"
 )
 
 func main() {
@@ -15,80 +20,42 @@ func main() {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
-	// Set Gin mode based on environment
-	if cfg.App.IsProduction() {
-		gin.SetMode(gin.ReleaseMode)
+	// Setup routes
+	r := router.SetupRoutes(cfg)
+
+	// Configure HTTP server
+	server := &http.Server{
+		Addr:         cfg.Server.GetServerAddress(),
+		Handler:      r,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
-	// Create Gin router
-	r := gin.Default()
+	// Start server in a goroutine
+	go func() {
+		log.Printf("%s starting on %s", cfg.App.Name, cfg.Server.GetServerAddress())
+		log.Printf("Environment: %s", cfg.App.Environment)
+		log.Printf("Debug Mode: %v", cfg.App.Debug)
 
-	// Health check endpoint
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"service": cfg.App.Name,
-			"version": cfg.App.Version,
-			"status":  "healthy",
-		})
-	})
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
 
-	// User endpoints
-	r.POST("/users/register", registerUser)
-	r.POST("/users/login", loginUser)
-	r.GET("/users/:id", getUser)
-	r.PUT("/users/:id", updateUser)
-	r.POST("/users/:id/addresses", addUserAddress)
-	r.GET("/users/:id/addresses", getUserAddresses)
+	// Wait for interrupt signal to gracefully shut down the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
 
-	// Start server
-	serverAddr := cfg.Server.GetServerAddress()
-	log.Printf("%s starting on %s", cfg.App.Name, serverAddr)
-	if err := r.Run(serverAddr); err != nil {
-		log.Fatal("Failed to start server:", err)
+	// Give outstanding requests a deadline of 30 seconds to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
 	}
-}
 
-func registerUser(c *gin.Context) {
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "User registered successfully",
-	})
-}
-
-func loginUser(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"token":   "jwt_token_here",
-	})
-}
-
-func getUser(c *gin.Context) {
-	userID := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{
-		"user_id": userID,
-		"email":   "user@example.com",
-	})
-}
-
-func updateUser(c *gin.Context) {
-	userID := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{
-		"user_id": userID,
-		"message": "User updated successfully",
-	})
-}
-
-func addUserAddress(c *gin.Context) {
-	userID := c.Param("id")
-	c.JSON(http.StatusCreated, gin.H{
-		"user_id": userID,
-		"message": "Address added successfully",
-	})
-}
-
-func getUserAddresses(c *gin.Context) {
-	userID := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{
-		"user_id":   userID,
-		"addresses": []string{},
-	})
+	log.Println("Server exited")
 }
