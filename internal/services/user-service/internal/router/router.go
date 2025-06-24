@@ -79,30 +79,10 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 			profile := protected.Group("/profile")
 			{
 				profile.GET("", authHandler.GetProfile)
-				// profile.PUT("", authHandler.UpdateProfile)
-				// profile.DELETE("", authHandler.DeleteProfile)
-			}
-
-			// User management routes (admin only)
-			admin := protected.Group("/admin")
-			admin.Use(middleware.RoleMiddleware("admin"))
-			{
-				// admin.GET("/users", userHandler.GetAllUsers)
-				// admin.GET("/users/:id", userHandler.GetUserByID)
-				// admin.PUT("/users/:id", userHandler.UpdateUser)
-				// admin.DELETE("/users/:id", userHandler.DeleteUser)
 			}
 
 			// Logout route
 			protected.POST("/auth/logout", authHandler.Logout)
-		}
-
-		// Optional auth routes (authentication optional)
-		optional := v1.Group("/")
-		optional.Use(middleware.OptionalAuthMiddleware(jwtSvc))
-		{
-			// These routes can be accessed with or without authentication
-			// optional.GET("/public-content", someHandler.GetPublicContent)
 		}
 	}
 
