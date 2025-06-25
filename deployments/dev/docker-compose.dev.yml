@@ -1,0 +1,7 @@
+version: '3.8'
+
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: internal/services/user-service/Dockerfile
