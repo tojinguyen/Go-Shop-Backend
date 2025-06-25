@@ -13,6 +13,19 @@ services:
       - ${REDIS_VOLUME_NAME:-redis_dev_data}:/data
     networks:
       - go-shop-network
+
+  postgres:
+    # Override base config for development
+    container_name: ${COMPOSE_PROJECT_NAME:-go-shop}-postgres-dev
+    environment:
+      - POSTGRES_DB=${DB_NAME:-go_shop_dev}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-dev_password}
+      - POSTGRES_INITDB_ARGS=${POSTGRES_INITDB_ARGS:---encoding=UTF-8 --lc-collate=C --lc-ctype=C}
+    volumes:
+      - ${POSTGRES_VOLUME_NAME:-postgres_dev_data}:/var/lib/postgresql/data
+    networks:
+      - go-shop-network
       
   # Additional service for development only
   redis-commander:
@@ -29,6 +42,23 @@ services:
     networks:
       - go-shop-network
 
+  # PostgreSQL Admin UI for development
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-go-shop}-pgadmin
+    ports:
+      - "8082:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@go-shop.dev
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    depends_on:
+      - postgres
+    networks:
+      - go-shop-network
+
 volumes:
   redis_dev_data:
     name: ${REDIS_VOLUME_NAME:-redis_dev_data}
+  postgres_dev_data:
+    name: ${POSTGRES_VOLUME_NAME:-postgres_dev_data}
