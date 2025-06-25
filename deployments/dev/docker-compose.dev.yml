@@ -11,6 +11,8 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - ${REDIS_VOLUME_NAME:-redis_dev_data}:/data
+    networks:
+      - go-shop-network
       
   # Additional service for development only
   redis-commander:
@@ -25,7 +27,7 @@ services:
     depends_on:
       - redis
     networks:
-      - ${NETWORK_NAME:-go-shop-network}
+      - go-shop-network
 
 volumes:
   redis_dev_data:

@@ -25,6 +25,8 @@ services:
           cpus: '${REDIS_CPU_RESERVATION:-0.5}'
     volumes:
       - ${REDIS_VOLUME_NAME:-redis_prod_data}:/data
+    networks:
+      - go-shop-network
     logging:
       driver: "json-file"
       options:

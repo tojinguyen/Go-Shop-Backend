@@ -12,7 +12,7 @@ services:
     volumes:
       - ${REDIS_VOLUME_NAME:-redis_data}:/data
     networks:
-      - ${NETWORK_NAME:-go-shop-network}
+      - go-shop-network
 
 volumes:
   redis_data:
