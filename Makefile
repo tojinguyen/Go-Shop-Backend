@@ -23,20 +23,23 @@ create-migration:
 		goose -dir migrations/mysql create -s $(name) sql \
 	)
 
-# Infrastructure
-infra up:
- 	docker-compose up -d
+# Infrastructure (Production)
+infra-prod-up:
+    docker-compose -f deployments/prod/docker-compose.prod.yml up -d
 
-infra down:
-  	docker-compose down
+infra-prod-down:
+    docker-compose -f deployments/prod/docker-compose.prod.yml down
 
-# Development
-dev-up:
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Infrastructure (Development)
+infra-dev-up:
+    docker-compose -f deployments/dev/docker-compose.dev.yml up -d
 
-dev-down:
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+infra-dev-down:
+    docker-compose -f deployments/dev/docker-compose.dev.yml down
 
-# Production  
-prod-up:
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Infrastructure (Local)
+infra-local-up:
+    docker-compose -f deployments/local/docker-compose.local.yml up -d
+
+infra-local-down:
+    docker-compose -f deployments/local/docker-compose.local.yml down
