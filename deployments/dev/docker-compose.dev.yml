@@ -1,7 +1,30 @@
 version: '3.8'
 
 services:
-  user-service:
-    build:
-      context: .
-      dockerfile: internal/services/user-service/Dockerfile
+  redis:
+    # Override base config for development
+    container_name: go-shop-redis-dev
+    command: redis-server --loglevel verbose --save 60 1
+    environment:
+      - REDIS_LOG_LEVEL=debug
+      - REDIS_ENV=development
+    volumes:
+      - redis_dev_data:/data  # Override volume for dev
+      
+  # Additional service for development only
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: go-shop-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=admin
+      - HTTP_PASSWORD=admin
+    depends_on:
+      - redis
+    networks:
+      - go-shop-network
+
+volumes:
+  redis_dev_data:

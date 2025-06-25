@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  redis:
+    # Override base config for production
+    container_name: go-shop-redis-prod
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10 --save 60 10000
+    restart: unless-stopped
+    environment:
+      - REDIS_ENV=production
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    volumes:
+      - redis_prod_data:/data  # Override volume for prod
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  redis_prod_data:
+    driver: local
