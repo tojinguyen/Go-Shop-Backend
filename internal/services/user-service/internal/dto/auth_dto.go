@@ -1,25 +1,25 @@
 package dto
 
+// RegisterRequest represents the registration request payload
+type RegisterRequest struct {
+	Email           string `json:"email" binding:"required" validate:"required,email"`
+	Password        string `json:"password" binding:"required" validate:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" binding:"required" validate:"required,eqfield=Password"`
+}
+
 // LoginRequest represents the login request payload
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required" validate:"required,email"`
 	Password string `json:"password" binding:"required" validate:"required,min=8"`
 }
 
-// RegisterRequest represents the registration request payload
-type RegisterRequest struct {
-	Email           string `json:"email" binding:"required" validate:"required,email"`
-	Password        string `json:"password" binding:"required" validate:"required,min=8"`
-	ConfirmPassword string `json:"confirm_password" binding:"required" validate:"required,eqfield=Password"`
-	FirstName       string `json:"first_name" binding:"required" validate:"required,min=2,max=50"`
-	LastName        string `json:"last_name" binding:"required" validate:"required,min=2,max=50"`
-	Username        string `json:"username" validate:"omitempty,min=3,max=30"`
-	Phone           string `json:"phone" validate:"omitempty,e164"`
-}
-
 // RefreshTokenRequest represents the refresh token request payload
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required" validate:"required"`
+}
+
+type RegisterResponse struct {
+	UserID string `json:"user_id"`
 }
 
 // AuthResponse represents the authentication response
