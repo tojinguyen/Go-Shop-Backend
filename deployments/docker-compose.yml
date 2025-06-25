@@ -2,19 +2,23 @@ version: '3.8'
 
 services:
   redis:
-    image: redis:7-alpine
-    container_name: go-shop-redis
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: ${COMPOSE_PROJECT_NAME:-go-shop}-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     command: redis-server
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
-      - redis_data:/data
+      - ${REDIS_VOLUME_NAME:-redis_data}:/data
     networks:
-      - go-shop-network
+      - ${NETWORK_NAME:-go-shop-network}
 
 volumes:
   redis_data:
+    name: ${REDIS_VOLUME_NAME:-redis_data}
 
 networks:
   go-shop-network:
+    name: ${NETWORK_NAME:-go-shop-network}
     driver: bridge

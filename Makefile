@@ -25,21 +25,21 @@ create-migration:
 
 # Infrastructure (Main)
 infra-up:
-	docker-compose -f deployments/docker-compose.yml up -d
+	docker-compose -f deployments/docker-compose.yml --env-file deployments/.env up -d
 
 infra-down:
-	docker-compose -f deployments/docker-compose.yml down
+	docker-compose -f deployments/docker-compose.yml --env-file deployments/.env down
 
 # Infrastructure (Production)
 infra-prod-up:
-	docker-compose -f deployments/prod/docker-compose.prod.yml up -d
+	docker-compose -f deployments/docker-compose.yml -f deployments/prod/docker-compose.prod.yml --env-file deployments/prod/.env up -d
 
 infra-prod-down:
-	docker-compose -f deployments/prod/docker-compose.prod.yml down
+	docker-compose -f deployments/docker-compose.yml -f deployments/prod/docker-compose.prod.yml --env-file deployments/prod/.env down
 
 # Infrastructure (Development)
 infra-dev-up:
-	docker-compose -f deployments/dev/docker-compose.dev.yml up -d
+	docker-compose -f deployments/docker-compose.yml -f deployments/dev/docker-compose.dev.yml --env-file deployments/dev/.env up -d
 
 infra-dev-down:
-	docker-compose -f deployments/dev/docker-compose.dev.yml down
+	docker-compose -f deployments/docker-compose.yml -f deployments/dev/docker-compose.dev.yml --env-file deployments/dev/.env down

@@ -3,33 +3,35 @@ version: '3.8'
 services:
   redis:
     # Override base config for production
-    container_name: go-shop-redis-prod
-    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10 --save 60 10000
+    container_name: ${COMPOSE_PROJECT_NAME:-go-shop}-redis-prod
+    command: redis-server --appendonly yes --maxmemory ${REDIS_MAX_MEMORY:-1gb} --maxmemory-policy ${REDIS_MAX_MEMORY_POLICY:-allkeys-lru} --save ${REDIS_SAVE_CONFIG:-900 1 300 10 60 10000}
     restart: unless-stopped
     environment:
-      - REDIS_ENV=production
+      - REDIS_ENV=${APP_ENV:-production}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: ${REDIS_HEALTH_CHECK_INTERVAL:-30s}
+      timeout: ${REDIS_HEALTH_CHECK_TIMEOUT:-10s}
+      retries: ${REDIS_HEALTH_CHECK_RETRIES:-3}
       start_period: 10s
     deploy:
       resources:
         limits:
-          memory: 1G
-          cpus: '1.0'
+          memory: ${REDIS_MEMORY_LIMIT:-1G}
+          cpus: '${REDIS_CPU_LIMIT:-1.0}'
         reservations:
-          memory: 512M
-          cpus: '0.5'
+          memory: ${REDIS_MEMORY_RESERVATION:-512M}
+          cpus: '${REDIS_CPU_RESERVATION:-0.5}'
     volumes:
-      - redis_prod_data:/data  # Override volume for prod
+      - ${REDIS_VOLUME_NAME:-redis_prod_data}:/data
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
 
 volumes:
   redis_prod_data:
+    name: ${REDIS_VOLUME_NAME:-redis_prod_data}
     driver: local
