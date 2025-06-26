@@ -1,6 +1,6 @@
 version: "2"
 sql:
-  - engine: "postgresql"  # hoặc "mysql" tùy database bạn dùng
+  - engine: "postgresql" 
     queries: "./internal/db/queries"
     schema: "./internal/db/migrations"
     gen:
