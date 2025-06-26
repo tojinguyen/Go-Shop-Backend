@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/handlers"
+	postgresql_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/postgreql-infra"
+	redis_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/redis-infra"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/middleware"
 	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
 )
@@ -17,7 +19,7 @@ type RouterConfig struct {
 }
 
 // SetupRoutes sets up all the routes for the user service
-func SetupRoutes(cfg *config.Config) *gin.Engine {
+func SetupRoutes(cfg *config.Config, pgService *postgresql_infra.PostgreSQLService, redisService *redis_infra.RedisService) *gin.Engine {
 	// Set Gin mode based on environment
 	if cfg.App.IsProduction() {
 		gin.SetMode(gin.ReleaseMode)
@@ -72,9 +74,9 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	// Initialize services
 	jwtSvc := jwtService.NewJwtService(cfg)
 
-	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(jwtSvc, cfg)
-	profileHandler := handlers.NewProfileHandler(jwtSvc, cfg)
+	// Initialize handlers with database services
+	authHandler := handlers.NewAuthHandler(jwtSvc, cfg, pgService, redisService)
+	profileHandler := handlers.NewProfileHandler(jwtSvc, cfg, pgService, redisService)
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {

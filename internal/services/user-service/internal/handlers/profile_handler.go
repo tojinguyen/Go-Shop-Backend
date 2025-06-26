@@ -4,20 +4,26 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/dto"
+	postgresql_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/postgreql-infra"
+	redis_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/redis-infra"
 	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/pkg/response"
 )
 
 type ProfileHandler struct {
-	config     *config.Config
-	jwtService jwtService.JwtService
+	config       *config.Config
+	jwtService   jwtService.JwtService
+	pgService    *postgresql_infra.PostgreSQLService
+	redisService *redis_infra.RedisService
 }
 
-// NewAuthHandler creates a new auth handler
-func NewProfileHandler(jwtSvc jwtService.JwtService, cfg *config.Config) *ProfileHandler {
+// NewProfileHandler creates a new profile handler
+func NewProfileHandler(jwtSvc jwtService.JwtService, cfg *config.Config, pgSvc *postgresql_infra.PostgreSQLService, redisSvc *redis_infra.RedisService) *ProfileHandler {
 	return &ProfileHandler{
-		jwtService: jwtSvc,
-		config:     cfg,
+		jwtService:   jwtSvc,
+		config:       cfg,
+		pgService:    pgSvc,
+		redisService: redisSvc,
 	}
 }
 

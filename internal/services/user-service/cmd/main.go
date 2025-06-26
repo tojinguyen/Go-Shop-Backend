@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
+	postgresql_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/postgreql-infra"
+	redis_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/redis-infra"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/router"
 )
 
@@ -20,8 +22,24 @@ func main() {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
-	// Setup routes
-	router := router.SetupRoutes(cfg)
+	// Initialize PostgreSQL service
+	pgService, err := postgresql_infra.NewPostgreSQLService(&cfg.Database)
+	if err != nil {
+		log.Fatal("Failed to initialize PostgreSQL service:", err)
+	}
+	defer pgService.Close()
+
+	// Initialize Redis service
+	redisService := redis_infra.NewRedisService(cfg.Redis.Host, cfg.Redis.Port, cfg.Redis.Password, cfg.Redis.DB)
+
+	// Test Redis connection
+	if err := redisService.Ping(); err != nil {
+		log.Fatal("Failed to connect to Redis:", err)
+	}
+	defer redisService.Close()
+
+	// Setup routes with services
+	router := router.SetupRoutes(cfg, pgService, redisService)
 
 	// Configure HTTP server
 	server := &http.Server{

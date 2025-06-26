@@ -62,9 +62,11 @@ type RedisService struct {
 }
 
 // NewRedisService creates a new Redis service instance
-func NewRedisService(addr, password string, db int) *RedisService {
+func NewRedisService(host, port string, password string, db int) *RedisService {
+	redisAddr := fmt.Sprintf("%s:%s", host, port)
+
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,
+		Addr:     redisAddr,
 		Password: password,
 		DB:       db,
 	})
