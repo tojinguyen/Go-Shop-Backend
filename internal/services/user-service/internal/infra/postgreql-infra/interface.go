@@ -23,9 +23,6 @@ type DatabaseService interface {
 
 	// Lifecycle management
 	Close()
-
-	// User operations
-	CreateUserAccount(ctx context.Context, email, hashedPassword string) (*sqlc.CreateUserAccountRow, error)
 }
 
 // Ensure PostgreSQLService implements DatabaseService interface

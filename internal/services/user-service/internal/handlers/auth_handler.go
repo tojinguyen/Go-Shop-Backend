@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +12,6 @@ import (
 	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/pkg/response"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/pkg/validation"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthHandler handles authentication-related requests
@@ -120,45 +118,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	// Hash the password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		response.InternalServerError(c, "PASSWORD_HASH_FAILED", "Failed to hash password")
-		return
-	}
-
-	// Create user account using PostgreSQL service
-	ctx := context.Background()
-	userAccount, err := h.pgService.CreateUserAccount(ctx, req.Email, string(hashedPassword))
-	if err != nil {
-		// Check if it's a duplicate email error
-		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "already exists") {
-			response.BadRequest(c, "EMAIL_ALREADY_EXISTS", "User with this email already exists", "")
-			return
-		}
-		response.InternalServerError(c, "USER_CREATION_FAILED", "Failed to create user account")
-		return
-	}
-
-	// Store user session in Redis (optional)
-	sessionKey := "user_session:" + userAccount.ID.String()
-	sessionData := map[string]interface{}{
-		"user_id":    userAccount.ID.String(),
-		"email":      userAccount.Email,
-		"created_at": userAccount.CreatedAt,
-	}
-
-	if err := h.redisService.SetJSON(sessionKey, sessionData, 0); err != nil {
-		// Log error but don't fail the registration
-		// In production, you might want to use proper logging
-		// log.Printf("Failed to store user session in Redis: %v", err)
-	}
-
-	registerResponse := &dto.RegisterResponse{
-		UserID: userAccount.ID.String(),
-	}
-
-	response.Created(c, "User registered successfully", registerResponse)
+	response.Created(c, "User registered successfully", nil)
 }
 
 // RefreshToken handles token refresh

@@ -155,18 +155,3 @@ func (s *PostgreSQLService) ExecuteInTransaction(ctx context.Context, queries []
 
 	return nil
 }
-
-// CreateUserAccount creates a new user account using SQLC generated function
-func (s *PostgreSQLService) CreateUserAccount(ctx context.Context, email, hashedPassword string) (*sqlc.CreateUserAccountRow, error) {
-	params := sqlc.CreateUserAccountParams{
-		Email:          email,
-		HashedPassword: hashedPassword,
-	}
-
-	result, err := s.queries.CreateUserAccount(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user account: %w", err)
-	}
-
-	return &result, nil
-}
