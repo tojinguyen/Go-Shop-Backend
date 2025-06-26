@@ -5,21 +5,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/handlers"
-	postgresql_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/postgreql-infra"
-	redis_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/redis-infra"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/middleware"
-	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
+	"github.com/your-username/go-shop/internal/services/user-service/internal/services"
 )
 
 // RouterConfig holds the configuration for the router
 type RouterConfig struct {
-	Config     *config.Config
-	JWTService jwtService.JwtService
+	Config           *config.Config
+	ServiceContainer *services.ServiceContainer
 }
 
 // SetupRoutes sets up all the routes for the user service
-func SetupRoutes(cfg *config.Config, pgService *postgresql_infra.PostgreSQLService, redisService *redis_infra.RedisService) *gin.Engine {
+func SetupRoutes(serviceContainer *services.ServiceContainer) *gin.Engine {
+	cfg := serviceContainer.GetConfig()
+
 	// Set Gin mode based on environment
 	if cfg.App.IsProduction() {
 		gin.SetMode(gin.ReleaseMode)
@@ -71,20 +69,24 @@ func SetupRoutes(cfg *config.Config, pgService *postgresql_infra.PostgreSQLServi
 		c.Next()
 	})
 
-	// Initialize services
-	jwtSvc := jwtService.NewJwtService(cfg)
+	// Initialize handler factory
+	handlerFactory := services.NewHandlerFactory(serviceContainer)
 
-	// Initialize handlers with database services
-	authHandler := handlers.NewAuthHandler(jwtSvc, cfg, pgService, redisService)
-	profileHandler := handlers.NewProfileHandler(jwtSvc, cfg, pgService, redisService)
+	// Initialize handlers using factory
+	authHandler := handlerFactory.CreateAuthHandler()
+	profileHandler := handlerFactory.CreateProfileHandler()
 
-	// Health check endpoint
+	// Health check endpoint with detailed health information
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "healthy",
-			"service": "user-service",
-			"version": cfg.App.Version,
-		})
+		healthChecker := services.NewHealthChecker(serviceContainer)
+		healthInfo := healthChecker.CheckHealth(c.Request.Context())
+
+		// Return appropriate HTTP status based on health
+		if healthInfo["status"] == "healthy" {
+			c.JSON(200, healthInfo)
+		} else {
+			c.JSON(503, healthInfo)
+		}
 	})
 
 	// API versioning
@@ -106,7 +108,7 @@ func SetupRoutes(cfg *config.Config, pgService *postgresql_infra.PostgreSQLServi
 
 		// Protected routes (authentication required)
 		protected := v1.Group("/")
-		protected.Use(middleware.AuthMiddleware(jwtSvc))
+		protected.Use(handlerFactory.CreateAuthMiddleware())
 		{
 			// User profile routes
 			profile := protected.Group("/users/profile")

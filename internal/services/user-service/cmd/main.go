@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
-	postgresql_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/postgreql-infra"
-	redis_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/redis-infra"
 	"github.com/your-username/go-shop/internal/services/user-service/internal/router"
+	"github.com/your-username/go-shop/internal/services/user-service/internal/services"
 )
 
 func main() {
@@ -22,39 +21,30 @@ func main() {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
-	// Initialize PostgreSQL service
-	pgService, err := postgresql_infra.NewPostgreSQLService(&cfg.Database)
+	// Initialize service container
+	serviceContainer, err := services.NewServiceContainer(cfg)
 	if err != nil {
-		log.Fatal("Failed to initialize PostgreSQL service:", err)
+		log.Fatal("Failed to initialize services:", err)
 	}
-	defer pgService.Close()
+	defer serviceContainer.Close()
 
-	// Initialize Redis service
-	redisService := redis_infra.NewRedisService(cfg.Redis.Host, cfg.Redis.Port, cfg.Redis.Password, cfg.Redis.DB)
-
-	// Test Redis connection
-	if err := redisService.Ping(); err != nil {
-		log.Fatal("Failed to connect to Redis:", err)
-	}
-	defer redisService.Close()
-
-	// Setup routes with services
-	router := router.SetupRoutes(cfg, pgService, redisService)
+	// Setup routes with service container
+	router := router.SetupRoutes(serviceContainer)
 
 	// Configure HTTP server
 	server := &http.Server{
-		Addr:         cfg.Server.GetServerAddress(),
+		Addr:         serviceContainer.GetConfig().Server.GetServerAddress(),
 		Handler:      router,
-		ReadTimeout:  cfg.Server.ReadTimeout,
-		WriteTimeout: cfg.Server.WriteTimeout,
-		IdleTimeout:  cfg.Server.IdleTimeout,
+		ReadTimeout:  serviceContainer.GetConfig().Server.ReadTimeout,
+		WriteTimeout: serviceContainer.GetConfig().Server.WriteTimeout,
+		IdleTimeout:  serviceContainer.GetConfig().Server.IdleTimeout,
 	}
 
 	// Start server in a goroutine
 	go func() {
-		log.Printf("%s starting on %s", cfg.App.Name, cfg.Server.GetServerAddress())
-		log.Printf("Environment: %s", cfg.App.Environment)
-		log.Printf("Debug Mode: %v", cfg.App.Debug)
+		log.Printf("%s starting on %s", serviceContainer.GetConfig().App.Name, serviceContainer.GetConfig().Server.GetServerAddress())
+		log.Printf("Environment: %s", serviceContainer.GetConfig().App.Environment)
+		log.Printf("Debug Mode: %v", serviceContainer.GetConfig().App.Debug)
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
