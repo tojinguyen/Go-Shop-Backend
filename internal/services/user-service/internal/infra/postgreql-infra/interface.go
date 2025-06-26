@@ -21,13 +21,8 @@ type DatabaseService interface {
 	WithTransaction(ctx context.Context, fn func(*sqlc.Queries) error) error
 	ExecuteInTransaction(ctx context.Context, queries []string) error
 
-	// Health and monitoring
-	Health(ctx context.Context) error
-	Stats() *pgxpool.Stat
-
 	// Lifecycle management
 	Close()
-	Migrate(ctx context.Context) error
 
 	// User operations
 	CreateUserAccount(ctx context.Context, email, hashedPassword string) (*sqlc.CreateUserAccountRow, error)

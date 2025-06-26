@@ -127,37 +127,12 @@ func (s *PostgreSQLService) WithTransaction(ctx context.Context, fn func(*sqlc.Q
 	return nil
 }
 
-// Health checks the database connection health
-func (s *PostgreSQLService) Health(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	if err := s.pool.Ping(ctx); err != nil {
-		return fmt.Errorf("database health check failed: %w", err)
-	}
-
-	return nil
-}
-
-// Stats returns connection pool statistics
-func (s *PostgreSQLService) Stats() *pgxpool.Stat {
-	return s.pool.Stat()
-}
-
 // Close closes the database connection pool
 func (s *PostgreSQLService) Close() {
 	if s.pool != nil {
 		log.Println("Closing PostgreSQL connection pool...")
 		s.pool.Close()
 	}
-}
-
-// Migrate runs database migrations (placeholder for future implementation)
-func (s *PostgreSQLService) Migrate(ctx context.Context) error {
-	// TODO: Implement migration logic using migrate library
-	// For now, just return nil
-	log.Println("Database migration not implemented yet")
-	return nil
 }
 
 // ExecuteInTransaction executes multiple queries in a single transaction
