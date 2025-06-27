@@ -6,10 +6,17 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	CreateUserAccount(ctx context.Context, arg CreateUserAccountParams) (CreateUserAccountRow, error)
+	GetUserAccountByEmail(ctx context.Context, email string) (UserAccount, error)
+	GetUserAccountByID(ctx context.Context, id pgtype.UUID) (UserAccount, error)
+	SoftDeleteUserAccount(ctx context.Context, id pgtype.UUID) error
+	UpdateLastLoginAt(ctx context.Context, id pgtype.UUID) error
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 
 var _ Querier = (*Queries)(nil)

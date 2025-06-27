@@ -42,3 +42,81 @@ func (q *Queries) CreateUserAccount(ctx context.Context, arg CreateUserAccountPa
 	)
 	return i, err
 }
+
+const getUserAccountByEmail = `-- name: GetUserAccountByEmail :one
+SELECT id, email, hashed_password, last_login_at, created_at, updated_at 
+FROM user_accounts 
+WHERE email = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (UserAccount, error) {
+	row := q.db.QueryRow(ctx, getUserAccountByEmail, email)
+	var i UserAccount
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.HashedPassword,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserAccountByID = `-- name: GetUserAccountByID :one
+SELECT id, email, hashed_password, last_login_at, created_at, updated_at 
+FROM user_accounts 
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) GetUserAccountByID(ctx context.Context, id pgtype.UUID) (UserAccount, error) {
+	row := q.db.QueryRow(ctx, getUserAccountByID, id)
+	var i UserAccount
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.HashedPassword,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const softDeleteUserAccount = `-- name: SoftDeleteUserAccount :exec
+UPDATE user_accounts 
+SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeleteUserAccount(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteUserAccount, id)
+	return err
+}
+
+const updateLastLoginAt = `-- name: UpdateLastLoginAt :exec
+UPDATE user_accounts 
+SET last_login_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) UpdateLastLoginAt(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, updateLastLoginAt, id)
+	return err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE user_accounts 
+SET hashed_password = $2, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+type UpdateUserPasswordParams struct {
+	ID             pgtype.UUID `json:"id"`
+	HashedPassword string      `json:"hashed_password"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.HashedPassword)
+	return err
+}
