@@ -965,7 +965,7 @@ Complete Order Flow with All Components:
 ### Setup môi trường development
 ```bash
 # Clone repository
-git clone https://github.com/your-username/go-shop.git
+git clone https://github.com/toji-dev/go-shop.git
 cd go-shop
 
 # Start infrastructure services

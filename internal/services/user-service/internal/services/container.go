@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
-	postgresql_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/postgreql-infra"
-	redis_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/redis-infra"
-	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
+	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
+	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 )
 
 // ServiceContainer holds all application services
@@ -43,7 +43,20 @@ func NewServiceContainer(cfg *config.Config) (*ServiceContainer, error) {
 
 // initPostgreSQL initializes PostgreSQL service
 func (sc *ServiceContainer) initPostgreSQL() error {
-	pgService, err := postgresql_infra.NewPostgreSQLService(&sc.Config.Database)
+	// Convert config types
+	pgConfig := &postgresql_infra.DatabaseConfig{
+		Host:         sc.Config.Database.Host,
+		Port:         sc.Config.Database.Port,
+		User:         sc.Config.Database.User,
+		Password:     sc.Config.Database.Password,
+		Name:         sc.Config.Database.Name,
+		SSLMode:      sc.Config.Database.SSLMode,
+		MaxOpenConns: sc.Config.Database.MaxOpenConns,
+		MaxIdleConns: sc.Config.Database.MaxIdleConns,
+		MaxLifetime:  sc.Config.Database.MaxLifetime,
+	}
+
+	pgService, err := postgresql_infra.NewPostgreSQLService(pgConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create PostgreSQL service: %w", err)
 	}

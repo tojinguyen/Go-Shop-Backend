@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/handlers"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/middleware"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/handlers"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/middleware"
 )
 
 // HandlerFactory creates handlers with all necessary dependencies

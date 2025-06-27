@@ -4,14 +4,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/dto"
-	postgresql_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/postgreql-infra"
-	redis_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/redis-infra"
-	errorConstants "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/errors"
-	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/pkg/response"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/pkg/validation"
+	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+	errorConstants "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/errors"
+	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/response"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/validation"
 )
 
 // AuthHandler handles authentication-related requests

@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	errorConstants "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/errors"
-	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
+	errorConstants "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/errors"
+	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 )
 
 // AuthMiddleware creates a JWT authentication middleware

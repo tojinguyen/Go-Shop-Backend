@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/router"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/services"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
 func main() {

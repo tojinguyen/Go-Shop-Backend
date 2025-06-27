@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/dto"
-	postgresql_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/postgreql-infra"
-	redis_infra "github.com/your-username/go-shop/internal/services/user-service/internal/infra/redis-infra"
-	jwtService "github.com/your-username/go-shop/internal/services/user-service/internal/pkg/jwt"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/pkg/response"
+	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/response"
 )
 
 type ProfileHandler struct {

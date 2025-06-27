@@ -8,20 +8,29 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/your-username/go-shop/internal/services/user-service/internal/config"
-	"github.com/your-username/go-shop/internal/services/user-service/internal/db/sqlc"
 )
+
+// DatabaseConfig holds database configuration
+type DatabaseConfig struct {
+	Host         string
+	Port         string
+	User         string
+	Password     string
+	Name         string
+	SSLMode      string
+	MaxOpenConns int
+	MaxIdleConns int
+	MaxLifetime  time.Duration
+}
 
 // PostgreSQLService represents the PostgreSQL database service
 type PostgreSQLService struct {
-	pool    *pgxpool.Pool
-	queries *sqlc.Queries
-	config  *config.DatabaseConfig
+	pool   *pgxpool.Pool
+	config *DatabaseConfig
 }
 
 // NewPostgreSQLService creates a new PostgreSQL service instance
-func NewPostgreSQLService(cfg *config.DatabaseConfig) (*PostgreSQLService, error) {
+func NewPostgreSQLService(cfg *DatabaseConfig) (*PostgreSQLService, error) {
 	service := &PostgreSQLService{
 		config: cfg,
 	}
@@ -29,9 +38,6 @@ func NewPostgreSQLService(cfg *config.DatabaseConfig) (*PostgreSQLService, error
 	if err := service.connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
-
-	// Initialize SQLC queries
-	service.queries = sqlc.New(service.pool)
 
 	return service, nil
 }
@@ -83,11 +89,6 @@ func (s *PostgreSQLService) connect() error {
 	return nil
 }
 
-// GetQueries returns the SQLC queries instance
-func (s *PostgreSQLService) GetQueries() *sqlc.Queries {
-	return s.queries
-}
-
 // GetPool returns the connection pool
 func (s *PostgreSQLService) GetPool() *pgxpool.Pool {
 	return s.pool
@@ -104,18 +105,15 @@ func (s *PostgreSQLService) BeginTransaction(ctx context.Context) (pgx.Tx, error
 }
 
 // WithTransaction executes a function within a database transaction
-func (s *PostgreSQLService) WithTransaction(ctx context.Context, fn func(*sqlc.Queries) error) error {
+func (s *PostgreSQLService) WithTransaction(ctx context.Context, fn func(pgx.Tx) error) error {
 	tx, err := s.BeginTransaction(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
-	// Create queries with transaction
-	qtx := s.queries.WithTx(tx)
-
 	// Execute function
-	if err := fn(qtx); err != nil {
+	if err := fn(tx); err != nil {
 		return err
 	}
 
