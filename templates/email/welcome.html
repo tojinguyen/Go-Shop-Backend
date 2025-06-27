@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chào mừng đến với Go-Shop</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .welcome-text {
+            font-size: 24px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Go-Shop</div>
+            <h1 class="welcome-text">Chào mừng {{.Name}}!</h1>
+        </div>
+        
+        <div class="content">
+            <p>Cảm ơn bạn đã tham gia cộng đồng Go-Shop. Chúng tôi rất vui khi có bạn cùng hành trình mua sắm trực tuyến.</p>
+            
+            <p>Với tài khoản Go-Shop của bạn, bạn có thể:</p>
+            <ul>
+                <li>Khám phá hàng ngàn sản phẩm chất lượng</li>
+                <li>Theo dõi đơn hàng một cách dễ dàng</li>
+                <li>Nhận các ưu đãi và khuyến mãi đặc biệt</li>
+                <li>Đánh giá và chia sẻ trải nghiệm sản phẩm</li>
+            </ul>
+            
+            <p>Hãy bắt đầu khám phá ngay bây giờ!</p>
+            
+            <div style="text-align: center;">
+                <a href="https://go-shop.com" class="button">Bắt đầu mua sắm</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Email này được gửi vào ngày {{.Date}}</p>
+            <p>Nếu bạn có bất kỳ câu hỏi nào, hãy liên hệ với chúng tôi tại support@go-shop.com</p>
+            <p>&copy; 2025 Go-Shop. Tất cả quyền được bảo lưu.</p>
+        </div>
+    </div>
+</body>
+</html>

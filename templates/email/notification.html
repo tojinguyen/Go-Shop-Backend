@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo - Go-Shop</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .message-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-style: italic;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Go-Shop</div>
+            <h1 class="title">📢 Thông báo</h1>
+        </div>
+        
+        <div class="content">
+            <div class="message-box">
+                <div>{{.Message}}</div>
+                <div class="timestamp">Thời gian: {{.Date}}</div>
+            </div>
+            
+            <p>Đây là thông báo từ hệ thống Go-Shop. Vui lòng đọc kỹ nội dung để cập nhật thông tin mới nhất.</p>
+            
+            <div style="text-align: center;">
+                <a href="https://go-shop.com/notifications" class="button">Xem tất cả thông báo</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Nếu bạn không muốn nhận email thông báo, bạn có thể cập nhật cài đặt trong tài khoản của mình.</p>
+            <p>📧 support@go-shop.com | 📞 1800-xxxx</p>
+            <p>&copy; 2025 Go-Shop. Tất cả quyền được bảo lưu.</p>
+        </div>
+    </div>
+</body>
+</html>
