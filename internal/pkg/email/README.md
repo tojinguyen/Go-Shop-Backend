@@ -1,15 +1,25 @@
 # SMTP Email Service - Go-Shop
 
-Email service dùng chung cho tất cả các microservices trong hệ thống Go-Shop.
+Email service cơ bản dùng chung cho tất cả các microservices trong hệ thống Go-Shop.
 
 ## Tính năng
 
 - ✅ Hỗ trợ SMTP với TLS/SSL
 - ✅ Gửi email text và HTML
 - ✅ Template engine cho email đẹp
-- ✅ Các method chuyên dụng (welcome, password reset, order confirmation, notification)
 - ✅ Cấu hình sẵn cho Gmail, Outlook, Yahoo
 - ✅ Có thể tùy chỉnh SMTP server
+- ✅ Interface đơn giản, linh hoạt để từng service tự implement logic riêng
+
+## Interface
+
+```go
+type EmailService interface {
+    SendEmail(to []string, subject, body string) error
+    SendHTMLEmail(to []string, subject, htmlBody string) error
+    SendTemplateEmail(to []string, subject, templateName string, data interface{}) error
+}
+```
 
 ## Cài đặt
 
@@ -73,29 +83,16 @@ err := emailService.SendHTMLEmail(
     htmlBody,
 )
 
-// Email chào mừng
-err := emailService.SendWelcomeEmail("user@example.com", "John Doe")
-
-// Email reset password
-resetLink := "https://go-shop.com/reset-password?token=abc123"
-err := emailService.SendPasswordResetEmail("user@example.com", resetLink)
-
-// Email xác nhận đơn hàng
-orderData := map[string]interface{}{
-    "CustomerName": "John Doe",
-    "TotalAmount":  250000,
-    "Items": []map[string]interface{}{
-        {"Name": "Product 1", "Quantity": 2, "Price": 100000},
-        {"Name": "Product 2", "Quantity": 1, "Price": 150000},
-    },
+// Email sử dụng template
+templateData := map[string]interface{}{
+    "Name": "John Doe",
+    "Date": time.Now().Format("02/01/2006"),
 }
-err := emailService.SendOrderConfirmationEmail("user@example.com", "ORD001", orderData)
-
-// Email thông báo
-err := emailService.SendNotificationEmail(
-    "user@example.com",
-    "System Maintenance",
-    "The system will be under maintenance from 2:00 AM to 4:00 AM.",
+err := emailService.SendTemplateEmail(
+    []string{"user@example.com"},
+    "Welcome to Go-Shop",
+    "welcome", // template name
+    templateData,
 )
 ```
 
@@ -122,11 +119,16 @@ EMAIL_TEMPLATE_PATH=./templates/email
 
 ```go
 // trong auth_service.go
+type AuthService struct {
+    emailService email.EmailService
+    // ... other fields
+}
+
 func (s *AuthService) RegisterUser(userData UserDTO) error {
     // ... tạo user ...
     
     // Gửi email chào mừng
-    err := s.emailService.SendWelcomeEmail(user.Email, user.Name)
+    err := s.sendWelcomeEmail(user.Email, user.Name)
     if err != nil {
         log.Printf("Failed to send welcome email: %v", err)
         // Không return lỗi vì đăng ký thành công rồi
@@ -135,11 +137,42 @@ func (s *AuthService) RegisterUser(userData UserDTO) error {
     return nil
 }
 
+func (s *AuthService) sendWelcomeEmail(userEmail, userName string) error {
+    subject := "Chào mừng bạn đến với Go-Shop!"
+    
+    data := map[string]interface{}{
+        "Name": userName,
+        "Date": time.Now().Format("02/01/2006"),
+    }
+    
+    return s.emailService.SendTemplateEmail(
+        []string{userEmail},
+        subject,
+        "welcome",
+        data,
+    )
+}
+
 func (s *AuthService) ForgotPassword(email string) error {
     // ... tạo reset token ...
     
-    resetLink := fmt.Sprintf("https://go-shop.com/reset-password?token=%s", token)
-    return s.emailService.SendPasswordResetEmail(email, resetLink)
+    return s.sendPasswordResetEmail(email, resetLink)
+}
+
+func (s *AuthService) sendPasswordResetEmail(userEmail, resetLink string) error {
+    subject := "Đặt lại mật khẩu Go-Shop"
+    
+    data := map[string]interface{}{
+        "ResetLink":  resetLink,
+        "ExpireTime": "24 giờ",
+    }
+    
+    return s.emailService.SendTemplateEmail(
+        []string{userEmail},
+        subject,
+        "password_reset",
+        data,
+    )
 }
 ```
 
@@ -147,20 +180,38 @@ func (s *AuthService) ForgotPassword(email string) error {
 
 ```go
 // trong order_service.go
+type OrderService struct {
+    emailService email.EmailService
+    // ... other fields
+}
+
 func (s *OrderService) CreateOrder(orderData OrderDTO) error {
     // ... tạo đơn hàng ...
     
     // Gửi email xác nhận
-    err := s.emailService.SendOrderConfirmationEmail(
-        order.CustomerEmail,
-        order.ID,
-        orderData,
-    )
+    err := s.sendOrderConfirmationEmail(order.CustomerEmail, order.ID, orderData)
     if err != nil {
         log.Printf("Failed to send order confirmation email: %v", err)
     }
     
     return nil
+}
+
+func (s *OrderService) sendOrderConfirmationEmail(customerEmail, orderID string, orderData interface{}) error {
+    subject := fmt.Sprintf("Xác nhận đơn hàng #%s", orderID)
+    
+    data := map[string]interface{}{
+        "OrderID":   orderID,
+        "OrderData": orderData,
+        "Date":      time.Now().Format("02/01/2006 15:04"),
+    }
+    
+    return s.emailService.SendTemplateEmail(
+        []string{customerEmail},
+        subject,
+        "order_confirmation",
+        data,
+    )
 }
 ```
 
@@ -168,15 +219,22 @@ func (s *OrderService) CreateOrder(orderData OrderDTO) error {
 
 ```go
 // trong notification_service.go
+type NotificationService struct {
+    emailService email.EmailService
+    // ... other fields
+}
+
 func (s *NotificationService) SendNotification(notification NotificationDTO) error {
     // Gửi qua email
-    err := s.emailService.SendNotificationEmail(
-        notification.UserEmail,
+    return s.emailService.SendTemplateEmail(
+        []string{notification.UserEmail},
         notification.Subject,
-        notification.Message,
+        "notification",
+        map[string]interface{}{
+            "Message": notification.Message,
+            "Date":    time.Now().Format("02/01/2006 15:04"),
+        },
     )
-    
-    return err
 }
 ```
 

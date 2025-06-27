@@ -8,7 +8,6 @@ import (
 	"net/smtp"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 // EmailService định nghĩa interface cho email service
@@ -16,10 +15,6 @@ type EmailService interface {
 	SendEmail(to []string, subject, body string) error
 	SendHTMLEmail(to []string, subject, htmlBody string) error
 	SendTemplateEmail(to []string, subject, templateName string, data interface{}) error
-	SendWelcomeEmail(to, name string) error
-	SendPasswordResetEmail(to, resetLink string) error
-	SendOrderConfirmationEmail(to, orderID string, orderData interface{}) error
-	SendNotificationEmail(to, subject, message string) error
 }
 
 // SMTPConfig cấu hình cho SMTP server
@@ -134,124 +129,6 @@ func (s *SMTPEmailService) SendTemplateEmail(to []string, subject, templateName 
 	}
 
 	return s.SendHTMLEmail(to, subject, buf.String())
-}
-
-// SendWelcomeEmail gửi email chào mừng
-func (s *SMTPEmailService) SendWelcomeEmail(to, name string) error {
-	subject := "Chào mừng bạn đến với Go-Shop!"
-
-	data := map[string]interface{}{
-		"Name": name,
-		"Date": time.Now().Format("02/01/2006"),
-	}
-
-	// Thử sử dụng template trước
-	if _, exists := s.templates["welcome"]; exists {
-		return s.SendTemplateEmail([]string{to}, subject, "welcome", data)
-	}
-
-	// Fallback to plain HTML
-	htmlBody := fmt.Sprintf(`
-		<html>
-		<body>
-			<h2>Chào mừng %s!</h2>
-			<p>Cảm ơn bạn đã đăng ký tài khoản Go-Shop.</p>
-			<p>Chúng tôi rất vui khi có bạn tham gia cộng đồng của chúng tôi.</p>
-			<p>Chúc bạn có những trải nghiệm tuyệt vời!</p>
-		</body>
-		</html>
-	`, name)
-
-	return s.SendHTMLEmail([]string{to}, subject, htmlBody)
-}
-
-// SendPasswordResetEmail gửi email reset password
-func (s *SMTPEmailService) SendPasswordResetEmail(to, resetLink string) error {
-	subject := "Đặt lại mật khẩu Go-Shop"
-
-	data := map[string]interface{}{
-		"ResetLink":  resetLink,
-		"ExpireTime": "24 giờ",
-	}
-
-	// Thử sử dụng template trước
-	if _, exists := s.templates["password_reset"]; exists {
-		return s.SendTemplateEmail([]string{to}, subject, "password_reset", data)
-	}
-
-	// Fallback to plain HTML
-	htmlBody := fmt.Sprintf(`
-		<html>
-		<body>
-			<h2>Đặt lại mật khẩu</h2>
-			<p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản Go-Shop của mình.</p>
-			<p>Nhấn vào liên kết bên dưới để đặt lại mật khẩu:</p>
-			<p><a href="%s">Đặt lại mật khẩu</a></p>
-			<p>Liên kết này sẽ hết hạn sau 24 giờ.</p>
-			<p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
-		</body>
-		</html>
-	`, resetLink)
-
-	return s.SendHTMLEmail([]string{to}, subject, htmlBody)
-}
-
-// SendOrderConfirmationEmail gửi email xác nhận đơn hàng
-func (s *SMTPEmailService) SendOrderConfirmationEmail(to, orderID string, orderData interface{}) error {
-	subject := fmt.Sprintf("Xác nhận đơn hàng #%s", orderID)
-
-	data := map[string]interface{}{
-		"OrderID":   orderID,
-		"OrderData": orderData,
-		"Date":      time.Now().Format("02/01/2006 15:04"),
-	}
-
-	// Thử sử dụng template trước
-	if _, exists := s.templates["order_confirmation"]; exists {
-		return s.SendTemplateEmail([]string{to}, subject, "order_confirmation", data)
-	}
-
-	// Fallback to plain HTML
-	htmlBody := fmt.Sprintf(`
-		<html>
-		<body>
-			<h2>Xác nhận đơn hàng</h2>
-			<p>Cảm ơn bạn đã đặt hàng tại Go-Shop!</p>
-			<p>Mã đơn hàng: <strong>#%s</strong></p>
-			<p>Thời gian đặt hàng: %s</p>
-			<p>Chúng tôi sẽ xử lý đơn hàng của bạn sớm nhất có thể.</p>
-			<p>Bạn có thể theo dõi trạng thái đơn hàng trong tài khoản của mình.</p>
-		</body>
-		</html>
-	`, orderID, time.Now().Format("02/01/2006 15:04"))
-
-	return s.SendHTMLEmail([]string{to}, subject, htmlBody)
-}
-
-// SendNotificationEmail gửi email thông báo chung
-func (s *SMTPEmailService) SendNotificationEmail(to, subject, message string) error {
-	data := map[string]interface{}{
-		"Message": message,
-		"Date":    time.Now().Format("02/01/2006 15:04"),
-	}
-
-	// Thử sử dụng template trước
-	if _, exists := s.templates["notification"]; exists {
-		return s.SendTemplateEmail([]string{to}, subject, "notification", data)
-	}
-
-	// Fallback to plain HTML
-	htmlBody := fmt.Sprintf(`
-		<html>
-		<body>
-			<h2>Thông báo</h2>
-			<p>%s</p>
-			<p><em>Thời gian: %s</em></p>
-		</body>
-		</html>
-	`, message, time.Now().Format("02/01/2006 15:04"))
-
-	return s.SendHTMLEmail([]string{to}, subject, htmlBody)
 }
 
 // sendEmail method chính để gửi email
