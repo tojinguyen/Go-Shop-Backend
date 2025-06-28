@@ -1,17 +1,16 @@
 package handlers
 
 import (
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 )
 
 // HandlerFactory creates handlers with all necessary dependencies
 type HandlerFactory struct {
-	container *services.ServiceContainer
+	container *container.ServiceContainer
 }
 
 // NewHandlerFactory creates a new handler factory
-func NewHandlerFactory(container *router.ServiceContainer) *HandlerFactory {
+func NewHandlerFactory(container *container.ServiceContainer) *HandlerFactory {
 	return &HandlerFactory{
 		container: container,
 	}

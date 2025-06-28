@@ -4,12 +4,13 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/handlers"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/middleware"
 )
 
 // SetupRoutes sets up all the routes for the user service
-func SetupRoutes(serviceContainer *ServiceContainer) *gin.Engine {
+func SetupRoutes(serviceContainer *container.ServiceContainer) *gin.Engine {
 	cfg := serviceContainer.GetConfig()
 
 	// Set Gin mode based on environment
