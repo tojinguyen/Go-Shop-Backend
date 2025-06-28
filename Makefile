@@ -81,22 +81,22 @@ env-clean:
 	@echo "✅ Environment cleanup complete!"
 
 # Infrastructure (Main)
-infra-up:
+up:
 	docker-compose -f deployments/docker-compose.yml --env-file deployments/.env up -d
 
-infra-down:
+down:
 	docker-compose -f deployments/docker-compose.yml --env-file deployments/.env down
 
 # Infrastructure (Production)
-infra-prod-up:
+prod up:
 	docker-compose -f deployments/docker-compose.yml -f deployments/prod/docker-compose.prod.yml --env-file deployments/prod/.env up -d
 
-infra-prod-down:
+prod down:
 	docker-compose -f deployments/docker-compose.yml -f deployments/prod/docker-compose.prod.yml --env-file deployments/prod/.env down
 
 # Infrastructure (Development)
-infra-dev-up:
+dev up:
 	docker-compose -f deployments/docker-compose.yml -f deployments/dev/docker-compose.dev.yml --env-file deployments/dev/.env up -d
 
-infra-dev-down:
+dev down:
 	docker-compose -f deployments/docker-compose.yml -f deployments/dev/docker-compose.dev.yml --env-file deployments/dev/.env down
