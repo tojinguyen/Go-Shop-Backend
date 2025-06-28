@@ -24,21 +24,17 @@ type RegisterResponse struct {
 
 // AuthResponse represents the authentication response
 type AuthResponse struct {
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
-	TokenType    string    `json:"token_type"`
-	ExpiresIn    int64     `json:"expires_in"`
-	User         *UserInfo `json:"user"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int64  `json:"expires_in"`
+	ID           string `json:"id"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
 }
 
 // UserInfo represents user information in auth response
 type UserInfo struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Username  string `json:"username"`
-	Role      string `json:"role"`
 }
 
 // TokenValidationResponse represents the token validation response

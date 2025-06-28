@@ -48,7 +48,7 @@ func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.R
 	}
 
 	// Create the user account
-	userAccount, err := s.container.GetUserAccountRepo().CreateUserAccount(context.Background(), params)
+	userAccount, err := s.container.GetUserAccountRepo().CreateUserAccount(ctx, params)
 	if err != nil {
 		return dto.RegisterResponse{}, fmt.Errorf("failed to create user account: %w", err)
 	}
@@ -79,7 +79,7 @@ func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthRes
 	tokenInput := &jwtService.GenerateTokenInput{
 		UserId: userAccount.Id,
 		Email:  userAccount.Email,
-		Role:   "user", // Default role
+		Role:   userAccount.Role,
 	}
 
 	accessToken, err := s.container.GetJWT().GenerateAccessToken(tokenInput)
@@ -93,7 +93,7 @@ func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthRes
 	}
 
 	// Update last login time
-	err = s.container.GetUserAccountRepo().UpdateLastLoginAt(context.Background(), userAccount.Id)
+	err = s.container.GetUserAccountRepo().UpdateLastLoginAt(ctx, userAccount.Id)
 	if err != nil {
 		// Log error but don't fail the login
 		fmt.Printf("Failed to update last login time: %v\n", err)
@@ -105,12 +105,9 @@ func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthRes
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",
 		ExpiresIn:    3600, // 1 hour
-		User: &dto.UserInfo{
-			ID:       userAccount.Id,
-			Email:    userAccount.Email,
-			Username: userAccount.Email, // Using email as username for now
-			Role:     "user",            // Default role
-		},
+		ID:           userAccount.Id,
+		Email:        userAccount.Email,
+		Role:         userAccount.Role,
 	}, nil
 }
 
@@ -150,12 +147,9 @@ func (s *AuthService) RefreshToken(ctx *gin.Context, req dto.RefreshTokenRequest
 		RefreshToken: newRefreshToken,
 		TokenType:    "Bearer",
 		ExpiresIn:    3600, // 1 hour
-		User: &dto.UserInfo{
-			ID:       userAccount.Id,
-			Email:    userAccount.Email,
-			Username: userAccount.Email,
-			Role:     claims.Role,
-		},
+		ID:           userAccount.Id,
+		Email:        userAccount.Email,
+		Role:         userAccount.Role,
 	}, nil
 }
 
