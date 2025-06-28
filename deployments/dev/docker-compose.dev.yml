@@ -1,6 +1,82 @@
 version: '3.8'
 
 services:
+  # Override service configurations for development
+  user-service:
+    environment:
+      - SERVICE_ENV=development
+      - LOG_LEVEL=debug
+      - DB_NAME=go_shop_user_service_dev
+    env_file:
+      - ../../internal/services/user-service/.env
+    volumes:
+      - ../../internal/services/user-service:/app
+    command: go run cmd/main.go
+
+  shop-service:
+    environment:
+      - SERVICE_ENV=development
+      - LOG_LEVEL=debug
+      - DB_NAME=go_shop_shop_service_dev
+    env_file:
+      - ../../internal/services/shop-service/.env
+    volumes:
+      - ../../internal/services/shop-service:/app
+    command: go run cmd/main.go
+
+  order-service:
+    environment:
+      - SERVICE_ENV=development
+      - LOG_LEVEL=debug
+      - DB_NAME=go_shop_order_service_dev
+    env_file:
+      - ../../internal/services/order-service/.env
+    volumes:
+      - ../../internal/services/order-service:/app
+    command: go run cmd/main.go
+
+  payment-service:
+    environment:
+      - SERVICE_ENV=development
+      - LOG_LEVEL=debug
+      - DB_NAME=go_shop_payment_service_dev
+    env_file:
+      - ../../internal/services/payment-service/.env
+    volumes:
+      - ../../internal/services/payment-service:/app
+    command: go run cmd/main.go
+
+  shipping-service:
+    environment:
+      - SERVICE_ENV=development
+      - LOG_LEVEL=debug
+      - DB_NAME=go_shop_shipping_service_dev
+    env_file:
+      - ../../internal/services/shipping-service/.env
+    volumes:
+      - ../../internal/services/shipping-service:/app
+    command: go run cmd/main.go
+
+  review-service:
+    environment:
+      - SERVICE_ENV=development
+      - LOG_LEVEL=debug
+      - DB_NAME=go_shop_review_service_dev
+    env_file:
+      - ../../internal/services/review-service/.env
+    volumes:
+      - ../../internal/services/review-service:/app
+    command: go run cmd/main.go
+
+  notification-service:
+    environment:
+      - SERVICE_ENV=development
+      - LOG_LEVEL=debug
+    env_file:
+      - ../../internal/services/notification-service/.env
+    volumes:
+      - ../../internal/services/notification-service:/app
+    command: go run cmd/main.go
   redis:
     # Override base config for development
     container_name: ${COMPOSE_PROJECT_NAME:-go-shop}-redis-dev

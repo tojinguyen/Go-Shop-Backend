@@ -1,6 +1,159 @@
 version: '3.8'
 
 services:
+  # Override service configurations for production
+  user-service:
+    environment:
+      - SERVICE_ENV=production
+      - LOG_LEVEL=warn
+      - DB_NAME=go_shop_user_service_prod
+    env_file:
+      - ../../internal/services/user-service/.env
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  shop-service:
+    environment:
+      - SERVICE_ENV=production
+      - LOG_LEVEL=warn
+      - DB_NAME=go_shop_shop_service_prod
+    env_file:
+      - ../../internal/services/shop-service/.env
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  order-service:
+    environment:
+      - SERVICE_ENV=production
+      - LOG_LEVEL=warn
+      - DB_NAME=go_shop_order_service_prod
+    env_file:
+      - ../../internal/services/order-service/.env
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  payment-service:
+    environment:
+      - SERVICE_ENV=production
+      - LOG_LEVEL=warn
+      - DB_NAME=go_shop_payment_service_prod
+    env_file:
+      - ../../internal/services/payment-service/.env
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  shipping-service:
+    environment:
+      - SERVICE_ENV=production
+      - LOG_LEVEL=warn
+      - DB_NAME=go_shop_shipping_service_prod
+    env_file:
+      - ../../internal/services/shipping-service/.env
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  review-service:
+    environment:
+      - SERVICE_ENV=production
+      - LOG_LEVEL=warn
+      - DB_NAME=go_shop_review_service_prod
+    env_file:
+      - ../../internal/services/review-service/.env
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  notification-service:
+    environment:
+      - SERVICE_ENV=production
+      - LOG_LEVEL=warn
+    env_file:
+      - ../../internal/services/notification-service/.env
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.125'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
   redis:
     # Override base config for production
     container_name: ${COMPOSE_PROJECT_NAME:-go-shop}-redis-prod
