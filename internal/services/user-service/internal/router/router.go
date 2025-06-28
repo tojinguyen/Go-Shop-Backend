@@ -71,6 +71,9 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	authHandler := handlerFactory.CreateAuthHandler()
 	profileHandler := handlerFactory.CreateProfileHandler()
 
+	// Get AuthService for enhanced middleware
+	authService := handlerFactory.GetAuthService()
+
 	// Health check endpoint with detailed health information
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "pong")
@@ -84,17 +87,22 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
-			auth.POST("/logout", authHandler.Logout)
 			auth.POST("/refresh", authHandler.RefreshToken)
 			auth.POST("/reset-password", authHandler.ResetPassword)
 			auth.POST("/change-password", authHandler.ChangePassword)
 			auth.POST("/validate-access-token", authHandler.ValidateToken)
 		}
 
-		// Protected routes (authentication required)
+		// Protected routes (authentication required with blacklist checking)
 		protected := v1.Group("/")
-		protected.Use(middleware.AuthMiddleware(serviceContainer.GetJWT()))
+		protected.Use(middleware.AuthMiddlewareWithBlacklist(serviceContainer.GetJWT(), authService))
 		{
+			// Auth routes that require authentication
+			authProtected := protected.Group("/auth")
+			{
+				authProtected.POST("/logout", authHandler.Logout)
+			}
+
 			// User profile routes
 			profile := protected.Group("/users/profile")
 			{

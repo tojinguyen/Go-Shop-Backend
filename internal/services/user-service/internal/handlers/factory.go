@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
 // HandlerFactory creates handlers with all necessary dependencies
@@ -31,4 +32,9 @@ func (hf *HandlerFactory) CreateProfileHandler() *ProfileHandler {
 		hf.container.GetPostgreSQL(),
 		hf.container.GetRedis(),
 	)
+}
+
+// GetAuthService returns the auth service for middleware use
+func (hf *HandlerFactory) GetAuthService() *services.AuthService {
+	return services.NewAuthService(&hf.container)
 }

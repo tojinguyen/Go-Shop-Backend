@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -180,12 +181,26 @@ func (s *AuthService) Logout(ctx *gin.Context, token string) error {
 		return nil
 	}
 
-	// TODO: Implement token blacklisting in Redis
-	// For now, we'll just return success since JWT tokens are stateless
-	// In a production environment, you would:
-	// 1. Add token to Redis blacklist with expiry time
-	// 2. Log the logout event
-	// 3. Clear any user sessions
+	// Add token to Redis blacklist
+	blacklistKey := fmt.Sprintf("blacklisted_token:%s", token)
+
+	// Calculate expiry time based on token's remaining lifetime
+	now := time.Now().Unix()
+	expiresAt := claims.ExpiresAt
+
+	if expiresAt > now {
+		// Token is still valid, blacklist it until it naturally expires
+		remainingTTL := time.Duration(expiresAt-now) * time.Second
+
+		// Store token in Redis blacklist with remaining TTL
+		err = s.container.GetRedis().Set(blacklistKey, "blacklisted", remainingTTL)
+		if err != nil {
+			// Log error but don't fail the logout
+			fmt.Printf("Warning: Failed to blacklist token in Redis: %v\n", err)
+		} else {
+			fmt.Printf("Token successfully blacklisted in Redis with TTL: %v\n", remainingTTL)
+		}
+	}
 
 	// Log the logout
 	fmt.Printf("User %s logged out successfully\n", claims.UserId)
@@ -283,4 +298,18 @@ func (s *AuthService) generatePasswordResetToken(userID string) (string, error) 
 	}
 
 	return resetToken, nil
+}
+
+// IsTokenBlacklisted checks if a token is in the Redis blacklist
+func (s *AuthService) IsTokenBlacklisted(token string) bool {
+	blacklistKey := fmt.Sprintf("blacklisted_token:%s", token)
+
+	exists, err := s.container.GetRedis().Exists(blacklistKey)
+	if err != nil {
+		// If Redis is unavailable, log error but don't block authentication
+		fmt.Printf("Warning: Failed to check token blacklist: %v\n", err)
+		return false
+	}
+
+	return exists
 }

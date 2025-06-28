@@ -116,24 +116,21 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 // Logout handles user logout
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// Get token from authorization header
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		response.BadRequest(c, "MISSING_TOKEN", "Authorization header is required", "")
+	// Get token from middleware context (it's already validated by AuthMiddlewareWithBlacklist)
+	token, exists := c.Get("token")
+	if !exists {
+		response.BadRequest(c, "MISSING_TOKEN", "Token not found in context", "")
 		return
 	}
 
-	// Extract token
-	token := ""
-	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
-		token = authHeader[7:]
-	} else {
-		response.BadRequest(c, "INVALID_TOKEN_FORMAT", "Invalid authorization header format", "")
+	tokenStr, ok := token.(string)
+	if !ok {
+		response.InternalServerError(c, "INVALID_TOKEN_TYPE", "Invalid token type in context")
 		return
 	}
 
-	// Use AuthService to handle logout
-	err := h.authService.Logout(c, token)
+	// Use AuthService to handle logout (blacklist the token)
+	err := h.authService.Logout(c, tokenStr)
 	if err != nil {
 		response.InternalServerError(c, "LOGOUT_FAILED", "Failed to logout user")
 		return
