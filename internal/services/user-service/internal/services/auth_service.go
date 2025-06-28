@@ -8,5 +8,6 @@ import (
 
 func Register(ctx context.Context, loginRequest dto.RegisterRequest) (dto.RegisterResponse, error) {
 	// Check if user already exists
+
 	return dto.RegisterResponse{}, nil
 }

@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/middleware"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
@@ -12,7 +11,7 @@ type HandlerFactory struct {
 }
 
 // NewHandlerFactory creates a new handler factory
-func NewHandlerFactory(container *services.ServiceContainer) *HandlerFactory {
+func NewHandlerFactory(container *router.ServiceContainer) *HandlerFactory {
 	return &HandlerFactory{
 		container: container,
 	}
@@ -36,9 +35,4 @@ func (hf *HandlerFactory) CreateProfileHandler() *ProfileHandler {
 		hf.container.GetPostgreSQL(),
 		hf.container.GetRedis(),
 	)
-}
-
-// CreateAuthMiddleware creates authentication middleware
-func (hf *HandlerFactory) CreateAuthMiddleware() func(c *gin.Context) {
-	return middleware.AuthMiddleware(hf.container.GetJWT())
 }

@@ -29,3 +29,8 @@ WHERE id = $1 AND deleted_at IS NULL;
 UPDATE user_accounts 
 SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL;
+
+-- name: CheckUserExistsByEmail :one
+SELECT id 
+FROM user_accounts 
+WHERE email = $1 AND deleted_at IS NULL;

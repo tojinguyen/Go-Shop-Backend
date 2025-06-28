@@ -11,6 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const checkUserExistsByEmail = `-- name: CheckUserExistsByEmail :one
+SELECT id 
+FROM user_accounts 
+WHERE email = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) CheckUserExistsByEmail(ctx context.Context, email string) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, checkUserExistsByEmail, email)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createUserAccount = `-- name: CreateUserAccount :one
 INSERT INTO user_accounts (
   email, hashed_password

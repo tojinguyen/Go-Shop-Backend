@@ -17,6 +17,7 @@ type UserAccountRepository interface {
 	UpdateLastLoginAt(ctx context.Context, id string) error
 	UpdateUserPassword(ctx context.Context, id string, hashedPassword string) error
 	SoftDeleteUserAccount(ctx context.Context, id string) error
+	CheckUserExistsByEmail(ctx context.Context, email string) (bool, error)
 }
 
 type userAccountRepository struct {
@@ -154,4 +155,16 @@ func (r *userAccountRepository) SoftDeleteUserAccount(ctx context.Context, id st
 
 	// Use SQLC generated function
 	return r.queries.SoftDeleteUserAccount(ctx, uuid)
+}
+
+// Check if user exists by email
+func (r *userAccountRepository) CheckUserExistsByEmail(ctx context.Context, email string) (bool, error) {
+	// Use SQLC generated function
+	id, err := r.queries.CheckUserExistsByEmail(ctx, email)
+	if err != nil {
+		return false, err
+	}
+
+	// If id is not null, user exists
+	return id != pgtype.UUID{}, nil
 }

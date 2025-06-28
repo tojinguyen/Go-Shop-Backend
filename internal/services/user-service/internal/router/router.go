@@ -4,19 +4,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/handlers"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/middleware"
 )
 
-// RouterConfig holds the configuration for the router
-type RouterConfig struct {
-	Config           *config.Config
-	ServiceContainer *services.ServiceContainer
-}
-
 // SetupRoutes sets up all the routes for the user service
-func SetupRoutes(serviceContainer *services.ServiceContainer) *gin.Engine {
+func SetupRoutes(serviceContainer *ServiceContainer) *gin.Engine {
 	cfg := serviceContainer.GetConfig()
 
 	// Set Gin mode based on environment
@@ -101,7 +94,7 @@ func SetupRoutes(serviceContainer *services.ServiceContainer) *gin.Engine {
 
 		// Protected routes (authentication required)
 		protected := v1.Group("/")
-		protected.Use(handlerFactory.CreateAuthMiddleware())
+		protected.Use(middleware.AuthMiddleware(serviceContainer.GetJWT()))
 		{
 			// User profile routes
 			profile := protected.Group("/users/profile")

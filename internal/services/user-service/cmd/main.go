@@ -11,7 +11,6 @@ import (
 
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
 func main() {
@@ -22,7 +21,7 @@ func main() {
 	}
 
 	// Initialize service container
-	serviceContainer, err := services.NewServiceContainer(cfg)
+	serviceContainer, err := router.NewServiceContainer(cfg)
 	if err != nil {
 		log.Fatal("Failed to initialize services:", err)
 	}

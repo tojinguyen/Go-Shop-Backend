@@ -1,4 +1,4 @@
-package services
+package router
 
 import (
 	"fmt"

@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	CheckUserExistsByEmail(ctx context.Context, email string) (pgtype.UUID, error)
 	CreateUserAccount(ctx context.Context, arg CreateUserAccountParams) (CreateUserAccountRow, error)
 	GetUserAccountByEmail(ctx context.Context, email string) (UserAccount, error)
 	GetUserAccountByID(ctx context.Context, id pgtype.UUID) (UserAccount, error)
