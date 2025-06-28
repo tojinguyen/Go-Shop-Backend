@@ -65,7 +65,9 @@ type ForgotPasswordRequest struct {
 }
 
 type ResetPasswordRequest struct {
-	Email string `json:"email" binding:"required" validate:"required,email"`
+	Token           string `json:"token" binding:"required" validate:"required"`
+	NewPassword     string `json:"new_password" binding:"required" validate:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" binding:"required" validate:"required,eqfield=NewPassword"`
 }
 
 type ChangePasswordRequest struct {

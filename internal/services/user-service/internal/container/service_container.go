@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/toji-dev/go-shop/internal/pkg/email"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
@@ -17,6 +18,7 @@ type ServiceContainer struct {
 	postgreSQL      *postgresql_infra.PostgreSQLService
 	redis           *redis_infra.RedisService
 	jwt             jwtService.JwtService
+	email           email.EmailService
 	userAccountRepo repository.UserAccountRepository
 }
 
@@ -38,6 +40,11 @@ func NewServiceContainer(cfg *config.Config) (ServiceContainer, error) {
 
 	// Initialize JWT service
 	container.initJWT()
+
+	// Initialize Email service
+	if err := container.initEmail(); err != nil {
+		return ServiceContainer{}, fmt.Errorf("failed to initialize Email service: %w", err)
+	}
 
 	// Initialize UserAccountRepository
 	container.initUserAccountRepository()
@@ -91,6 +98,30 @@ func (sc *ServiceContainer) initJWT() {
 	log.Println("JWT service initialized")
 }
 
+// initEmail initializes Email service
+func (sc *ServiceContainer) initEmail() error {
+	emailConfig := &email.SMTPConfig{
+		Host:         sc.config.Email.Host,
+		Port:         sc.config.Email.Port,
+		Username:     sc.config.Email.Username,
+		Password:     sc.config.Email.Password,
+		From:         sc.config.Email.From,
+		FromName:     sc.config.Email.FromName,
+		UseTLS:       sc.config.Email.UseTLS,
+		UseSSL:       sc.config.Email.UseSSL,
+		TemplatePath: sc.config.Email.TemplatePath,
+	}
+
+	emailService, err := email.NewSMTPEmailService(*emailConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create Email service: %w", err)
+	}
+
+	sc.email = emailService
+	log.Println("Email service initialized")
+	return nil
+}
+
 func (sc *ServiceContainer) initUserAccountRepository() {
 	sc.userAccountRepo = repository.NewUserAccountRepository(sc.postgreSQL)
 	log.Println("UserAccountRepository initialized")
@@ -136,4 +167,9 @@ func (sc *ServiceContainer) GetConfig() *config.Config {
 // GetUserAccountRepo returns UserAccountRepository
 func (sc *ServiceContainer) GetUserAccountRepo() repository.UserAccountRepository {
 	return sc.userAccountRepo
+}
+
+// GetEmail returns Email service
+func (sc *ServiceContainer) GetEmail() email.EmailService {
+	return sc.email
 }

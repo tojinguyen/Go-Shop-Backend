@@ -205,12 +205,6 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	// Validate email format
-	if !validation.ValidateEmail(req.Email) {
-		response.BadRequest(c, "INVALID_EMAIL", "Invalid email format", "")
-		return
-	}
-
 	// Use AuthService to handle password reset
 	err := h.authService.ResetPassword(c, req)
 	if err != nil {

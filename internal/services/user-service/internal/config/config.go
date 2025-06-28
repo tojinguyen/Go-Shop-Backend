@@ -17,6 +17,7 @@ type Config struct {
 	Redis    RedisConfig    `json:"redis"`
 	CORS     CORSConfig     `json:"cors"`
 	App      AppConfig      `json:"app"`
+	Email    EmailConfig    `json:"email"`
 }
 
 // ServerConfig holds server configuration
@@ -74,6 +75,19 @@ type AppConfig struct {
 	LogLevel    string `json:"log_level"`
 }
 
+// EmailConfig holds email configuration
+type EmailConfig struct {
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	From         string `json:"from"`
+	FromName     string `json:"from_name"`
+	UseTLS       bool   `json:"use_tls"`
+	UseSSL       bool   `json:"use_ssl"`
+	TemplatePath string `json:"template_path"`
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if it exists
@@ -122,6 +136,17 @@ func Load() (*Config, error) {
 			Environment: getEnvWithDefault("APP_ENV", "development"),
 			Debug:       getBoolEnvWithDefault("APP_DEBUG", true),
 			LogLevel:    getEnvWithDefault("LOG_LEVEL", "info"),
+		},
+		Email: EmailConfig{
+			Host:         getEnvWithDefault("EMAIL_HOST", "smtp.example.com"),
+			Port:         getIntEnvWithDefault("EMAIL_PORT", 587),
+			Username:     getEnvWithDefault("EMAIL_USERNAME", ""),
+			Password:     getEnvWithDefault("EMAIL_PASSWORD", ""),
+			From:         getEnvWithDefault("EMAIL_FROM", ""),
+			FromName:     getEnvWithDefault("EMAIL_FROM_NAME", "Go-Shop"),
+			UseTLS:       getBoolEnvWithDefault("EMAIL_USE_TLS", true),
+			UseSSL:       getBoolEnvWithDefault("EMAIL_USE_SSL", false),
+			TemplatePath: getEnvWithDefault("EMAIL_TEMPLATE_PATH", "./templates/email"),
 		},
 	}
 

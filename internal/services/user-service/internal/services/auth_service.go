@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -218,24 +219,97 @@ func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordReq
 		return fmt.Errorf("failed to check user existence: %w", err)
 	}
 
-	// Generate password reset token (you can use JWT or random token)
+	// Generate password reset token
 	resetToken, err := s.generatePasswordResetToken(userAccount.Id)
 	if err != nil {
 		return fmt.Errorf("failed to generate reset token: %w", err)
 	}
 
-	// TODO: Store reset token in Redis with expiry (15 minutes)
-	// TODO: Send email with reset link
-	// For now, we'll just log it
-	fmt.Printf("Password reset requested for user %s. Reset token: %s\n", userAccount.Email, resetToken)
+	// Store reset token in Redis with 15 minutes expiry
+	resetTokenKey := fmt.Sprintf("password_reset_token:%s", userAccount.Id)
+	err = s.container.GetRedis().Set(resetTokenKey, resetToken, 15*time.Minute)
+	if err != nil {
+		return fmt.Errorf("failed to store reset token: %w", err)
+	}
+
+	// Prepare email data
+	emailData := struct {
+		UserName   string
+		ResetToken string
+		ResetLink  string
+	}{
+		UserName:   userAccount.Email, // You might want to add a name field to user account
+		ResetToken: resetToken,
+		ResetLink:  fmt.Sprintf("http://localhost:3000/reset-password?token=%s", resetToken), // Adjust URL as needed
+	}
+
+	// Send password reset email using template
+	subject := "Password Reset Request - Go-Shop"
+
+	// Try to use template first, fallback to HTML if template fails
+	err = s.container.GetEmail().SendTemplateEmail([]string{userAccount.Email}, subject, "password_reset.html", emailData)
+	if err != nil {
+		// Fallback to simple HTML email if template fails
+		htmlBody := fmt.Sprintf(`
+			<html>
+			<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+				<div style="background-color: #f9f9f9; padding: 30px; border-radius: 10px; border: 1px solid #ddd;">
+					<h2 style="color: #e74c3c; text-align: center;">Password Reset Request</h2>
+					<p>Hello,</p>
+					<p>You have requested to reset your password for your Go-Shop account.</p>
+					<p>Please click the link below to reset your password:</p>
+					<div style="text-align: center; margin: 20px 0;">
+						<a href="%s" style="background-color: #3498db; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+					</div>
+					<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0;">
+						<strong>Security Notice:</strong> This link will expire in 15 minutes.
+					</div>
+					<p>If you did not request this password reset, please ignore this email.</p>
+					<br>
+					<p>Best regards,<br>Go-Shop Team</p>
+				</div>
+			</body>
+			</html>
+		`, emailData.ResetLink)
+
+		err = s.container.GetEmail().SendHTMLEmail([]string{userAccount.Email}, subject, htmlBody)
+		if err != nil {
+			// Don't fail the request if email fails, but log the error
+			fmt.Printf("Warning: Failed to send password reset email to %s: %v\n", userAccount.Email, err)
+			return nil
+		}
+	}
+
+	fmt.Printf("Password reset email sent successfully to %s\n", userAccount.Email)
 
 	return nil
 }
 
 func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordRequest) error {
-	// TODO: Validate reset token from Redis
-	// For now, we'll just check if user exists
-	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(context.Background(), req.Email)
+	// Validate the reset token
+	claims, err := s.container.GetJWT().ValidateAccessToken(context.Background(), req.Token)
+	if err != nil {
+		return fmt.Errorf("invalid or expired reset token")
+	}
+
+	// Check if this is a password reset token
+	if claims.Role != "password_reset" {
+		return fmt.Errorf("invalid reset token")
+	}
+
+	// Check if the token exists in Redis
+	resetTokenKey := fmt.Sprintf("password_reset_token:%s", claims.UserId)
+	exists, err := s.container.GetRedis().Exists(resetTokenKey)
+	if err != nil {
+		return fmt.Errorf("failed to verify reset token: %w", err)
+	}
+
+	if !exists {
+		return fmt.Errorf("reset token has expired or already been used")
+	}
+
+	// Get user account to ensure user still exists
+	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByID(context.Background(), claims.UserId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("user not found")
@@ -243,10 +317,26 @@ func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordReque
 		return fmt.Errorf("failed to get user account: %w", err)
 	}
 
-	// TODO: Hash new password and update in database
-	// For now, just return success
-	fmt.Printf("Password reset for user %s\n", userAccount.Email)
+	// Hash new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash new password: %w", err)
+	}
 
+	// Update password in database
+	err = s.container.GetUserAccountRepo().UpdateUserPassword(context.Background(), userAccount.Id, string(hashedPassword))
+	if err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	// Remove the reset token from Redis to prevent reuse
+	err = s.container.GetRedis().Delete(resetTokenKey)
+	if err != nil {
+		// Log error but don't fail the password reset
+		fmt.Printf("Warning: Failed to remove reset token from Redis: %v\n", err)
+	}
+
+	fmt.Printf("Password reset successfully for user %s\n", userAccount.Email)
 	return nil
 }
 
@@ -283,17 +373,17 @@ func (s *AuthService) ChangePassword(ctx *gin.Context, req dto.ChangePasswordReq
 
 // Helper function to generate password reset token
 func (s *AuthService) generatePasswordResetToken(userID string) (string, error) {
-	// Generate a simple reset token using JWT with short expiry
+	// Generate a password reset token using JWT with 15 minutes expiry
 	tokenInput := &jwtService.GenerateTokenInput{
 		UserId: userID,
 		Email:  "", // Not needed for reset token
 		Role:   "password_reset",
 	}
 
-	// For reset tokens, we can reuse the access token generation with shorter expiry
+	// Generate a short-lived reset token
 	resetToken, err := s.container.GetJWT().GenerateAccessToken(tokenInput)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate reset token: %w", err)
 	}
 
 	return resetToken, nil
