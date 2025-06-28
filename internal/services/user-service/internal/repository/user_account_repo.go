@@ -48,11 +48,12 @@ func (r *userAccountRepository) CreateUserAccount(ctx context.Context, params sq
 
 	// Convert SQLC result to domain model
 	userAccount := &domain.UserAccount{
-		Id:          result.ID.String(),
-		Email:       result.Email,
-		LastLoginAt: "", // Will be empty for new accounts
-		CreatedAt:   result.CreatedAt.Time.Format(time.RFC3339),
-		UpdatedAt:   result.UpdatedAt.Time.Format(time.RFC3339),
+		Id:             result.ID.String(),
+		Email:          result.Email,
+		HashedPassword: "", // Don't return password in create response
+		LastLoginAt:    "", // Will be empty for new accounts
+		CreatedAt:      result.CreatedAt.Time.Format(time.RFC3339),
+		UpdatedAt:      result.UpdatedAt.Time.Format(time.RFC3339),
 	}
 
 	return userAccount, nil
@@ -68,8 +69,9 @@ func (r *userAccountRepository) GetUserAccountByEmail(ctx context.Context, email
 
 	// Convert SQLC result to domain model
 	userAccount := &domain.UserAccount{
-		Id:    result.ID.String(),
-		Email: result.Email,
+		Id:             result.ID.String(),
+		Email:          result.Email,
+		HashedPassword: result.HashedPassword,
 	}
 
 	// Handle nullable timestamp fields
