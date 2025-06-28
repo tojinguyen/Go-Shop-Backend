@@ -90,7 +90,6 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 			auth.POST("/reset-password", authHandler.ResetPassword)
 			auth.POST("/change-password", authHandler.ChangePassword)
 			auth.POST("/validate-access-token", authHandler.ValidateToken)
-			auth.POST("/verify-otp", authHandler.VerifyOTP)
 		}
 
 		// Protected routes (authentication required)

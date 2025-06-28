@@ -230,24 +230,3 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 
 	response.Success(c, "Password changed successfully", nil)
 }
-
-func (h *AuthHandler) VerifyOTP(c *gin.Context) {
-	var req dto.VerifyOTPRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
-		return
-	}
-
-	// Validate OTP
-	var valid, otpErrors = validation.ValidateOTP(req.OTP)
-	if !valid {
-		response.BadRequest(c, "INVALID_OTP", "OTP is invalid", otpErrors)
-		return
-	}
-
-	// Here you would typically:
-	// 1. Verify the OTP against the stored value
-	// 2. Mark the user as verified if successful
-
-	response.Success(c, "OTP verified successfully", nil)
-}
