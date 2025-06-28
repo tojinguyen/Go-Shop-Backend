@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/handlers"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
@@ -70,23 +71,15 @@ func SetupRoutes(serviceContainer *services.ServiceContainer) *gin.Engine {
 	})
 
 	// Initialize handler factory
-	handlerFactory := services.NewHandlerFactory(serviceContainer)
+	handlerFactory := handlers.NewHandlerFactory(serviceContainer)
 
 	// Initialize handlers using factory
 	authHandler := handlerFactory.CreateAuthHandler()
 	profileHandler := handlerFactory.CreateProfileHandler()
 
 	// Health check endpoint with detailed health information
-	router.GET("/health", func(c *gin.Context) {
-		healthChecker := services.NewHealthChecker(serviceContainer)
-		healthInfo := healthChecker.CheckHealth(c.Request.Context())
-
-		// Return appropriate HTTP status based on health
-		if healthInfo["status"] == "healthy" {
-			c.JSON(200, healthInfo)
-		} else {
-			c.JSON(503, healthInfo)
-		}
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, "pong")
 	})
 
 	// API versioning
@@ -99,7 +92,7 @@ func SetupRoutes(serviceContainer *services.ServiceContainer) *gin.Engine {
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/logout", authHandler.Logout)
 			auth.POST("/refresh", authHandler.RefreshToken)
-			auth.POST("forgot-password", authHandler.ForgotPassword)
+			auth.POST("/forgot-password", authHandler.ForgotPassword)
 			auth.POST("/reset-password", authHandler.ResetPassword)
 			auth.POST("/change-password", authHandler.ChangePassword)
 			auth.POST("/validate-access-token", authHandler.ValidateToken)

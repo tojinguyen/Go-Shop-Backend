@@ -12,6 +12,7 @@ import (
 	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/validation"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
 // AuthHandler handles authentication-related requests
@@ -30,6 +31,47 @@ func NewAuthHandler(jwtSvc jwtService.JwtService, cfg *config.Config, pgSvc *pos
 		pgService:    pgSvc,
 		redisService: redisSvc,
 	}
+}
+
+// Register handles user registration
+func (h *AuthHandler) Register(c *gin.Context) {
+	var req dto.RegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	// Validate email
+	if !validation.ValidateEmail(req.Email) {
+		response.BadRequest(c, "INVALID_EMAIL", "Invalid email format", "")
+		return
+	}
+
+	// Validate password
+	isValidPassword, passwordErrors := validation.ValidatePassword(req.Password)
+	if !isValidPassword {
+		response.BadRequest(c, "WEAK_PASSWORD", "Password does not meet requirements", strings.Join(passwordErrors, "; "))
+		return
+	}
+
+	// Check password confirmation
+	if req.Password != req.ConfirmPassword {
+		response.BadRequest(c, "PASSWORD_MISMATCH", "Passwords do not match", "")
+		return
+	}
+
+	res, err := services.Register(c, req)
+
+	if err != nil {
+		if err == errorConstants.ErrUserAlreadyExists {
+			response.Conflict(c, "USER_ALREADY_EXISTS", "User with this email already exists")
+			return
+		}
+		response.InternalServerError(c, "REGISTRATION_FAILED", "Failed to register user")
+		return
+	}
+
+	response.Created(c, "User registered successfully", res)
 }
 
 // Login handles user login
@@ -89,36 +131,6 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	response.Success(c, "Login successful", authResponse)
-}
-
-// Register handles user registration
-func (h *AuthHandler) Register(c *gin.Context) {
-	var req dto.RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
-		return
-	}
-
-	// Validate email
-	if !validation.ValidateEmail(req.Email) {
-		response.BadRequest(c, "INVALID_EMAIL", "Invalid email format", "")
-		return
-	}
-
-	// Validate password
-	isValidPassword, passwordErrors := validation.ValidatePassword(req.Password)
-	if !isValidPassword {
-		response.BadRequest(c, "WEAK_PASSWORD", "Password does not meet requirements", strings.Join(passwordErrors, "; "))
-		return
-	}
-
-	// Check password confirmation
-	if req.Password != req.ConfirmPassword {
-		response.BadRequest(c, "PASSWORD_MISMATCH", "Passwords do not match", "")
-		return
-	}
-
-	response.Created(c, "User registered successfully", nil)
 }
 
 // RefreshToken handles token refresh
