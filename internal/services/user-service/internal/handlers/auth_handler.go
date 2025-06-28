@@ -160,27 +160,6 @@ func (h *AuthHandler) ValidateToken(c *gin.Context) {
 	response.Success(c, "Token is valid", tokenInfo)
 }
 
-func (h *AuthHandler) ForgotPassword(c *gin.Context) {
-	var req dto.ForgotPasswordRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
-		return
-	}
-
-	// Validate email format
-	if !validation.ValidateEmail(req.Email) {
-		response.BadRequest(c, "INVALID_EMAIL", "Invalid email format", "")
-		return
-	}
-
-	// Here you would typically:
-	// 1. Check if user exists by email
-	// 2. Generate a password reset token
-	// 3. Send reset link via email
-
-	response.Success(c, "Password reset link sent successfully", nil)
-}
-
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req dto.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

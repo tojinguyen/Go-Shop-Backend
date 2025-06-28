@@ -86,7 +86,6 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/logout", authHandler.Logout)
 			auth.POST("/refresh", authHandler.RefreshToken)
-			auth.POST("/forgot-password", authHandler.ForgotPassword)
 			auth.POST("/reset-password", authHandler.ResetPassword)
 			auth.POST("/change-password", authHandler.ChangePassword)
 			auth.POST("/validate-access-token", authHandler.ValidateToken)
