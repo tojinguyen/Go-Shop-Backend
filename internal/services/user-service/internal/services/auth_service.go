@@ -165,3 +165,22 @@ func (s *AuthService) RefreshToken(ctx *gin.Context, req dto.RefreshTokenRequest
 		},
 	}, nil
 }
+
+func (s *AuthService) ValidateToken(ctx *gin.Context, token string) (*dto.TokenValidationResponse, error) {
+	// Validate access token
+	claims, err := s.container.GetJWT().ValidateAccessToken(ctx.Request.Context(), token)
+	if err != nil {
+		return nil, fmt.Errorf("token validation failed: %w", err)
+	}
+
+	// Return token information
+	tokenInfo := &dto.TokenValidationResponse{
+		Valid:     true,
+		UserID:    claims.UserId,
+		UserEmail: claims.Email,
+		UserRole:  claims.Role,
+		ExpiresAt: claims.ExpiresAt,
+	}
+
+	return tokenInfo, nil
+}

@@ -4,36 +4,22 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
-	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
-	errorConstants "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/errors"
-	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/validation"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
 // AuthHandler handles authentication-related requests
 type AuthHandler struct {
-	jwtService      jwtService.JwtService
-	config          *config.Config
-	pgService       *postgresql_infra.PostgreSQLService
-	redisService    *redis_infra.RedisService
-	userAccountRepo repository.UserAccountRepository
+	authService *services.AuthService
 }
 
 // NewAuthHandler creates a new auth handler
 func NewAuthHandler(sc container.ServiceContainer) *AuthHandler {
 	return &AuthHandler{
-		jwtService:      sc.GetJWT(),
-		config:          sc.GetConfig(),
-		pgService:       sc.GetPostgreSQL(),
-		redisService:    sc.GetRedis(),
-		userAccountRepo: sc.GetUserAccountRepo(),
+		authService: services.NewAuthService(&sc),
 	}
 }
 
@@ -64,10 +50,10 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	res, err := services.Register(c, req)
+	res, err := h.authService.Register(c, req)
 
 	if err != nil {
-		if err == errorConstants.ErrUserAlreadyExists {
+		if strings.Contains(err.Error(), "already exists") {
 			response.Conflict(c, "USER_ALREADY_EXISTS", "User with this email already exists")
 			return
 		}
@@ -92,46 +78,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Here you would typically:
-	// 1. Find user by email in database
-	// 2. Verify password hash
-	// 3. Check if user is active
-
-	// For demo purposes, we'll create a mock user
-	mockUser := &dto.UserInfo{
-		ID:        "user-123",
-		Email:     req.Email,
-		FirstName: "John",
-		LastName:  "Doe",
-		Username:  "johndoe",
-		Role:      "user",
-	}
-
-	// Generate tokens
-	tokenInput := &jwtService.GenerateTokenInput{
-		UserId: mockUser.ID,
-		Email:  mockUser.Email,
-		Role:   mockUser.Role,
-	}
-
-	accessToken, err := h.jwtService.GenerateAccessToken(tokenInput)
+	// Use AuthService to handle login
+	authResponse, err := h.authService.Login(c, req)
 	if err != nil {
-		response.InternalServerError(c, "TOKEN_GENERATION_FAILED", "Failed to generate access token")
+		if strings.Contains(err.Error(), "invalid email or password") {
+			response.Unauthorized(c, "INVALID_CREDENTIALS", "Invalid email or password")
+			return
+		}
+		response.InternalServerError(c, "LOGIN_FAILED", "Failed to login user")
 		return
-	}
-
-	refreshToken, err := h.jwtService.GenerateRefreshToken(tokenInput)
-	if err != nil {
-		response.InternalServerError(c, "TOKEN_GENERATION_FAILED", "Failed to generate refresh token")
-		return
-	}
-
-	authResponse := &dto.AuthResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		TokenType:    "Bearer",
-		ExpiresIn:    int64(h.config.JWT.AccessTokenTTL.Seconds()),
-		User:         mockUser,
 	}
 
 	response.Success(c, "Login successful", authResponse)
@@ -145,48 +100,15 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	// Validate refresh token
-	claims, err := h.jwtService.ValidateRefreshToken(req.RefreshToken)
+	// Use AuthService to handle token refresh
+	authResponse, err := h.authService.RefreshToken(c, req)
 	if err != nil {
-		var errorCode string
-		switch err {
-		case errorConstants.ErrTokenExpired:
-			errorCode = "REFRESH_TOKEN_EXPIRED"
-		case errorConstants.ErrTokenInvalid:
-			errorCode = "REFRESH_TOKEN_INVALID"
-		default:
-			errorCode = "REFRESH_TOKEN_VALIDATION_FAILED"
+		if strings.Contains(err.Error(), "invalid refresh token") {
+			response.Unauthorized(c, "REFRESH_TOKEN_INVALID", "Invalid refresh token")
+			return
 		}
-
-		response.Unauthorized(c, errorCode, err.Error())
+		response.InternalServerError(c, "TOKEN_REFRESH_FAILED", "Failed to refresh token")
 		return
-	}
-
-	// Generate new access token
-	tokenInput := &jwtService.GenerateTokenInput{
-		UserId: claims.UserId,
-		Email:  claims.Email,
-		Role:   claims.Role,
-	}
-
-	newAccessToken, err := h.jwtService.GenerateAccessToken(tokenInput)
-	if err != nil {
-		response.InternalServerError(c, "TOKEN_GENERATION_FAILED", "Failed to generate access token")
-		return
-	}
-
-	// Optionally generate new refresh token
-	newRefreshToken, err := h.jwtService.GenerateRefreshToken(tokenInput)
-	if err != nil {
-		response.InternalServerError(c, "TOKEN_GENERATION_FAILED", "Failed to generate refresh token")
-		return
-	}
-
-	authResponse := &dto.AuthResponse{
-		AccessToken:  newAccessToken,
-		RefreshToken: newRefreshToken,
-		TokenType:    "Bearer",
-		ExpiresIn:    int64(h.config.JWT.AccessTokenTTL.Seconds()),
 	}
 
 	response.Success(c, "Token refreshed successfully", authResponse)
@@ -221,31 +143,18 @@ func (h *AuthHandler) ValidateToken(c *gin.Context) {
 	}
 
 	// Validate token
-	claims, err := h.jwtService.ValidateAccessToken(c.Request.Context(), token)
+	tokenInfo, err := h.authService.ValidateToken(c, token)
 	if err != nil {
-		var errorCode string
-		switch err {
-		case errorConstants.ErrTokenExpired:
-			errorCode = "TOKEN_EXPIRED"
-		case errorConstants.ErrTokenInvalid:
-			errorCode = "TOKEN_INVALID"
-		default:
-			errorCode = "TOKEN_VALIDATION_FAILED"
+		if strings.Contains(err.Error(), "expired") {
+			response.Unauthorized(c, "TOKEN_EXPIRED", "Token has expired")
+			return
 		}
-
-		response.Unauthorized(c, errorCode, err.Error())
+		if strings.Contains(err.Error(), "invalid") {
+			response.Unauthorized(c, "TOKEN_INVALID", "Invalid token")
+			return
+		}
+		response.Unauthorized(c, "TOKEN_VALIDATION_FAILED", "Token validation failed")
 		return
-	}
-
-	// Return token information
-	tokenInfo := &dto.TokenValidationResponse{
-		Valid:     true,
-		UserID:    claims.UserId,
-		UserEmail: claims.Email,
-		UserRole:  claims.Role,
-		ExpiresAt: claims.ExpiresAt,
-		IssuedAt:  claims.IssuedAt,
-		Issuer:    claims.Issuer,
 	}
 
 	response.Success(c, "Token is valid", tokenInfo)
