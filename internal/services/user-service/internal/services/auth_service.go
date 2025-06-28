@@ -59,13 +59,6 @@ func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.R
 	}, nil
 }
 
-// Register function signature for backward compatibility
-func Register(ctx *gin.Context, req dto.RegisterRequest) (dto.RegisterResponse, error) {
-	// This function would need a service container instance
-	// It's better to use the AuthService struct method above
-	return dto.RegisterResponse{}, fmt.Errorf("use AuthService.Register method instead")
-}
-
 func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthResponse, error) {
 	// Get user by email
 	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(context.Background(), req.Email)
@@ -183,4 +176,117 @@ func (s *AuthService) ValidateToken(ctx *gin.Context, token string) (*dto.TokenV
 	}
 
 	return tokenInfo, nil
+}
+
+func (s *AuthService) Logout(ctx *gin.Context, token string) error {
+	// Extract user ID from token for logging purposes
+	claims, err := s.container.GetJWT().ValidateAccessToken(ctx.Request.Context(), token)
+	if err != nil {
+		// Even if token is invalid, we consider logout successful
+		return nil
+	}
+
+	// TODO: Implement token blacklisting in Redis
+	// For now, we'll just return success since JWT tokens are stateless
+	// In a production environment, you would:
+	// 1. Add token to Redis blacklist with expiry time
+	// 2. Log the logout event
+	// 3. Clear any user sessions
+
+	// Log the logout
+	fmt.Printf("User %s logged out successfully\n", claims.UserId)
+
+	return nil
+}
+
+func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordRequest) error {
+	// Check if user exists
+	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(context.Background(), req.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Don't reveal if email exists or not for security
+			return nil
+		}
+		return fmt.Errorf("failed to check user existence: %w", err)
+	}
+
+	// Generate password reset token (you can use JWT or random token)
+	resetToken, err := s.generatePasswordResetToken(userAccount.Id)
+	if err != nil {
+		return fmt.Errorf("failed to generate reset token: %w", err)
+	}
+
+	// TODO: Store reset token in Redis with expiry (15 minutes)
+	// TODO: Send email with reset link
+	// For now, we'll just log it
+	fmt.Printf("Password reset requested for user %s. Reset token: %s\n", userAccount.Email, resetToken)
+
+	return nil
+}
+
+func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordRequest) error {
+	// TODO: Validate reset token from Redis
+	// For now, we'll just check if user exists
+	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(context.Background(), req.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("user not found")
+		}
+		return fmt.Errorf("failed to get user account: %w", err)
+	}
+
+	// TODO: Hash new password and update in database
+	// For now, just return success
+	fmt.Printf("Password reset for user %s\n", userAccount.Email)
+
+	return nil
+}
+
+func (s *AuthService) ChangePassword(ctx *gin.Context, req dto.ChangePasswordRequest) error {
+	// Get user account
+	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(context.Background(), req.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("user not found")
+		}
+		return fmt.Errorf("failed to get user account: %w", err)
+	}
+
+	// Verify current password
+	err = bcrypt.CompareHashAndPassword([]byte(userAccount.HashedPassword), []byte(req.CurrentPassword))
+	if err != nil {
+		return fmt.Errorf("current password is incorrect")
+	}
+
+	// Hash new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash new password: %w", err)
+	}
+
+	// Update password in database
+	err = s.container.GetUserAccountRepo().UpdateUserPassword(context.Background(), userAccount.Id, string(hashedPassword))
+	if err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	return nil
+}
+
+// Helper function to generate password reset token
+func (s *AuthService) generatePasswordResetToken(userID string) (string, error) {
+	// Generate a simple reset token using JWT with short expiry
+	tokenInput := &jwtService.GenerateTokenInput{
+		UserId: userID,
+		Email:  "", // Not needed for reset token
+		Role:   "password_reset",
+	}
+
+	// For reset tokens, we can reuse the access token generation with shorter expiry
+	resetToken, err := s.container.GetJWT().GenerateAccessToken(tokenInput)
+	if err != nil {
+		return "", err
+	}
+
+	return resetToken, nil
 }

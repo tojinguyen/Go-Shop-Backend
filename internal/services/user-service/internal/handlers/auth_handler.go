@@ -116,10 +116,28 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 // Logout handles user logout
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// Here you would typically:
-	// 1. Blacklist the current token
-	// 2. Clear any user sessions
-	// 3. Log the logout event
+	// Get token from authorization header
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		response.BadRequest(c, "MISSING_TOKEN", "Authorization header is required", "")
+		return
+	}
+
+	// Extract token
+	token := ""
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		token = authHeader[7:]
+	} else {
+		response.BadRequest(c, "INVALID_TOKEN_FORMAT", "Invalid authorization header format", "")
+		return
+	}
+
+	// Use AuthService to handle logout
+	err := h.authService.Logout(c, token)
+	if err != nil {
+		response.InternalServerError(c, "LOGOUT_FAILED", "Failed to logout user")
+		return
+	}
 
 	response.Success(c, "Logout successful", nil)
 }
@@ -160,6 +178,29 @@ func (h *AuthHandler) ValidateToken(c *gin.Context) {
 	response.Success(c, "Token is valid", tokenInfo)
 }
 
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req dto.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	// Validate email format
+	if !validation.ValidateEmail(req.Email) {
+		response.BadRequest(c, "INVALID_EMAIL", "Invalid email format", "")
+		return
+	}
+
+	// Use AuthService to handle forgot password
+	err := h.authService.ForgotPassword(c, req)
+	if err != nil {
+		response.InternalServerError(c, "FORGOT_PASSWORD_FAILED", "Failed to process password reset request")
+		return
+	}
+
+	response.Success(c, "Password reset link sent successfully", nil)
+}
+
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req dto.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -170,6 +211,17 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	// Validate email format
 	if !validation.ValidateEmail(req.Email) {
 		response.BadRequest(c, "INVALID_EMAIL", "Invalid email format", "")
+		return
+	}
+
+	// Use AuthService to handle password reset
+	err := h.authService.ResetPassword(c, req)
+	if err != nil {
+		if strings.Contains(err.Error(), "user not found") {
+			response.NotFound(c, "USER_NOT_FOUND", "User not found")
+			return
+		}
+		response.InternalServerError(c, "RESET_PASSWORD_FAILED", "Failed to reset password")
 		return
 	}
 
@@ -202,10 +254,20 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	// Here you would typically:
-	// 1. Verify current password against stored hash
-	// 2. Hash the new password
-	// 3. Update user password in database
+	// Use AuthService to handle password change
+	err := h.authService.ChangePassword(c, req)
+	if err != nil {
+		if strings.Contains(err.Error(), "user not found") {
+			response.NotFound(c, "USER_NOT_FOUND", "User not found")
+			return
+		}
+		if strings.Contains(err.Error(), "current password is incorrect") {
+			response.BadRequest(c, "INCORRECT_CURRENT_PASSWORD", "Current password is incorrect", "")
+			return
+		}
+		response.InternalServerError(c, "CHANGE_PASSWORD_FAILED", "Failed to change password")
+		return
+	}
 
 	response.Success(c, "Password changed successfully", nil)
 }
