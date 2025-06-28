@@ -26,3 +26,17 @@ func ParseTime(timeStr string) (time.Time, error) {
 func FormatTime(t time.Time) string {
 	return t.Format(time.RFC3339)
 }
+
+// CalculateDurationFromSeconds calculates duration from seconds
+func CalculateDurationFromSeconds(seconds int64) time.Duration {
+	return time.Duration(seconds) * time.Second
+}
+
+// GetSecondsUntilExpiry calculates seconds until expiry from current time
+func GetSecondsUntilExpiry(expiryUnix int64) int64 {
+	now := GetUTCUnixTime()
+	if expiryUnix > now {
+		return expiryUnix - now
+	}
+	return 0
+}
