@@ -10,7 +10,7 @@ import (
 )
 
 // SetupRoutes sets up all the routes for the user service
-func SetupRoutes(serviceContainer *container.ServiceContainer) *gin.Engine {
+func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	cfg := serviceContainer.GetConfig()
 
 	// Set Gin mode based on environment

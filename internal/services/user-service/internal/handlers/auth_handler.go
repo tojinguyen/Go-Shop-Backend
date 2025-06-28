@@ -7,29 +7,33 @@ import (
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
 	errorConstants "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/errors"
 	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/validation"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
 // AuthHandler handles authentication-related requests
 type AuthHandler struct {
-	jwtService   jwtService.JwtService
-	config       *config.Config
-	pgService    *postgresql_infra.PostgreSQLService
-	redisService *redis_infra.RedisService
+	jwtService      jwtService.JwtService
+	config          *config.Config
+	pgService       *postgresql_infra.PostgreSQLService
+	redisService    *redis_infra.RedisService
+	userAccountRepo repository.UserAccountRepository
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(jwtSvc jwtService.JwtService, cfg *config.Config, pgSvc *postgresql_infra.PostgreSQLService, redisSvc *redis_infra.RedisService) *AuthHandler {
+func NewAuthHandler(sc container.ServiceContainer) *AuthHandler {
 	return &AuthHandler{
-		jwtService:   jwtSvc,
-		config:       cfg,
-		pgService:    pgSvc,
-		redisService: redisSvc,
+		jwtService:      sc.GetJWT(),
+		config:          sc.GetConfig(),
+		pgService:       sc.GetPostgreSQL(),
+		redisService:    sc.GetRedis(),
+		userAccountRepo: sc.GetUserAccountRepo(),
 	}
 }
 

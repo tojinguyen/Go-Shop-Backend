@@ -6,11 +6,11 @@ import (
 
 // HandlerFactory creates handlers with all necessary dependencies
 type HandlerFactory struct {
-	container *container.ServiceContainer
+	container container.ServiceContainer
 }
 
 // NewHandlerFactory creates a new handler factory
-func NewHandlerFactory(container *container.ServiceContainer) *HandlerFactory {
+func NewHandlerFactory(container container.ServiceContainer) *HandlerFactory {
 	return &HandlerFactory{
 		container: container,
 	}
@@ -19,10 +19,7 @@ func NewHandlerFactory(container *container.ServiceContainer) *HandlerFactory {
 // CreateAuthHandler creates an authentication handler
 func (hf *HandlerFactory) CreateAuthHandler() *AuthHandler {
 	return NewAuthHandler(
-		hf.container.GetJWT(),
-		hf.container.GetConfig(),
-		hf.container.GetPostgreSQL(),
-		hf.container.GetRedis(),
+		hf.container,
 	)
 }
 

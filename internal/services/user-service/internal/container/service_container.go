@@ -8,34 +8,39 @@ import (
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 )
 
 // ServiceContainer holds all application services
 type ServiceContainer struct {
-	Config     *config.Config
-	PostgreSQL *postgresql_infra.PostgreSQLService
-	Redis      *redis_infra.RedisService
-	JWT        jwtService.JwtService
+	Config          *config.Config
+	PostgreSQL      *postgresql_infra.PostgreSQLService
+	Redis           *redis_infra.RedisService
+	JWT             jwtService.JwtService
+	UserAccountRepo repository.UserAccountRepository
 }
 
 // NewServiceContainer creates and initializes all services
-func NewServiceContainer(cfg *config.Config) (*ServiceContainer, error) {
-	container := &ServiceContainer{
+func NewServiceContainer(cfg *config.Config) (ServiceContainer, error) {
+	container := ServiceContainer{
 		Config: cfg,
 	}
 
 	// Initialize PostgreSQL service
 	if err := container.initPostgreSQL(); err != nil {
-		return nil, fmt.Errorf("failed to initialize PostgreSQL: %w", err)
+		return ServiceContainer{}, fmt.Errorf("failed to initialize PostgreSQL: %w", err)
 	}
 
 	// Initialize Redis service
 	if err := container.initRedis(); err != nil {
-		return nil, fmt.Errorf("failed to initialize Redis: %w", err)
+		return ServiceContainer{}, fmt.Errorf("failed to initialize Redis: %w", err)
 	}
 
 	// Initialize JWT service
 	container.initJWT()
+
+	// Initialize UserAccountRepository
+	container.initUserAccountRepository()
 
 	log.Println("All services initialized successfully")
 	return container, nil
@@ -86,6 +91,11 @@ func (sc *ServiceContainer) initJWT() {
 	log.Println("JWT service initialized")
 }
 
+func (sc *ServiceContainer) initUserAccountRepository() {
+	sc.UserAccountRepo = repository.NewUserAccountRepository(sc.PostgreSQL)
+	log.Println("UserAccountRepository initialized")
+}
+
 // Close gracefully closes all services
 func (sc *ServiceContainer) Close() {
 	log.Println("Shutting down services...")
@@ -121,4 +131,9 @@ func (sc *ServiceContainer) GetJWT() jwtService.JwtService {
 // GetConfig returns configuration
 func (sc *ServiceContainer) GetConfig() *config.Config {
 	return sc.Config
+}
+
+// GetUserAccountRepo returns UserAccountRepository
+func (sc *ServiceContainer) GetUserAccountRepo() repository.UserAccountRepository {
+	return sc.UserAccountRepo
 }
