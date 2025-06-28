@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -13,6 +12,7 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
 	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
+	timeUtils "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/time"
 )
 
 type AuthService struct {
@@ -185,12 +185,11 @@ func (s *AuthService) Logout(ctx *gin.Context, token string) error {
 	blacklistKey := fmt.Sprintf("blacklisted_token:%s", token)
 
 	// Calculate expiry time based on token's remaining lifetime
-	now := time.Now().Unix()
-	expiresAt := claims.ExpiresAt
+	secondsUntilExpiry := timeUtils.GetSecondsUntilExpiry(claims.ExpiresAt)
 
-	if expiresAt > now {
+	if secondsUntilExpiry > 0 {
 		// Token is still valid, blacklist it until it naturally expires
-		remainingTTL := time.Duration(expiresAt-now) * time.Second
+		remainingTTL := timeUtils.CalculateDurationFromSeconds(secondsUntilExpiry)
 
 		// Store token in Redis blacklist with remaining TTL
 		err = s.container.GetRedis().Set(blacklistKey, "blacklisted", remainingTTL)
