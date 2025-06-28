@@ -210,7 +210,7 @@ func (s *AuthService) Logout(ctx *gin.Context, token string) error {
 
 func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordRequest) error {
 	// Check if user exists
-	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(context.Background(), req.Email)
+	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(ctx, req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Don't reveal if email exists or not for security
@@ -232,6 +232,12 @@ func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordReq
 		return fmt.Errorf("failed to store reset token: %w", err)
 	}
 
+	// Get frontend URL from config
+	frontendURL := s.container.GetConfig().App.FrontendURL
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000" // fallback
+	}
+
 	// Prepare email data
 	emailData := struct {
 		UserName   string
@@ -240,7 +246,7 @@ func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordReq
 	}{
 		UserName:   userAccount.Email, // You might want to add a name field to user account
 		ResetToken: resetToken,
-		ResetLink:  fmt.Sprintf("http://localhost:3000/reset-password?token=%s", resetToken), // Adjust URL as needed
+		ResetLink:  fmt.Sprintf("%s/reset-password?token=%s", frontendURL, resetToken),
 	}
 
 	// Send password reset email using template
@@ -371,6 +377,20 @@ func (s *AuthService) ChangePassword(ctx *gin.Context, req dto.ChangePasswordReq
 	return nil
 }
 
+// IsTokenBlacklisted checks if a token is in the Redis blacklist
+func (s *AuthService) IsTokenBlacklisted(token string) bool {
+	blacklistKey := fmt.Sprintf("blacklisted_token:%s", token)
+
+	exists, err := s.container.GetRedis().Exists(blacklistKey)
+	if err != nil {
+		// If Redis is unavailable, log error but don't block authentication
+		fmt.Printf("Warning: Failed to check token blacklist: %v\n", err)
+		return false
+	}
+
+	return exists
+}
+
 // Helper function to generate password reset token
 func (s *AuthService) generatePasswordResetToken(userID string) (string, error) {
 	// Generate a password reset token using JWT with 15 minutes expiry
@@ -387,18 +407,4 @@ func (s *AuthService) generatePasswordResetToken(userID string) (string, error) 
 	}
 
 	return resetToken, nil
-}
-
-// IsTokenBlacklisted checks if a token is in the Redis blacklist
-func (s *AuthService) IsTokenBlacklisted(token string) bool {
-	blacklistKey := fmt.Sprintf("blacklisted_token:%s", token)
-
-	exists, err := s.container.GetRedis().Exists(blacklistKey)
-	if err != nil {
-		// If Redis is unavailable, log error but don't block authentication
-		fmt.Printf("Warning: Failed to check token blacklist: %v\n", err)
-		return false
-	}
-
-	return exists
 }

@@ -73,6 +73,7 @@ type AppConfig struct {
 	Environment string `json:"environment"`
 	Debug       bool   `json:"debug"`
 	LogLevel    string `json:"log_level"`
+	FrontendURL string `json:"frontend_url"`
 }
 
 // EmailConfig holds email configuration
@@ -136,6 +137,7 @@ func Load() (*Config, error) {
 			Environment: getEnvWithDefault("APP_ENV", "development"),
 			Debug:       getBoolEnvWithDefault("APP_DEBUG", true),
 			LogLevel:    getEnvWithDefault("LOG_LEVEL", "info"),
+			FrontendURL: getEnvWithDefault("FRONTEND_URL", "http://localhost:3000"),
 		},
 		Email: EmailConfig{
 			Host:         getEnvWithDefault("EMAIL_HOST", "smtp.example.com"),
