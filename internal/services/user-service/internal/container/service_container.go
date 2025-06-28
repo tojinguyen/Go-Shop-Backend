@@ -13,17 +13,17 @@ import (
 
 // ServiceContainer holds all application services
 type ServiceContainer struct {
-	Config          *config.Config
-	PostgreSQL      *postgresql_infra.PostgreSQLService
-	Redis           *redis_infra.RedisService
-	JWT             jwtService.JwtService
-	UserAccountRepo repository.UserAccountRepository
+	config          *config.Config
+	postgreSQL      *postgresql_infra.PostgreSQLService
+	redis           *redis_infra.RedisService
+	jwt             jwtService.JwtService
+	userAccountRepo repository.UserAccountRepository
 }
 
 // NewServiceContainer creates and initializes all services
 func NewServiceContainer(cfg *config.Config) (ServiceContainer, error) {
 	container := ServiceContainer{
-		Config: cfg,
+		config: cfg,
 	}
 
 	// Initialize PostgreSQL service
@@ -50,15 +50,15 @@ func NewServiceContainer(cfg *config.Config) (ServiceContainer, error) {
 func (sc *ServiceContainer) initPostgreSQL() error {
 	// Convert config types
 	pgConfig := &postgresql_infra.DatabaseConfig{
-		Host:         sc.Config.Database.Host,
-		Port:         sc.Config.Database.Port,
-		User:         sc.Config.Database.User,
-		Password:     sc.Config.Database.Password,
-		Name:         sc.Config.Database.Name,
-		SSLMode:      sc.Config.Database.SSLMode,
-		MaxOpenConns: sc.Config.Database.MaxOpenConns,
-		MaxIdleConns: sc.Config.Database.MaxIdleConns,
-		MaxLifetime:  sc.Config.Database.MaxLifetime,
+		Host:         sc.config.Database.Host,
+		Port:         sc.config.Database.Port,
+		User:         sc.config.Database.User,
+		Password:     sc.config.Database.Password,
+		Name:         sc.config.Database.Name,
+		SSLMode:      sc.config.Database.SSLMode,
+		MaxOpenConns: sc.config.Database.MaxOpenConns,
+		MaxIdleConns: sc.config.Database.MaxIdleConns,
+		MaxLifetime:  sc.config.Database.MaxLifetime,
 	}
 
 	pgService, err := postgresql_infra.NewPostgreSQLService(pgConfig)
@@ -66,33 +66,33 @@ func (sc *ServiceContainer) initPostgreSQL() error {
 		return fmt.Errorf("failed to create PostgreSQL service: %w", err)
 	}
 
-	sc.PostgreSQL = pgService
+	sc.postgreSQL = pgService
 	log.Println("PostgreSQL service initialized")
 	return nil
 }
 
 // initRedis initializes Redis service
 func (sc *ServiceContainer) initRedis() error {
-	redisService := redis_infra.NewRedisService(sc.Config.Redis.Host, sc.Config.Redis.Port, sc.Config.Redis.Password, sc.Config.Redis.DB)
+	redisService := redis_infra.NewRedisService(sc.config.Redis.Host, sc.config.Redis.Port, sc.config.Redis.Password, sc.config.Redis.DB)
 
 	// Test Redis connection
 	if err := redisService.Ping(); err != nil {
 		return fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
-	sc.Redis = redisService
+	sc.redis = redisService
 	log.Println("Redis service initialized")
 	return nil
 }
 
 // initJWT initializes JWT service
 func (sc *ServiceContainer) initJWT() {
-	sc.JWT = jwtService.NewJwtService(sc.Config)
+	sc.jwt = jwtService.NewJwtService(sc.config)
 	log.Println("JWT service initialized")
 }
 
 func (sc *ServiceContainer) initUserAccountRepository() {
-	sc.UserAccountRepo = repository.NewUserAccountRepository(sc.PostgreSQL)
+	sc.userAccountRepo = repository.NewUserAccountRepository(sc.postgreSQL)
 	log.Println("UserAccountRepository initialized")
 }
 
@@ -100,13 +100,13 @@ func (sc *ServiceContainer) initUserAccountRepository() {
 func (sc *ServiceContainer) Close() {
 	log.Println("Shutting down services...")
 
-	if sc.PostgreSQL != nil {
-		sc.PostgreSQL.Close()
+	if sc.postgreSQL != nil {
+		sc.postgreSQL.Close()
 		log.Println("PostgreSQL service closed")
 	}
 
-	if sc.Redis != nil {
-		sc.Redis.Close()
+	if sc.redis != nil {
+		sc.redis.Close()
 		log.Println("Redis service closed")
 	}
 
@@ -115,25 +115,25 @@ func (sc *ServiceContainer) Close() {
 
 // GetPostgreSQL returns PostgreSQL service
 func (sc *ServiceContainer) GetPostgreSQL() *postgresql_infra.PostgreSQLService {
-	return sc.PostgreSQL
+	return sc.postgreSQL
 }
 
 // GetRedis returns Redis service
 func (sc *ServiceContainer) GetRedis() *redis_infra.RedisService {
-	return sc.Redis
+	return sc.redis
 }
 
 // GetJWT returns JWT service
 func (sc *ServiceContainer) GetJWT() jwtService.JwtService {
-	return sc.JWT
+	return sc.jwt
 }
 
 // GetConfig returns configuration
 func (sc *ServiceContainer) GetConfig() *config.Config {
-	return sc.Config
+	return sc.config
 }
 
 // GetUserAccountRepo returns UserAccountRepository
 func (sc *ServiceContainer) GetUserAccountRepo() repository.UserAccountRepository {
-	return sc.UserAccountRepo
+	return sc.userAccountRepo
 }
