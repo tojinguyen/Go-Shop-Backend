@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     birthday DATE,
     phone VARCHAR(20) UNIQUE,
     user_role VARCHAR(20) NOT NULL DEFAULT 'user', -- Enum: user, shipper
-    deleted_at TIMESTAMP WITH TIME ZONE,
     banned_at TIMESTAMP WITH TIME ZONE,
     avatar_url TEXT,
     gender VARCHAR(10), -- Enum: MALE, FEMALE, OTHER

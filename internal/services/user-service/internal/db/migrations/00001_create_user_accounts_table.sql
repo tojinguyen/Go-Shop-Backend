@@ -6,7 +6,8 @@ CREATE TABLE user_accounts (
     hashed_password TEXT NOT NULL,
     last_login_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 -- +goose StatementEnd
 
