@@ -28,6 +28,7 @@ go.work.sum
 .env
 
 error.log
+access.log
 
 logs/
 
