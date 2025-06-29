@@ -13,14 +13,14 @@ RUN addgroup -g 10001 appgroup && \
 
 WORKDIR /build
 
-# Copy go mod files first for better caching
-COPY go.mod go.sum ./
+# Copy the entire project structure to maintain relative paths
+COPY . .
+
+# Navigate to user-service directory
+WORKDIR /build/internal/services/user-service
 
 # Download dependencies
 RUN go mod download && go mod verify
-
-# Copy source code
-COPY . .
 
 # Build the binary with security optimizations
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
@@ -33,10 +33,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 FROM gcr.io/distroless/static-debian12:nonroot
 
 # Copy the binary
-COPY --from=builder /build/user-service /app/user-service
+COPY --from=builder /build/internal/services/user-service/user-service /app/user-service
 
 # Copy templates if they exist
-COPY --from=builder /build/templates /app/templates
+COPY --from=builder /build/internal/services/user-service/templates /app/templates
 
 # Set working directory
 WORKDIR /app
