@@ -30,7 +30,6 @@ services:
       - ./internal/services/user-service/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init:/docker-entrypoint-initdb.d
     networks:
       - go-shop-network
     restart: unless-stopped

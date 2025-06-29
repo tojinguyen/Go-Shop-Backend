@@ -7,13 +7,10 @@ create-migration:
 		goose -dir migrations/mysql create -s $(name) sql \
 	)
 
-	@echo "🧹 Cleaning up environment files..."
-	@if exist "deployments\.env" ( \
-		del "deployments\.env" && echo "🗑️  Removed deployments\.env" \
-	)
-	@if exist "deployments\dev\.env" ( \
-		del "deployments\dev\.env" && echo "🗑️  Removed deployments\dev\.env" \
-	)
-	@echo "✅ Environment cleanup complete!"
-
+build:
+	docker compose up -d --build 
+dev up:
+	docker compose up -d 
+dev down:
+	docker compose down
 
