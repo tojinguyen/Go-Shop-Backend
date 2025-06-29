@@ -21,6 +21,11 @@ func main() {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
+	// Debug configuration (chỉ trong development)
+	if cfg.App.IsDevelopment() {
+		cfg.Debug()
+	}
+
 	// Initialize service container
 	serviceContainer, err := container.NewServiceContainer(cfg)
 	if err != nil {

@@ -96,8 +96,8 @@ func Load() (*Config, error) {
 
 	config := &Config{
 		Server: ServerConfig{
-			Host:         getEnvWithDefault("SERVER_HOST", "localhost"),
-			Port:         getEnvWithDefault("SERVER_PORT", "8081"),
+			Host:         getEnvWithDefault("SERVICE_HOST", "0.0.0.0"),
+			Port:         getEnvWithDefault("SERVICE_PORT", "8080"),
 			ReadTimeout:  getDurationEnvWithDefault("SERVER_READ_TIMEOUT", 30*time.Second),
 			WriteTimeout: getDurationEnvWithDefault("SERVER_WRITE_TIMEOUT", 30*time.Second),
 			IdleTimeout:  getDurationEnvWithDefault("SERVER_IDLE_TIMEOUT", 60*time.Second),
@@ -106,8 +106,8 @@ func Load() (*Config, error) {
 			Host:         getEnvWithDefault("DB_HOST", "localhost"),
 			Port:         getEnvWithDefault("DB_PORT", "5432"),
 			User:         getEnvWithDefault("DB_USER", "postgres"),
-			Password:     getEnvWithDefault("DB_PASSWORD", ""),
-			Name:         getEnvWithDefault("DB_NAME", "go_shop_users"),
+			Password:     getEnvWithDefault("DB_PASSWORD", "postgres123"),
+			Name:         getEnvWithDefault("DB_NAME", "go_shop_user_service"),
 			SSLMode:      getEnvWithDefault("DB_SSL_MODE", "disable"),
 			MaxOpenConns: getIntEnvWithDefault("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns: getIntEnvWithDefault("DB_MAX_IDLE_CONNS", 25),
@@ -115,14 +115,14 @@ func Load() (*Config, error) {
 		},
 		JWT: JWTConfig{
 			SecretKey:       getEnvWithDefault("JWT_SECRET_KEY", "your-secret-key"),
-			AccessTokenTTL:  getDurationEnvWithDefault("JWT_ACCESS_TOKEN_TTL", 15*time.Minute),
-			RefreshTokenTTL: getDurationEnvWithDefault("JWT_REFRESH_TOKEN_TTL", 24*time.Hour),
+			AccessTokenTTL:  getDurationEnvWithDefault("JWT_ACCESS_TOKEN_EXPIRY", 15*time.Minute),
+			RefreshTokenTTL: getDurationEnvWithDefault("JWT_REFRESH_TOKEN_EXPIRY", 24*time.Hour),
 			Issuer:          getEnvWithDefault("JWT_ISSUER", "go-shop-user-service"),
 		},
 		Redis: RedisConfig{
-			Host:     getEnvWithDefault("REDIS_HOST", "localhost"),
+			Host:     getEnvWithDefault("REDIS_HOST", "redis-cache"),
 			Port:     getEnvWithDefault("REDIS_PORT", "6379"),
-			Password: getEnvWithDefault("REDIS_PASSWORD", ""),
+			Password: getEnvWithDefault("REDIS_PASSWORD", "redis123"),
 			DB:       getIntEnvWithDefault("REDIS_DB", 0),
 		},
 		CORS: CORSConfig{
@@ -181,6 +181,18 @@ func (c *AppConfig) IsProduction() bool {
 // IsDevelopment returns true if the environment is development
 func (c *AppConfig) IsDevelopment() bool {
 	return c.Environment == "development"
+}
+
+// Debug prints configuration values (without sensitive data)
+func (c *Config) Debug() {
+	fmt.Printf("=== Configuration Debug ===\n")
+	fmt.Printf("Server: %s:%s\n", c.Server.Host, c.Server.Port)
+	fmt.Printf("Database: %s@%s:%s/%s (SSL: %s)\n", c.Database.User, c.Database.Host, c.Database.Port, c.Database.Name, c.Database.SSLMode)
+	fmt.Printf("Redis: %s:%s (DB: %d)\n", c.Redis.Host, c.Redis.Port, c.Redis.DB)
+	fmt.Printf("JWT Issuer: %s\n", c.JWT.Issuer)
+	fmt.Printf("Environment: %s\n", c.App.Environment)
+	fmt.Printf("Debug Mode: %v\n", c.App.Debug)
+	fmt.Printf("===========================\n")
 }
 
 // Helper functions for environment variable parsing
