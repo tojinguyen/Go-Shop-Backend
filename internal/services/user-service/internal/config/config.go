@@ -105,8 +105,8 @@ func Load() (*Config, error) {
 		Database: DatabaseConfig{
 			Host:         getEnvWithDefault("DB_HOST", "localhost"),
 			Port:         getEnvWithDefault("DB_PORT", "5432"),
-			User:         getEnvWithDefault("DB_USER", "postgres"),
-			Password:     getEnvWithDefault("DB_PASSWORD", "postgres123"),
+			User:         getEnvWithDefault("POSTGRES_USER", "postgres"),
+			Password:     getEnvWithDefault("POSTGRES_PASSWORD", "postgres123"),
 			Name:         getEnvWithDefault("DB_NAME", "go_shop_user_service"),
 			SSLMode:      getEnvWithDefault("DB_SSL_MODE", "disable"),
 			MaxOpenConns: getIntEnvWithDefault("DB_MAX_OPEN_CONNS", 25),
