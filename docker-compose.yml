@@ -22,7 +22,7 @@ services:
   # PostgreSQL Database
   postgres-user-service:
     image: postgres:15-alpine
-    container_name: ${PROJECT_NAME:-go-shop}-postgres
+    container_name: ${PROJECT_NAME:-go-shop}-postgres-user-service
     ports:
       - "${DB_PORT:-5432}:5432"
     env_file:

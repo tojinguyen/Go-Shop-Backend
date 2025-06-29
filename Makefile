@@ -9,8 +9,8 @@ create-migration:
 
 build:
 	docker compose up -d --build 
-dev up:
+up:
 	docker compose up -d 
-dev down:
+down:
 	docker compose down
 
