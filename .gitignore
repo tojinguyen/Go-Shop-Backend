@@ -29,6 +29,8 @@ go.work.sum
 
 error.log
 
+logs/
+
 # Editor/IDE
 # .idea/
 # .vscode/
