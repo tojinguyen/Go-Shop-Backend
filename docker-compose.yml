@@ -4,7 +4,7 @@ services:
   # Microservices
   user-service:
     build:
-      context: ../internal/services/user-service
+      context: ./internal/services/user-service
       dockerfile: Dockerfile
     container_name: ${PROJECT_NAME:-go-shop}-user-service
     ports:
