@@ -80,7 +80,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@go-shop.com
       PGADMIN_DEFAULT_PASSWORD: admin123
     ports:
-      - "5050:80"
+      - "5050:5050"
     depends_on:
       - postgres-user-service
     networks:
