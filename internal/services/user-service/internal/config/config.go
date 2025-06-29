@@ -188,6 +188,7 @@ func (c *Config) Debug() {
 	fmt.Printf("=== Configuration Debug ===\n")
 	fmt.Printf("Server: %s:%s\n", c.Server.Host, c.Server.Port)
 	fmt.Printf("Database: %s@%s:%s/%s (SSL: %s)\n", c.Database.User, c.Database.Host, c.Database.Port, c.Database.Name, c.Database.SSLMode)
+	fmt.Printf("Database Password: %s\n", c.Database.Password)
 	fmt.Printf("Redis: %s:%s (DB: %d)\n", c.Redis.Host, c.Redis.Port, c.Redis.DB)
 	fmt.Printf("JWT Issuer: %s\n", c.JWT.Issuer)
 	fmt.Printf("Environment: %s\n", c.App.Environment)
