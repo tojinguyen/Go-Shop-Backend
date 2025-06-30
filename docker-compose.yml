@@ -34,8 +34,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres-user-service
-      - redis-cache
+      postgres-user-service:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
     networks:
       - go-shop-network
     restart: unless-stopped
@@ -56,7 +58,7 @@ services:
       - go-shop-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
