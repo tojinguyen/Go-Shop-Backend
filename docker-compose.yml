@@ -29,12 +29,10 @@ services:
       context: .
       dockerfile: ./internal/services/user-service/Dockerfile
     container_name: ${PROJECT_NAME:-go-shop}-user-service
-    # Remove external port mapping since we'll access through nginx
     expose:
       - "8080"
     env_file:
       - .env
-      - ./internal/services/user-service/.env
     depends_on:
       - postgres-user-service
       - redis-cache
@@ -42,17 +40,18 @@ services:
       - go-shop-network
     restart: unless-stopped
 
-  # PostgreSQL Database
+  # PostgreSQL Database (main)
   postgres-user-service:
-    image: postgres:15-alpine
-    container_name: ${PROJECT_NAME:-go-shop}-postgres-user-service
+    image: postgres:15
+    container_name: postgres-user-service
     ports:
-      - "${DB_PORT:-5432}:5432"
-    env_file:
-      - .env
-      - ./internal/services/user-service/.env
+      - "${USER_SERVICE_POSTGRES_PORT:-5432}:5432"
+    environment: 
+      POSTGRES_USER: ${USER_SERVICE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_SERVICE_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${USER_SERVICE_POSTGRES_DB}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - user_postgres_data:/var/lib/postgresql/data
     networks:
       - go-shop-network
     restart: unless-stopped
@@ -94,8 +93,9 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  user_postgres_data:
   redis_data:
+  db_data:
 
 networks:
   go-shop-network:
