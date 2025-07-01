@@ -13,14 +13,29 @@ RUN addgroup -g 10001 appgroup && \
 
 WORKDIR /build
 
-# Copy the entire project structure to maintain relative paths
+# --- Tối ưu hóa Caching ---
+# 1. Sao chép các file go.mod/go.sum để tải dependencies
+# Chỉ những thay đổi trong các file này mới làm cho bước `go mod download` chạy lại.
+
+# Sao chép go.mod/sum của user-service
+COPY internal/services/user-service/go.mod internal/services/user-service/go.sum ./internal/services/user-service/
+
+# Sao chép go.mod/sum của các package dùng chung (nếu có)
+COPY internal/pkg/go.mod internal/pkg/go.sum ./internal/pkg/
+
+# Di chuyển vào thư mục service và tải dependencies
+WORKDIR /build/internal/services/user-service
+RUN go mod download
+
+# 2. Sao chép toàn bộ mã nguồn
+# Bước này sẽ chạy lại khi có bất kỳ thay đổi nào trong mã nguồn,
+# nhưng bước tải dependencies ở trên sẽ được lấy từ cache.
+WORKDIR /build
 COPY . .
 
-# Navigate to user-service directory
+# --- Build ---
+# Di chuyển lại vào thư mục service để build
 WORKDIR /build/internal/services/user-service
-
-# Download dependencies
-RUN go mod download && go mod verify
 
 # Build the binary with security optimizations
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
