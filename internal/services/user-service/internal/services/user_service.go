@@ -1,7 +1,7 @@
 package services
 
 import (
-	"context"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,10 +27,26 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest)
 	// Lấy repository từ ServiceContainer
 	repo := s.container.GetUserProfileRepo()
 
-	userID := uuid.New()
-	role := req.Role
-	if role == "" {
-		role = "user"
+	userIDRaw, exists := ctx.Get("user_id")
+	if !exists {
+		return domain.UserProfile{}, fmt.Errorf("user ID not found in context")
+	}
+	userIDStr, ok := userIDRaw.(string)
+	if !ok {
+		return domain.UserProfile{}, fmt.Errorf("user ID is not a string")
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return domain.UserProfile{}, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	roleRaw, exists := ctx.Get("user_role")
+	if !exists {
+		return domain.UserProfile{}, fmt.Errorf("user role not found in context")
+	}
+	role, ok := roleRaw.(string)
+	if !ok {
+		return domain.UserProfile{}, fmt.Errorf("user role is not a string")
 	}
 
 	params := sqlc.CreateUserProfileParams{
@@ -45,7 +61,7 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest)
 		Gender:           stringToPgText(""), // Cập nhật nếu có trường gender
 		DefaultAddressID: nullPgUUID(),
 	}
-	profile, err := repo.CreateUserProfile(context.Background(), params)
+	profile, err := repo.CreateUserProfile(ctx, params)
 	if err != nil {
 		return domain.UserProfile{}, err
 	}

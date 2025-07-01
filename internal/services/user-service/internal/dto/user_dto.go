@@ -10,7 +10,8 @@ type CreateUserRequest struct {
 	LastName  string `json:"last_name" binding:"required" validate:"required,min=2,max=50"`
 	Username  string `json:"username" validate:"omitempty,min=3,max=30"`
 	Phone     string `json:"phone" validate:"omitempty,e164"`
-	Role      string `json:"role" validate:"omitempty,oneof=user admin shipper"`
+	AvatarURL string `json:"avatar_url" validate:"omitempty,url"`
+	Birthday  string `json:"birthday" validate:"omitempty,datetime=2006-01-02"`
 }
 
 // UpdateUserRequest represents the update user request payload
