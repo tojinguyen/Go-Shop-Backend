@@ -77,6 +77,7 @@ func (r *userAccountRepository) GetUserAccountByEmail(ctx context.Context, email
 		Id:             result.ID.String(),
 		Email:          result.Email,
 		HashedPassword: result.HashedPassword,
+		Role:           result.UserRole,
 	}
 
 	// Handle nullable timestamp fields
