@@ -37,9 +37,11 @@ type UserAccount struct {
 	ID             pgtype.UUID        `json:"id"`
 	Email          string             `json:"email"`
 	HashedPassword string             `json:"hashed_password"`
+	UserRole       string             `json:"user_role"`
 	LastLoginAt    pgtype.Timestamptz `json:"last_login_at"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type UserProfile struct {
@@ -48,8 +50,6 @@ type UserProfile struct {
 	FullName         pgtype.Text        `json:"full_name"`
 	Birthday         pgtype.Date        `json:"birthday"`
 	Phone            pgtype.Text        `json:"phone"`
-	UserRole         string             `json:"user_role"`
-	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
 	BannedAt         pgtype.Timestamptz `json:"banned_at"`
 	AvatarUrl        pgtype.Text        `json:"avatar_url"`
 	Gender           pgtype.Text        `json:"gender"`

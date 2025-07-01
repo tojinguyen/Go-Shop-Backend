@@ -1,17 +1,17 @@
 -- name: CreateUserAccount :one
 INSERT INTO user_accounts (
-  email, hashed_password
+  email, hashed_password, user_role
 ) VALUES (
-  $1, $2
-) RETURNING id, email, created_at, updated_at;
+  $1, $2, $3
+) RETURNING id, email, user_role, created_at, updated_at;
 
 -- name: GetUserAccountByEmail :one
-SELECT id, email, hashed_password, last_login_at, created_at, updated_at 
+SELECT id, email, hashed_password, user_role, last_login_at, created_at, updated_at 
 FROM user_accounts 
 WHERE email = $1 AND deleted_at IS NULL;
 
 -- name: GetUserAccountByID :one
-SELECT id, email, hashed_password, last_login_at, created_at, updated_at 
+SELECT id, email, hashed_password, user_role, last_login_at, created_at, updated_at 
 FROM user_accounts 
 WHERE id = $1 AND deleted_at IS NULL;
 

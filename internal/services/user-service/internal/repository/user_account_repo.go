@@ -42,7 +42,7 @@ func (r *userAccountRepository) CreateUserAccount(ctx context.Context, params sq
 	sqlcParams := sqlc.CreateUserAccountParams{
 		Email:          params.Email,
 		HashedPassword: params.HashedPassword,
-		Role:           string(constant.UserRoleCustomer),
+		UserRole:       string(constant.UserRoleCustomer),
 	}
 
 	result, err := r.queries.CreateUserAccount(ctx, sqlcParams)

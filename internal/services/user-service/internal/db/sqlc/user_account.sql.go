@@ -26,31 +26,33 @@ func (q *Queries) CheckUserExistsByEmail(ctx context.Context, email string) (pgt
 
 const createUserAccount = `-- name: CreateUserAccount :one
 INSERT INTO user_accounts (
-  email, hashed_password
+  email, hashed_password, user_role
 ) VALUES (
-  $1, $2
-) RETURNING id, email, created_at, updated_at
+  $1, $2, $3
+) RETURNING id, email, user_role, created_at, updated_at
 `
 
 type CreateUserAccountParams struct {
 	Email          string `json:"email"`
 	HashedPassword string `json:"hashed_password"`
-	Role           string `json:"role,omitempty"`
+	UserRole       string `json:"user_role"`
 }
 
 type CreateUserAccountRow struct {
 	ID        pgtype.UUID        `json:"id"`
 	Email     string             `json:"email"`
+	UserRole  string             `json:"user_role"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateUserAccount(ctx context.Context, arg CreateUserAccountParams) (CreateUserAccountRow, error) {
-	row := q.db.QueryRow(ctx, createUserAccount, arg.Email, arg.HashedPassword)
+	row := q.db.QueryRow(ctx, createUserAccount, arg.Email, arg.HashedPassword, arg.UserRole)
 	var i CreateUserAccountRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
+		&i.UserRole,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -58,18 +60,29 @@ func (q *Queries) CreateUserAccount(ctx context.Context, arg CreateUserAccountPa
 }
 
 const getUserAccountByEmail = `-- name: GetUserAccountByEmail :one
-SELECT id, email, hashed_password, last_login_at, created_at, updated_at 
+SELECT id, email, hashed_password, user_role, last_login_at, created_at, updated_at 
 FROM user_accounts 
 WHERE email = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (UserAccount, error) {
+type GetUserAccountByEmailRow struct {
+	ID             pgtype.UUID        `json:"id"`
+	Email          string             `json:"email"`
+	HashedPassword string             `json:"hashed_password"`
+	UserRole       string             `json:"user_role"`
+	LastLoginAt    pgtype.Timestamptz `json:"last_login_at"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (GetUserAccountByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getUserAccountByEmail, email)
-	var i UserAccount
+	var i GetUserAccountByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.HashedPassword,
+		&i.UserRole,
 		&i.LastLoginAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -78,18 +91,29 @@ func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (User
 }
 
 const getUserAccountByID = `-- name: GetUserAccountByID :one
-SELECT id, email, hashed_password, last_login_at, created_at, updated_at 
+SELECT id, email, hashed_password, user_role, last_login_at, created_at, updated_at 
 FROM user_accounts 
 WHERE id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) GetUserAccountByID(ctx context.Context, id pgtype.UUID) (UserAccount, error) {
+type GetUserAccountByIDRow struct {
+	ID             pgtype.UUID        `json:"id"`
+	Email          string             `json:"email"`
+	HashedPassword string             `json:"hashed_password"`
+	UserRole       string             `json:"user_role"`
+	LastLoginAt    pgtype.Timestamptz `json:"last_login_at"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserAccountByID(ctx context.Context, id pgtype.UUID) (GetUserAccountByIDRow, error) {
 	row := q.db.QueryRow(ctx, getUserAccountByID, id)
-	var i UserAccount
+	var i GetUserAccountByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.HashedPassword,
+		&i.UserRole,
 		&i.LastLoginAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
