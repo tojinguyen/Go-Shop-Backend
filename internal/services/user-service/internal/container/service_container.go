@@ -20,6 +20,7 @@ type ServiceContainer struct {
 	jwt             jwtService.JwtService
 	email           email.EmailService
 	userAccountRepo repository.UserAccountRepository
+	userProfileRepo repository.UserProfileRepository
 }
 
 // NewServiceContainer creates and initializes all services
@@ -48,6 +49,9 @@ func NewServiceContainer(cfg *config.Config) (ServiceContainer, error) {
 
 	// Initialize UserAccountRepository
 	container.initUserAccountRepository()
+
+	// Initialize UserProfileRepository
+	container.initUserProfileRepository()
 
 	log.Println("All services initialized successfully")
 	return container, nil
@@ -127,6 +131,11 @@ func (sc *ServiceContainer) initUserAccountRepository() {
 	log.Println("UserAccountRepository initialized")
 }
 
+func (sc *ServiceContainer) initUserProfileRepository() {
+	sc.userProfileRepo = repository.NewUserProfileRepository(sc.postgreSQL)
+	log.Println("UserProfileRepository initialized")
+}
+
 // Close gracefully closes all services
 func (sc *ServiceContainer) Close() {
 	log.Println("Shutting down services...")
@@ -167,6 +176,11 @@ func (sc *ServiceContainer) GetConfig() *config.Config {
 // GetUserAccountRepo returns UserAccountRepository
 func (sc *ServiceContainer) GetUserAccountRepo() repository.UserAccountRepository {
 	return sc.userAccountRepo
+}
+
+// GetUserProfileRepo returns UserProfileRepository
+func (sc *ServiceContainer) GetUserProfileRepo() repository.UserProfileRepository {
+	return sc.userProfileRepo
 }
 
 // GetEmail returns Email service

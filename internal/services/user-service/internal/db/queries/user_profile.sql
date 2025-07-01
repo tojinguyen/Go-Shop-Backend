@@ -5,6 +5,7 @@ INSERT INTO user_profiles (
   full_name,
   birthday,
   phone,
+  role,
   banned_at,
   avatar_url,
   gender,
@@ -12,7 +13,7 @@ INSERT INTO user_profiles (
   created_at,
   updated_at
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now()
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()
 )
 RETURNING
   user_id,
@@ -20,6 +21,7 @@ RETURNING
   full_name,
   birthday,
   phone,
+  role,
   banned_at,
   avatar_url,
   gender,

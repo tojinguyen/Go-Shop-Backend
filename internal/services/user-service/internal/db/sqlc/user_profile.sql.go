@@ -18,6 +18,7 @@ INSERT INTO user_profiles (
   full_name,
   birthday,
   phone,
+  role,
   banned_at,
   avatar_url,
   gender,
@@ -25,7 +26,7 @@ INSERT INTO user_profiles (
   created_at,
   updated_at
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now()
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()
 )
 RETURNING
   user_id,
@@ -33,6 +34,7 @@ RETURNING
   full_name,
   birthday,
   phone,
+  role,
   banned_at,
   avatar_url,
   gender,
@@ -47,6 +49,7 @@ type CreateUserProfileParams struct {
 	FullName         pgtype.Text        `json:"full_name"`
 	Birthday         pgtype.Date        `json:"birthday"`
 	Phone            pgtype.Text        `json:"phone"`
+	Role             pgtype.Text        `json:"role"`
 	BannedAt         pgtype.Timestamptz `json:"banned_at"`
 	AvatarUrl        pgtype.Text        `json:"avatar_url"`
 	Gender           pgtype.Text        `json:"gender"`
@@ -60,6 +63,7 @@ func (q *Queries) CreateUserProfile(ctx context.Context, arg CreateUserProfilePa
 		arg.FullName,
 		arg.Birthday,
 		arg.Phone,
+		arg.Role,
 		arg.BannedAt,
 		arg.AvatarUrl,
 		arg.Gender,
@@ -72,6 +76,7 @@ func (q *Queries) CreateUserProfile(ctx context.Context, arg CreateUserProfilePa
 		&i.FullName,
 		&i.Birthday,
 		&i.Phone,
+		&i.Role,
 		&i.BannedAt,
 		&i.AvatarUrl,
 		&i.Gender,

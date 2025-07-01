@@ -50,6 +50,7 @@ type UserProfile struct {
 	FullName         pgtype.Text        `json:"full_name"`
 	Birthday         pgtype.Date        `json:"birthday"`
 	Phone            pgtype.Text        `json:"phone"`
+	Role             pgtype.Text        `json:"role"`
 	BannedAt         pgtype.Timestamptz `json:"banned_at"`
 	AvatarUrl        pgtype.Text        `json:"avatar_url"`
 	Gender           pgtype.Text        `json:"gender"`

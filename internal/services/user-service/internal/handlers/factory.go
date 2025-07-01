@@ -27,10 +27,7 @@ func (hf *HandlerFactory) CreateAuthHandler() *AuthHandler {
 // CreateProfileHandler creates a profile handler
 func (hf *HandlerFactory) CreateProfileHandler() *ProfileHandler {
 	return NewProfileHandler(
-		hf.container.GetJWT(),
-		hf.container.GetConfig(),
-		hf.container.GetPostgreSQL(),
-		hf.container.GetRedis(),
+		hf.container,
 	)
 }
 

@@ -45,20 +45,11 @@ func (h *ProfileHandler) CreateProfile(c *gin.Context) {
 		Birthday:         userProfile.Birthday,
 		Phone:            userProfile.Phone,
 		Avatar:           userProfile.AvatarURL,
-		Role:             "",
+		Role:             userProfile.Role,
 		Gender:           userProfile.Gender,
 		DefaultAddressID: userProfile.DefaultAddressID,
 		CreatedAt:        userProfile.CreatedAt,
 		UpdatedAt:        userProfile.UpdatedAt,
-	}
-
-	if role, exists := c.Get("role"); exists {
-		if roleStr, ok := role.(string); ok {
-			userProfileResponse.Role = roleStr
-		} else {
-			response.InternalServerError(c, "INVALID_ROLE", "Role type assertion failed")
-			return
-		}
 	}
 
 	response.Success(c, "Profile created successfully", userProfileResponse)
