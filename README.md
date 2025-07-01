@@ -97,7 +97,7 @@ POST   /api/v1/auth/validate-access-token
 
 ### User Management APIs
 ```
-POST    /api/v1/users/profile
+POST   /api/v1/users/profile
 GET    /api/v1/users/profile
 PUT    /api/v1/users/profile
 GET    /api/v1/users/{id}
