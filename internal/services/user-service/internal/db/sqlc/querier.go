@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	CheckUserExistsByEmail(ctx context.Context, email string) (pgtype.UUID, error)
 	CreateUserAccount(ctx context.Context, arg CreateUserAccountParams) (CreateUserAccountRow, error)
+	CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error)
 	GetUserAccountByEmail(ctx context.Context, email string) (GetUserAccountByEmailRow, error)
 	GetUserAccountByID(ctx context.Context, id pgtype.UUID) (GetUserAccountByIDRow, error)
 	SoftDeleteUserAccount(ctx context.Context, id pgtype.UUID) error
