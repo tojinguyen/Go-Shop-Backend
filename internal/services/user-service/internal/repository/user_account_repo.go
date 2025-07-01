@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
 )
@@ -41,10 +42,12 @@ func (r *userAccountRepository) CreateUserAccount(ctx context.Context, params sq
 	sqlcParams := sqlc.CreateUserAccountParams{
 		Email:          params.Email,
 		HashedPassword: params.HashedPassword,
+		Role:           string(constant.UserRoleCustomer),
 	}
 
 	result, err := r.queries.CreateUserAccount(ctx, sqlcParams)
 	if err != nil {
+		log.Println("Error creating user account:", err)
 		return nil, err
 	}
 

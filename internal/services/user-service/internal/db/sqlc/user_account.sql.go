@@ -35,6 +35,7 @@ INSERT INTO user_accounts (
 type CreateUserAccountParams struct {
 	Email          string `json:"email"`
 	HashedPassword string `json:"hashed_password"`
+	Role           string `json:"role,omitempty"`
 }
 
 type CreateUserAccountRow struct {
