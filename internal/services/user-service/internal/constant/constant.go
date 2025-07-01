@@ -8,3 +8,11 @@ const (
 	UserRoleCustomer UserRole = "customer"
 	UserRoleShipper  UserRole = "shipper"
 )
+
+type UserGender string
+
+const (
+	UserGenderMale   UserGender = "male"
+	UserGenderFemale UserGender = "female"
+	UserGenderOther  UserGender = "other"
+)

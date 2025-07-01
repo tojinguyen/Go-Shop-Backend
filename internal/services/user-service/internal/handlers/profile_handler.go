@@ -2,35 +2,70 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
-	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
-	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/response"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
 type ProfileHandler struct {
-	config       *config.Config
-	jwtService   jwtService.JwtService
-	pgService    *postgresql_infra.PostgreSQLService
-	redisService *redis_infra.RedisService
+	userService *services.UserService
 }
 
-// NewProfileHandler creates a new profile handler
-func NewProfileHandler(jwtSvc jwtService.JwtService, cfg *config.Config, pgSvc *postgresql_infra.PostgreSQLService, redisSvc *redis_infra.RedisService) *ProfileHandler {
+// NewAuthHandler creates a new auth handler
+func NewProfileHandler(sc container.ServiceContainer) *ProfileHandler {
 	return &ProfileHandler{
-		jwtService:   jwtSvc,
-		config:       cfg,
-		pgService:    pgSvc,
-		redisService: redisSvc,
+		userService: services.NewUserService(&sc),
 	}
+}
+
+func (h *ProfileHandler) CreateProfile(c *gin.Context) {
+	// Bind the request body to CreateUserRequest
+	var req dto.CreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	userProfile, err := h.userService.CreateProfile(c, req)
+
+	if err != nil {
+		if err.Error() == "user already exists" {
+			response.Conflict(c, "USER_ALREADY_EXISTS", "User with this email already exists")
+			return
+		}
+		response.InternalServerError(c, "PROFILE_CREATION_FAILED", "Failed to create profile")
+		return
+	}
+
+	userProfileResponse := &dto.UserResponse{
+		ID:               userProfile.UserID,
+		Email:            userProfile.Email,
+		FullName:         userProfile.FullName,
+		Birthday:         userProfile.Birthday,
+		Phone:            userProfile.Phone,
+		Avatar:           userProfile.AvatarURL,
+		Role:             "",
+		Gender:           userProfile.Gender,
+		DefaultAddressID: userProfile.DefaultAddressID,
+		CreatedAt:        userProfile.CreatedAt,
+		UpdatedAt:        userProfile.UpdatedAt,
+	}
+
+	if role, exists := c.Get("role"); exists {
+		if roleStr, ok := role.(string); ok {
+			userProfileResponse.Role = roleStr
+		} else {
+			response.InternalServerError(c, "INVALID_ROLE", "Role type assertion failed")
+			return
+		}
+	}
+
+	response.Success(c, "Profile created successfully", userProfileResponse)
 }
 
 // GetProfile returns the current user's profile
 func (h *ProfileHandler) GetProfile(c *gin.Context) {
-	// Here you would typically fetch user details from database
-	// For demo purposes, we'll return mock data
 	user := &dto.UserInfo{}
 
 	response.Success(c, "Profile retrieved successfully", user)

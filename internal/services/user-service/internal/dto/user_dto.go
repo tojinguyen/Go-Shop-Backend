@@ -31,17 +31,17 @@ type UpdatePasswordRequest struct {
 
 // UserResponse represents the user response payload
 type UserResponse struct {
-	ID        string    `json:"id"`
-	Email     string    `json:"email"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	Username  string    `json:"username"`
-	Phone     string    `json:"phone,omitempty"`
-	Avatar    string    `json:"avatar,omitempty"`
-	Role      string    `json:"role"`
-	IsActive  bool      `json:"is_active"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID               string `json:"id"`
+	Email            string `json:"email"`
+	FullName         string `json:"full_name"`
+	Birthday         string `json:"birthday,omitempty"`
+	Phone            string `json:"phone,omitempty"`
+	Avatar           string `json:"avatar,omitempty"`
+	Role             string `json:"role"`
+	Gender           string `json:"gender"`
+	DefaultAddressID string `json:"default_address_id,omitempty"`
+	CreatedAt        string `json:"created_at"`
+	UpdatedAt        string `json:"updated_at"`
 }
 
 // UserListResponse represents the user list response with pagination

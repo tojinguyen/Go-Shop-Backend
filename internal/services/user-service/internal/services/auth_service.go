@@ -298,7 +298,7 @@ func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordReq
 
 func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordRequest) error {
 	// Validate the reset token
-	claims, err := s.container.GetJWT().ValidateAccessToken(context.Background(), req.Token)
+	claims, err := s.container.GetJWT().ValidateAccessToken(ctx, req.Token)
 	if err != nil {
 		return fmt.Errorf("invalid or expired reset token")
 	}

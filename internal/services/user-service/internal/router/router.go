@@ -106,6 +106,7 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 			// User profile routes
 			profile := protected.Group("/users/profile")
 			{
+				profile.POST("", profileHandler.CreateProfile)
 				profile.GET("", profileHandler.GetProfile)
 				profile.PUT("", profileHandler.UpdateProfile)
 				profile.GET("/:id", profileHandler.GetProfileByID)
