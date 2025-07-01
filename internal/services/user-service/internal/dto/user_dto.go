@@ -6,12 +6,12 @@ import "time"
 type CreateUserRequest struct {
 	Email     string `json:"email" binding:"required" validate:"required,email"`
 	Password  string `json:"password" binding:"required" validate:"required,min=8"`
-	FirstName string `json:"first_name" binding:"required" validate:"required,min=2,max=50"`
-	LastName  string `json:"last_name" binding:"required" validate:"required,min=2,max=50"`
+	FullName  string `json:"full_name" binding:"required" validate:"required,min=2,max=100"`
 	Username  string `json:"username" validate:"omitempty,min=3,max=30"`
 	Phone     string `json:"phone" validate:"omitempty,e164"`
 	AvatarURL string `json:"avatar_url" validate:"omitempty,url"`
 	Birthday  string `json:"birthday" validate:"omitempty,datetime=2006-01-02"`
+	Gender    string `json:"gender" validate:"omitempty,oneof=male female other"`
 }
 
 // UpdateUserRequest represents the update user request payload

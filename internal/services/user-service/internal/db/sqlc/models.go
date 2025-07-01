@@ -47,13 +47,13 @@ type UserAccount struct {
 type UserProfile struct {
 	UserID           pgtype.UUID        `json:"user_id"`
 	Email            string             `json:"email"`
-	FullName         pgtype.Text        `json:"full_name"`
+	FullName         string             `json:"full_name"`
 	Birthday         pgtype.Date        `json:"birthday"`
-	Phone            pgtype.Text        `json:"phone"`
-	Role             pgtype.Text        `json:"role"`
+	Phone            string             `json:"phone"`
+	Role             string             `json:"role"`
 	BannedAt         pgtype.Timestamptz `json:"banned_at"`
-	AvatarUrl        pgtype.Text        `json:"avatar_url"`
-	Gender           pgtype.Text        `json:"gender"`
+	AvatarUrl        string             `json:"avatar_url"`
+	Gender           string             `json:"gender"`
 	DefaultAddressID pgtype.UUID        `json:"default_address_id"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`

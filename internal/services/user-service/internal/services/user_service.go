@@ -52,15 +52,15 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest)
 	params := sqlc.CreateUserProfileParams{
 		UserID:           uuidToPgtype(userID),
 		Email:            req.Email,
-		FullName:         stringToPgText(req.FirstName + " " + req.LastName),
-		Birthday:         stringToPgDate(""), // Cập nhật nếu có trường birthday
-		Phone:            stringToPgText(req.Phone),
-		Role:             stringToPgText(role),
+		FullName:         req.FullName,
+		Birthday:         stringToPgDate(req.Birthday),
+		Phone:            req.Phone,
+		Role:             role,
 		BannedAt:         nullPgTime(),
-		AvatarUrl:        stringToPgText(""), // Cập nhật nếu có trường avatar
-		Gender:           stringToPgText(""), // Cập nhật nếu có trường gender
+		AvatarUrl:        req.AvatarURL,
 		DefaultAddressID: nullPgUUID(),
 	}
+
 	profile, err := repo.CreateUserProfile(ctx, params)
 	if err != nil {
 		return domain.UserProfile{}, err

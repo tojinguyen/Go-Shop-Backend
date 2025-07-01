@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS addresses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
-    street TEXT NOT NULL,
+    street VARCHAR(255) NOT NULL,
     ward VARCHAR(100),
     district VARCHAR(100),
     city VARCHAR(100),
