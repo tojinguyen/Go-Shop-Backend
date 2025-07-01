@@ -30,7 +30,7 @@ services:
       dockerfile: ./internal/services/user-service/Dockerfile
     container_name: ${PROJECT_NAME:-go-shop}-user-service
     expose:
-      - "8080"
+      - "${USER_SERVICE_SERVICE_PORT:-8080}"
     env_file:
       - .env
     depends_on:
