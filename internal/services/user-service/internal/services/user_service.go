@@ -74,9 +74,7 @@ func uuidToPgtype(id uuid.UUID) pgtype.UUID {
 	u.Scan(id.String())
 	return u
 }
-func stringToPgText(s string) pgtype.Text {
-	return pgtype.Text{String: s, Valid: s != ""}
-}
+
 func stringToPgDate(s string) pgtype.Date {
 	var d pgtype.Date
 	if s != "" {
