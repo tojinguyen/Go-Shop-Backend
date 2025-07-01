@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"log"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
@@ -164,6 +166,10 @@ func (r *userAccountRepository) CheckUserExistsByEmail(ctx context.Context, emai
 	// Use SQLC generated function
 	id, err := r.queries.CheckUserExistsByEmail(ctx, email)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return false, nil
+		}
+		log.Println("Error checking user existence by email:", err)
 		return false, err
 	}
 

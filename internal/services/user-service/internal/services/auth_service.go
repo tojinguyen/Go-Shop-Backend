@@ -29,7 +29,7 @@ func NewAuthService(container *container.ServiceContainer) *AuthService {
 
 func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.RegisterResponse, error) {
 	// Check if user already exists
-	exists, err := s.container.GetUserAccountRepo().CheckUserExistsByEmail(context.Background(), req.Email)
+	exists, err := s.container.GetUserAccountRepo().CheckUserExistsByEmail(ctx, req.Email)
 	if err != nil {
 		log.Println("Error checking user existence:", err)
 		return dto.RegisterResponse{}, fmt.Errorf("failed to check user existence: %w", err)

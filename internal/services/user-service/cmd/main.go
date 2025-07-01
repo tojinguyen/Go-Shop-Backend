@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -38,7 +39,7 @@ func main() {
 
 	// Configure HTTP server
 	server := &http.Server{
-		Addr:         serviceContainer.GetConfig().Server.GetServerAddress(),
+		Addr:         fmt.Sprintf("0.0.0.0:%s", serviceContainer.GetConfig().Server.Port),
 		Handler:      router,
 		ReadTimeout:  serviceContainer.GetConfig().Server.ReadTimeout,
 		WriteTimeout: serviceContainer.GetConfig().Server.WriteTimeout,
