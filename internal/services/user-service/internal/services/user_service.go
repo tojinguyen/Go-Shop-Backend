@@ -50,12 +50,12 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest)
 	}
 
 	params := sqlc.CreateUserProfileParams{
-		UserID:           uuidToPgtype(userID),
+		UserID:           uuidToPgUUID(userID),
 		Email:            req.Email,
 		FullName:         req.FullName,
 		Birthday:         stringToPgDate(req.Birthday),
 		Phone:            req.Phone,
-		Role:             role,
+		UserRole:         role,
 		BannedAt:         nullPgTime(),
 		AvatarUrl:        req.AvatarURL,
 		DefaultAddressID: nullPgUUID(),
@@ -88,4 +88,8 @@ func nullPgTime() pgtype.Timestamptz {
 }
 func nullPgUUID() pgtype.UUID {
 	return pgtype.UUID{}
+}
+
+func uuidToPgUUID(u uuid.UUID) pgtype.UUID {
+	return pgtype.UUID{Bytes: u, Valid: true}
 }

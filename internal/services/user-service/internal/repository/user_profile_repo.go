@@ -37,7 +37,7 @@ func (r *userProfileRepository) CreateUserProfile(ctx context.Context, params sq
 		FullName:         profile.FullName,
 		Birthday:         pgDateToString(profile.Birthday),
 		Phone:            profile.Phone,
-		Role:             profile.Role,
+		Role:             profile.UserRole,
 		BannedAt:         pgTimeToString(profile.BannedAt),
 		AvatarURL:        profile.AvatarUrl,
 		Gender:           profile.Gender,
