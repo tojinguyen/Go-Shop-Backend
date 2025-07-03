@@ -23,7 +23,23 @@ services:
       retries: 3
       start_period: 40s
 
-  # Microservices
+  # Infrastructure services
+  redis-cache:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: ${PROJECT_NAME:-go-shop}-redis-cache
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - ${REDIS_VOLUME_NAME:-redis_data}:/data
+    networks:
+      - go-shop-network
+    restart: unless-stopped
+
+############## User Service Section ##############
+  # User Service
   user-service:
     build:
       context: .
@@ -42,7 +58,7 @@ services:
       - go-shop-network
     restart: unless-stopped
 
-  # PostgreSQL Database (main)
+  # PostgreSQL Database User Service
   postgres-user-service:
     image: postgres:15
     container_name: postgres-user-service
@@ -64,20 +80,47 @@ services:
       retries: 5
       start_period: 20s
 
-  # Infrastructure services
-  redis-cache:
-    image: ${REDIS_IMAGE:-redis:7-alpine}
-    container_name: ${PROJECT_NAME:-go-shop}-redis-cache
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+############### Shop Service Section ##############
+  # Shop Service
+  shop-service:
+    build:
+      context: .
+      dockerfile: ./internal/services/shop-service/Dockerfile
+    container_name: ${PROJECT_NAME:-go-shop}-shop-service
+    expose:
+      - "${SHOP_SERVICE_SERVICE_PORT:-8081}"
     env_file:
       - .env
-    volumes:
-      - ${REDIS_VOLUME_NAME:-redis_data}:/data
+    depends_on:
+      postgres-shop-service:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
     networks:
       - go-shop-network
     restart: unless-stopped
+
+  # PostgreSQL Database User Service
+  postgres-shop-service:
+    image: postgres:15
+    container_name: postgres-shop-service
+    ports:
+      - "${USER_SERVICE_POSTGRES_PORT:-6001}:6001"
+    environment: 
+      POSTGRES_USER: ${USER_SERVICE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_SERVICE_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${USER_SERVICE_POSTGRES_DB}
+    volumes:
+      - user_postgres_data:/var/lib/postgresql/data
+    networks:
+      - go-shop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
   user_postgres_data:
