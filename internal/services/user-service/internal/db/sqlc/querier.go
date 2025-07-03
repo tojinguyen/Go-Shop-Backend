@@ -18,8 +18,10 @@ type Querier interface {
 	GetUserAccountByID(ctx context.Context, id pgtype.UUID) (GetUserAccountByIDRow, error)
 	GetUserProfileByUserId(ctx context.Context, userID pgtype.UUID) (UserProfile, error)
 	SoftDeleteUserAccount(ctx context.Context, id pgtype.UUID) error
+	SoftDeleteUserProfile(ctx context.Context, userID pgtype.UUID) error
 	UpdateLastLoginAt(ctx context.Context, id pgtype.UUID) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error)
 }
 
 var _ Querier = (*Queries)(nil)
