@@ -31,6 +31,18 @@ func (hf *HandlerFactory) CreateProfileHandler() *ProfileHandler {
 	)
 }
 
+func (hf *HandlerFactory) CreateAddressHandler() *AddressHandler {
+	return NewAddressHandler(
+		hf.container,
+	)
+}
+
+func (hf *HandlerFactory) CreateShipperHandler() *ShipperHandler {
+	return NewShipperHandler(
+		hf.container,
+	)
+}
+
 // GetAuthService returns the auth service for middleware use
 func (hf *HandlerFactory) GetAuthService() *services.AuthService {
 	return services.NewAuthService(&hf.container)

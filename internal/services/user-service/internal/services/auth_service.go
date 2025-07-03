@@ -68,7 +68,7 @@ func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.R
 
 func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthResponse, error) {
 	// Get user by email
-	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(context.Background(), req.Email)
+	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(ctx, req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return dto.AuthResponse{}, fmt.Errorf("invalid email or password")

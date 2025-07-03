@@ -18,7 +18,7 @@ INSERT INTO user_profiles (
   full_name,
   birthday,
   phone,
-  role,
+  user_role,
   banned_at,
   avatar_url,
   gender,
@@ -34,7 +34,7 @@ RETURNING
   full_name,
   birthday,
   phone,
-  role,
+  user_role,
   banned_at,
   avatar_url,
   gender,
@@ -49,7 +49,7 @@ type CreateUserProfileParams struct {
 	FullName         string             `json:"full_name"`
 	Birthday         pgtype.Date        `json:"birthday"`
 	Phone            string             `json:"phone"`
-	Role             string             `json:"role"`
+	UserRole         string             `json:"user_role"`
 	BannedAt         pgtype.Timestamptz `json:"banned_at"`
 	AvatarUrl        string             `json:"avatar_url"`
 	Gender           string             `json:"gender"`
@@ -63,7 +63,7 @@ func (q *Queries) CreateUserProfile(ctx context.Context, arg CreateUserProfilePa
 		arg.FullName,
 		arg.Birthday,
 		arg.Phone,
-		arg.Role,
+		arg.UserRole,
 		arg.BannedAt,
 		arg.AvatarUrl,
 		arg.Gender,
@@ -76,7 +76,131 @@ func (q *Queries) CreateUserProfile(ctx context.Context, arg CreateUserProfilePa
 		&i.FullName,
 		&i.Birthday,
 		&i.Phone,
-		&i.Role,
+		&i.UserRole,
+		&i.BannedAt,
+		&i.AvatarUrl,
+		&i.Gender,
+		&i.DefaultAddressID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserProfileByUserId = `-- name: GetUserProfileByUserId :one
+SELECT
+  user_id,
+  email,
+  full_name,
+  birthday,
+  phone,
+  user_role,
+  banned_at,
+  avatar_url,
+  gender,
+  default_address_id,
+  created_at,
+  updated_at
+FROM user_profiles
+WHERE user_id = $1 AND banned_at IS NULL
+`
+
+func (q *Queries) GetUserProfileByUserId(ctx context.Context, userID pgtype.UUID) (UserProfile, error) {
+	row := q.db.QueryRow(ctx, getUserProfileByUserId, userID)
+	var i UserProfile
+	err := row.Scan(
+		&i.UserID,
+		&i.Email,
+		&i.FullName,
+		&i.Birthday,
+		&i.Phone,
+		&i.UserRole,
+		&i.BannedAt,
+		&i.AvatarUrl,
+		&i.Gender,
+		&i.DefaultAddressID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const softDeleteUserProfile = `-- name: SoftDeleteUserProfile :exec
+UPDATE user_profiles
+SET
+  banned_at = now(),
+  updated_at = now()
+WHERE user_id = $1
+`
+
+func (q *Queries) SoftDeleteUserProfile(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteUserProfile, userID)
+	return err
+}
+
+const updateUserProfile = `-- name: UpdateUserProfile :one
+UPDATE user_profiles
+SET
+  email = $2,
+  full_name = $3,
+  birthday = $4,
+  phone = $5,
+  user_role = $6,
+  banned_at = $7,
+  avatar_url = $8,
+  gender = $9,
+  default_address_id = $10,
+  updated_at = now()
+WHERE user_id = $1
+RETURNING
+  user_id,
+  email,
+  full_name,
+  birthday,
+  phone,
+  user_role,
+  banned_at,
+  avatar_url,
+  gender,
+  default_address_id,
+  created_at,
+  updated_at
+`
+
+type UpdateUserProfileParams struct {
+	UserID           pgtype.UUID        `json:"user_id"`
+	Email            string             `json:"email"`
+	FullName         string             `json:"full_name"`
+	Birthday         pgtype.Date        `json:"birthday"`
+	Phone            string             `json:"phone"`
+	UserRole         string             `json:"user_role"`
+	BannedAt         pgtype.Timestamptz `json:"banned_at"`
+	AvatarUrl        string             `json:"avatar_url"`
+	Gender           string             `json:"gender"`
+	DefaultAddressID pgtype.UUID        `json:"default_address_id"`
+}
+
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error) {
+	row := q.db.QueryRow(ctx, updateUserProfile,
+		arg.UserID,
+		arg.Email,
+		arg.FullName,
+		arg.Birthday,
+		arg.Phone,
+		arg.UserRole,
+		arg.BannedAt,
+		arg.AvatarUrl,
+		arg.Gender,
+		arg.DefaultAddressID,
+	)
+	var i UserProfile
+	err := row.Scan(
+		&i.UserID,
+		&i.Email,
+		&i.FullName,
+		&i.Birthday,
+		&i.Phone,
+		&i.UserRole,
 		&i.BannedAt,
 		&i.AvatarUrl,
 		&i.Gender,

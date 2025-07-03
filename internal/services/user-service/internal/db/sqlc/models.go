@@ -50,7 +50,7 @@ type UserProfile struct {
 	FullName         string             `json:"full_name"`
 	Birthday         pgtype.Date        `json:"birthday"`
 	Phone            string             `json:"phone"`
-	Role             string             `json:"role"`
+	UserRole         string             `json:"user_role"`
 	BannedAt         pgtype.Timestamptz `json:"banned_at"`
 	AvatarUrl        string             `json:"avatar_url"`
 	Gender           string             `json:"gender"`

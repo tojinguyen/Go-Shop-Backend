@@ -1,6 +1,7 @@
+# sqlc.yaml
 version: "2"
 sql:
-  - engine: "postgresql" 
+  - engine: "postgresql"
     queries: "./internal/db/queries"
     schema: "./internal/db/migrations"
     gen:

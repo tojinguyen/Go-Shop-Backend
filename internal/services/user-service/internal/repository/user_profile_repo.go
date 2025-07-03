@@ -2,9 +2,8 @@ package repository
 
 import (
 	"context"
-	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
@@ -12,6 +11,9 @@ import (
 
 type UserProfileRepository interface {
 	CreateUserProfile(ctx context.Context, params sqlc.CreateUserProfileParams) (*domain.UserProfile, error)
+	GetUserProfileByID(ctx context.Context, userID string) (*domain.UserProfile, error)
+	UpdateUserProfile(ctx context.Context, params sqlc.UpdateUserProfileParams) (*domain.UserProfile, error)
+	DeleteProfile(ctx context.Context, userID string) error
 }
 
 type userProfileRepository struct {
@@ -35,36 +37,65 @@ func (r *userProfileRepository) CreateUserProfile(ctx context.Context, params sq
 		UserID:           profile.UserID.String(),
 		Email:            profile.Email,
 		FullName:         profile.FullName,
-		Birthday:         pgDateToString(profile.Birthday),
+		Birthday:         converter.PgDateToString(profile.Birthday),
 		Phone:            profile.Phone,
-		Role:             profile.Role,
-		BannedAt:         pgTimeToString(profile.BannedAt),
+		Role:             profile.UserRole,
+		BannedAt:         converter.PgTimeToString(profile.BannedAt),
 		AvatarURL:        profile.AvatarUrl,
 		Gender:           profile.Gender,
-		DefaultAddressID: pgUUIDToString(profile.DefaultAddressID),
-		CreatedAt:        pgTimeToString(profile.CreatedAt),
-		UpdatedAt:        pgTimeToString(profile.UpdatedAt),
+		DefaultAddressID: converter.PgUUIDToString(profile.DefaultAddressID),
+		CreatedAt:        converter.PgTimeToString(profile.CreatedAt),
+		UpdatedAt:        converter.PgTimeToString(profile.UpdatedAt),
 	}, nil
 }
 
-// Helper functions
-func pgTimeToString(t pgtype.Timestamptz) string {
-	if t.Valid {
-		return t.Time.Format(time.RFC3339)
+func (r *userProfileRepository) GetUserProfileByID(ctx context.Context, userID string) (*domain.UserProfile, error) {
+	profile, err := r.queries.GetUserProfileByUserId(ctx, converter.StringToPgUUID(userID))
+	if err != nil {
+		return nil, err
 	}
-	return ""
+
+	return &domain.UserProfile{
+		UserID:           profile.UserID.String(),
+		Email:            profile.Email,
+		FullName:         profile.FullName,
+		Birthday:         converter.PgDateToString(profile.Birthday),
+		Phone:            profile.Phone,
+		Role:             profile.UserRole,
+		BannedAt:         converter.PgTimeToString(profile.BannedAt),
+		AvatarURL:        profile.AvatarUrl,
+		Gender:           profile.Gender,
+		DefaultAddressID: converter.PgUUIDToString(profile.DefaultAddressID),
+		CreatedAt:        converter.PgTimeToString(profile.CreatedAt),
+		UpdatedAt:        converter.PgTimeToString(profile.UpdatedAt),
+	}, nil
 }
 
-func pgDateToString(d pgtype.Date) string {
-	if d.Valid {
-		return d.Time.Format("2006-01-02")
+func (r *userProfileRepository) UpdateUserProfile(ctx context.Context, params sqlc.UpdateUserProfileParams) (*domain.UserProfile, error) {
+	profile, err := r.queries.UpdateUserProfile(ctx, params)
+	if err != nil {
+		return nil, err
 	}
-	return ""
+	return &domain.UserProfile{
+		UserID:           profile.UserID.String(),
+		Email:            profile.Email,
+		FullName:         profile.FullName,
+		Birthday:         converter.PgDateToString(profile.Birthday),
+		Phone:            profile.Phone,
+		Role:             profile.UserRole,
+		BannedAt:         converter.PgTimeToString(profile.BannedAt),
+		AvatarURL:        profile.AvatarUrl,
+		Gender:           profile.Gender,
+		DefaultAddressID: converter.PgUUIDToString(profile.DefaultAddressID),
+		CreatedAt:        converter.PgTimeToString(profile.CreatedAt),
+		UpdatedAt:        converter.PgTimeToString(profile.UpdatedAt),
+	}, nil
 }
 
-func pgUUIDToString(u pgtype.UUID) string {
-	if u.Valid {
-		return u.String()
+func (r *userProfileRepository) DeleteProfile(ctx context.Context, userID string) error {
+	err := r.queries.SoftDeleteUserProfile(ctx, converter.StringToPgUUID(userID))
+	if err != nil {
+		return err
 	}
-	return ""
+	return nil
 }

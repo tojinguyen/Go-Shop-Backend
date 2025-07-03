@@ -99,9 +99,9 @@ POST   /api/v1/auth/validate-access-token
 ```
 POST   /api/v1/users/profile
 GET    /api/v1/users/profile
-PUT    /api/v1/users/profile
 GET    /api/v1/users/{id}
-DELETE /api/v1/users/{id}
+PUT    /api/v1/users/profile
+DELETE /api/v1/users
 
 # Address Management
 GET    /api/v1/users/addresses
@@ -112,7 +112,10 @@ DELETE /api/v1/users/addresses/{id}
 PUT    /api/v1/users/addresses/{id}/default
 
 # Role Management (User, Shipper)
-POST   /api/v1/users/shipper/register
+POST   /api/v1/users/shippers/register
+GET    /api/v1/users/shippers/profile
+GET    /api/v1/users/shippers/{id}/profile
+PUT    /api/v1/users/shippers/profile
 ```
 
 ### Shop Management APIs
