@@ -82,36 +82,36 @@ services:
 
 ############### Shop Service Section ##############
   # Shop Service
-  shop-service:
-    build:
-      context: .
-      dockerfile: ./internal/services/shop-service/Dockerfile
-    container_name: ${PROJECT_NAME:-go-shop}-shop-service
-    expose:
-      - "${SHOP_SERVICE_SERVICE_PORT:-8081}"
-    env_file:
-      - .env
-    depends_on:
-      postgres-shop-service:
-        condition: service_healthy
-      redis-cache:
-        condition: service_started
-    networks:
-      - go-shop-network
-    restart: unless-stopped
+  # shop-service:
+  #   build:
+  #     context: .
+  #     dockerfile: ./internal/services/shop-service/Dockerfile
+  #   container_name: ${PROJECT_NAME:-go-shop}-shop-service
+  #   expose:
+  #     - "${SHOP_SERVICE_SERVICE_PORT:-8081}"
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     postgres-shop-service:
+  #       condition: service_healthy
+  #     redis-cache:
+  #       condition: service_started
+  #   networks:
+  #     - go-shop-network
+  #   restart: unless-stopped
 
   # PostgreSQL Database User Service
   postgres-shop-service:
     image: postgres:15
     container_name: postgres-shop-service
     ports:
-      - "${USER_SERVICE_POSTGRES_PORT:-6001}:6001"
+      - "${SHOP_SERVICE_POSTGRES_PORT:-6001}:6001"
     environment: 
-      POSTGRES_USER: ${USER_SERVICE_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${USER_SERVICE_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${USER_SERVICE_POSTGRES_DB}
+      POSTGRES_USER: ${SHOP_SERVICE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${SHOP_SERVICE_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${SHOP_SERVICE_POSTGRES_DB}
     volumes:
-      - user_postgres_data:/var/lib/postgresql/data
+      - shop_postgres_data:/var/lib/postgresql/data
     networks:
       - go-shop-network
     restart: unless-stopped
@@ -123,6 +123,7 @@ services:
       start_period: 20s
 
 volumes:
+  shop_postgres_data:
   user_postgres_data:
   redis_data:
   db_data:
