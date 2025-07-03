@@ -2,11 +2,10 @@ package services
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
@@ -50,15 +49,15 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest)
 	}
 
 	params := sqlc.CreateUserProfileParams{
-		UserID:           uuidToPgUUID(userID),
+		UserID:           converter.UUIDToPgUUID(userID),
 		Email:            req.Email,
 		FullName:         req.FullName,
-		Birthday:         stringToPgDate(req.Birthday),
+		Birthday:         converter.StringToPgDate(req.Birthday),
 		Phone:            req.Phone,
 		UserRole:         role,
-		BannedAt:         nullPgTime(),
+		BannedAt:         converter.NullPgTime(),
 		AvatarUrl:        req.AvatarURL,
-		DefaultAddressID: nullPgUUID(),
+		DefaultAddressID: converter.NullPgUUID(),
 	}
 
 	profile, err := repo.CreateUserProfile(ctx, params)
@@ -66,30 +65,4 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest)
 		return domain.UserProfile{}, err
 	}
 	return *profile, nil
-}
-
-// Helper functions for pgtype
-func uuidToPgtype(id uuid.UUID) pgtype.UUID {
-	var u pgtype.UUID
-	u.Scan(id.String())
-	return u
-}
-
-func stringToPgDate(s string) pgtype.Date {
-	var d pgtype.Date
-	if s != "" {
-		d.Time, _ = time.Parse("2006-01-02", s)
-		d.Valid = true
-	}
-	return d
-}
-func nullPgTime() pgtype.Timestamptz {
-	return pgtype.Timestamptz{}
-}
-func nullPgUUID() pgtype.UUID {
-	return pgtype.UUID{}
-}
-
-func uuidToPgUUID(u uuid.UUID) pgtype.UUID {
-	return pgtype.UUID{Bytes: u, Valid: true}
 }

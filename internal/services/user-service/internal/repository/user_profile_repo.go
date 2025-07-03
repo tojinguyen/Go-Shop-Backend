@@ -2,9 +2,8 @@ package repository
 
 import (
 	"context"
-	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
@@ -35,36 +34,14 @@ func (r *userProfileRepository) CreateUserProfile(ctx context.Context, params sq
 		UserID:           profile.UserID.String(),
 		Email:            profile.Email,
 		FullName:         profile.FullName,
-		Birthday:         pgDateToString(profile.Birthday),
+		Birthday:         converter.PgDateToString(profile.Birthday),
 		Phone:            profile.Phone,
 		Role:             profile.UserRole,
-		BannedAt:         pgTimeToString(profile.BannedAt),
+		BannedAt:         converter.PgTimeToString(profile.BannedAt),
 		AvatarURL:        profile.AvatarUrl,
 		Gender:           profile.Gender,
-		DefaultAddressID: pgUUIDToString(profile.DefaultAddressID),
-		CreatedAt:        pgTimeToString(profile.CreatedAt),
-		UpdatedAt:        pgTimeToString(profile.UpdatedAt),
+		DefaultAddressID: converter.PgUUIDToString(profile.DefaultAddressID),
+		CreatedAt:        converter.PgTimeToString(profile.CreatedAt),
+		UpdatedAt:        converter.PgTimeToString(profile.UpdatedAt),
 	}, nil
-}
-
-// Helper functions
-func pgTimeToString(t pgtype.Timestamptz) string {
-	if t.Valid {
-		return t.Time.Format(time.RFC3339)
-	}
-	return ""
-}
-
-func pgDateToString(d pgtype.Date) string {
-	if d.Valid {
-		return d.Time.Format("2006-01-02")
-	}
-	return ""
-}
-
-func pgUUIDToString(u pgtype.UUID) string {
-	if u.Valid {
-		return u.String()
-	}
-	return ""
 }
