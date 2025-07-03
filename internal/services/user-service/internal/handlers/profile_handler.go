@@ -115,7 +115,6 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 }
 
 func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
-	// Get user ID from context (set by auth middleware)
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {
 		response.Unauthorized(c, "USER_NOT_AUTHENTICATED", "User not authenticated")

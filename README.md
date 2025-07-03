@@ -99,9 +99,9 @@ POST   /api/v1/auth/validate-access-token
 ```
 POST   /api/v1/users/profile
 GET    /api/v1/users/profile
-PUT    /api/v1/users/profile
 GET    /api/v1/users/{id}
-DELETE /api/v1/users/{id}
+PUT    /api/v1/users/profile
+DELETE /api/v1/users
 
 # Address Management
 GET    /api/v1/users/addresses
