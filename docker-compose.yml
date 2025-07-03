@@ -79,21 +79,6 @@ services:
       - go-shop-network
     restart: unless-stopped
 
-  # pgAdmin GUI for PostgreSQL
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: ${PROJECT_NAME:-go-shop}-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@go-shop.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-    ports:
-      - "5050:5050"
-    depends_on:
-      - postgres-user-service
-    networks:
-      - go-shop-network
-    restart: unless-stopped
-
 volumes:
   user_postgres_data:
   redis_data:
