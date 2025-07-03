@@ -113,8 +113,9 @@ PUT    /api/v1/users/addresses/{id}/default
 
 # Role Management (User, Shipper)
 POST   /api/v1/users/shippers/register
-GET    /api/v1/users/shippers/me/profile
-PUT    /api/v1/users/shippers/me/profile
+GET    /api/v1/users/shippers/profile
+GET    /api/v1/users/shippers/{id}/profile
+PUT    /api/v1/users/shippers/profile
 ```
 
 ### Shop Management APIs

@@ -71,6 +71,7 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	authHandler := handlerFactory.CreateAuthHandler()
 	profileHandler := handlerFactory.CreateProfileHandler()
 	addressHandler := handlerFactory.CreateAddressHandler()
+	shipperHandler := handlerFactory.CreateShipperHandler()
 
 	// Get AuthService for enhanced middleware
 	authService := handlerFactory.GetAuthService()
@@ -122,6 +123,14 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 				addresses.PUT("/:id", addressHandler.UpdateAddress)
 				addresses.DELETE("/:id", addressHandler.DeleteAddress)
 				addresses.PUT("/:id/default", addressHandler.SetDefaultAddress)
+			}
+
+			shippers := protected.Group("users/shippers")
+			{
+				shippers.POST("/register", shipperHandler.RegisterShipper)
+				shippers.GET("/profile", shipperHandler.GetShipperProfile)
+				shippers.GET("/:id/profile", shipperHandler.GetShipperProfileByID)
+				shippers.PUT("/profile", shipperHandler.UpdateShipperProfile)
 			}
 		}
 	}
