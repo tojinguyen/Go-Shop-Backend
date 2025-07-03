@@ -28,3 +28,21 @@ RETURNING
   default_address_id,
   created_at,
   updated_at;
+
+-- name: GetUserProfileByUserId :one
+SELECT
+  user_id,
+  email,
+  full_name,
+  birthday,
+  phone,
+  user_role,
+  banned_at,
+  avatar_url,
+  gender,
+  default_address_id,
+  created_at,
+  updated_at
+FROM user_profiles
+WHERE user_id = $1 AND banned_at IS NULL;
+  

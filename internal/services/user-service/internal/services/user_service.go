@@ -23,9 +23,6 @@ func NewUserService(container *container.ServiceContainer) *UserService {
 }
 
 func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest) (domain.UserProfile, error) {
-	// Lấy repository từ ServiceContainer
-	repo := s.container.GetUserProfileRepo()
-
 	userIDRaw, exists := ctx.Get("user_id")
 	if !exists {
 		return domain.UserProfile{}, fmt.Errorf("user ID not found in context")
@@ -60,7 +57,15 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest)
 		DefaultAddressID: converter.NullPgUUID(),
 	}
 
-	profile, err := repo.CreateUserProfile(ctx, params)
+	profile, err := s.container.GetUserProfileRepo().CreateUserProfile(ctx, params)
+	if err != nil {
+		return domain.UserProfile{}, err
+	}
+	return *profile, nil
+}
+
+func (s *UserService) GetProfile(ctx *gin.Context, userID string) (domain.UserProfile, error) {
+	profile, err := s.container.GetUserProfileRepo().GetUserProfileByID(ctx, userID)
 	if err != nil {
 		return domain.UserProfile{}, err
 	}

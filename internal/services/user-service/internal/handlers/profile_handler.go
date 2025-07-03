@@ -57,9 +57,25 @@ func (h *ProfileHandler) CreateProfile(c *gin.Context) {
 
 // GetProfile returns the current user's profile
 func (h *ProfileHandler) GetProfile(c *gin.Context) {
-	user := &dto.UserInfo{}
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		response.Unauthorized(c, "USER_NOT_AUTHENTICATED", "User not authenticated")
+		return
+	}
+	userIDStr, ok := userIDRaw.(string)
+	if !ok {
+		response.BadRequest(c, "INVALID_USER_ID", "User ID is not a valid string", "User not authenticated")
+		return
+	}
 
-	response.Success(c, "Profile retrieved successfully", user)
+	userProfile, err := h.userService.GetProfile(c, userIDStr)
+
+	if err != nil {
+		response.InternalServerError(c, "PROFILE_RETRIEVAL_FAILED", "Failed to retrieve profile")
+		return
+	}
+
+	response.Success(c, "Profile retrieved successfully", userProfile)
 }
 
 func (h *ProfileHandler) UpdateProfile(c *gin.Context) {

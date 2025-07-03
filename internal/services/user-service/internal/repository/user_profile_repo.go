@@ -11,6 +11,7 @@ import (
 
 type UserProfileRepository interface {
 	CreateUserProfile(ctx context.Context, params sqlc.CreateUserProfileParams) (*domain.UserProfile, error)
+	GetUserProfileByID(ctx context.Context, userID string) (*domain.UserProfile, error)
 }
 
 type userProfileRepository struct {
@@ -30,6 +31,28 @@ func (r *userProfileRepository) CreateUserProfile(ctx context.Context, params sq
 	if err != nil {
 		return nil, err
 	}
+	return &domain.UserProfile{
+		UserID:           profile.UserID.String(),
+		Email:            profile.Email,
+		FullName:         profile.FullName,
+		Birthday:         converter.PgDateToString(profile.Birthday),
+		Phone:            profile.Phone,
+		Role:             profile.UserRole,
+		BannedAt:         converter.PgTimeToString(profile.BannedAt),
+		AvatarURL:        profile.AvatarUrl,
+		Gender:           profile.Gender,
+		DefaultAddressID: converter.PgUUIDToString(profile.DefaultAddressID),
+		CreatedAt:        converter.PgTimeToString(profile.CreatedAt),
+		UpdatedAt:        converter.PgTimeToString(profile.UpdatedAt),
+	}, nil
+}
+
+func (r *userProfileRepository) GetUserProfileByID(ctx context.Context, userID string) (*domain.UserProfile, error) {
+	profile, err := r.queries.GetUserProfileByUserId(ctx, converter.StringToPgUUID(userID))
+	if err != nil {
+		return nil, err
+	}
+
 	return &domain.UserProfile{
 		UserID:           profile.UserID.String(),
 		Email:            profile.Email,
