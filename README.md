@@ -112,7 +112,9 @@ DELETE /api/v1/users/addresses/{id}
 PUT    /api/v1/users/addresses/{id}/default
 
 # Role Management (User, Shipper)
-POST   /api/v1/users/shipper/register
+POST   /api/v1/users/shippers/register
+GET    /api/v1/users/shippers/me/profile
+PUT    /api/v1/users/shippers/me/profile
 ```
 
 ### Shop Management APIs
