@@ -7,7 +7,6 @@ type CreateUserRequest struct {
 	Email     string `json:"email" binding:"required" validate:"required,email"`
 	Password  string `json:"password" binding:"required" validate:"required,min=8"`
 	FullName  string `json:"full_name" binding:"required" validate:"required,min=2,max=100"`
-	Username  string `json:"username" validate:"omitempty,min=3,max=30"`
 	Phone     string `json:"phone" validate:"omitempty,e164"`
 	AvatarURL string `json:"avatar_url" validate:"omitempty,url"`
 	Birthday  string `json:"birthday" validate:"omitempty,datetime=2006-01-02"`
@@ -16,11 +15,10 @@ type CreateUserRequest struct {
 
 // UpdateUserRequest represents the update user request payload
 type UpdateUserRequest struct {
-	FirstName string `json:"first_name" validate:"omitempty,min=2,max=50"`
-	LastName  string `json:"last_name" validate:"omitempty,min=2,max=50"`
-	Username  string `json:"username" validate:"omitempty,min=3,max=30"`
+	FullName  string `json:"full_name" binding:"required" validate:"required,min=2,max=100"`
 	Phone     string `json:"phone" validate:"omitempty,e164"`
-	Avatar    string `json:"avatar" validate:"omitempty,url"`
+	AvatarURL string `json:"avatar_url" validate:"omitempty,url"`
+	Birthday  string `json:"birthday" validate:"omitempty,datetime=2006-01-02"`
 }
 
 // UpdatePasswordRequest represents the change password request payload

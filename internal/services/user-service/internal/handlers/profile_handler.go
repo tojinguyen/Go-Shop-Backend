@@ -79,15 +79,25 @@ func (h *ProfileHandler) GetProfile(c *gin.Context) {
 }
 
 func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
-	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
-		response.Unauthorized(c, "USER_NOT_AUTHENTICATED", "User not authenticated")
+	// Bind the request body to UpdateUserRequest
+	var req dto.UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
 		return
 	}
-	//TODO: update profile
 
-	response.Success(c, "Profile retrieved successfully", userID)
+	// Update the user profile
+	updatedProfile, err := h.userService.UpdateProfile(c, req)
+	if err != nil {
+		if err.Error() == "user not found" {
+			response.NotFound(c, "USER_NOT_FOUND", "User profile not found")
+			return
+		}
+		response.InternalServerError(c, "PROFILE_UPDATE_FAILED", "Failed to update profile")
+		return
+	}
+
+	response.Success(c, "Profile retrieved successfully", updatedProfile)
 }
 
 func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
