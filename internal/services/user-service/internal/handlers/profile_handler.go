@@ -116,12 +116,30 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 
 func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
+	userIDRaw, exists := c.Get("user_id")
 	if !exists {
 		response.Unauthorized(c, "USER_NOT_AUTHENTICATED", "User not authenticated")
 		return
 	}
-	// Here you would typically delete the user from the database
-	// For demo purposes, we'll just return a success message
-	response.Success(c, "Profile deleted successfully", userID)
+	userIDStr, ok := userIDRaw.(string)
+	if !ok {
+		response.BadRequest(c, "INVALID_USER_ID", "User ID is not a valid string", "User not authenticated")
+		return
+	}
+
+	// Delete the user profile
+	err := h.userService.DeleteProfile(c, userIDStr)
+	if err != nil {
+		if err.Error() == "user not found" {
+			response.NotFound(c, "USER_NOT_FOUND", "User profile not found")
+			return
+		}
+		response.InternalServerError(c, "PROFILE_DELETION_FAILED", "Failed to delete profile")
+		return
+	}
+
+	response.Success(c, "Profile deleted successfully", map[string]string{
+		"user_id": userIDStr,
+		"status":  "deleted",
+	})
 }

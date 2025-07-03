@@ -129,3 +129,18 @@ func (s *UserService) UpdateProfile(ctx *gin.Context, req dto.UpdateUserRequest)
 	}
 	return *profile, nil
 }
+
+func (s *UserService) DeleteProfile(ctx *gin.Context, userID string) error {
+	// Verify that the user exists before attempting to delete
+	_, err := s.container.GetUserProfileRepo().GetUserProfileByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("user not found: %w", err)
+	}
+
+	// Perform soft delete
+	err = s.container.GetUserProfileRepo().DeleteProfile(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete profile: %w", err)
+	}
+	return nil
+}

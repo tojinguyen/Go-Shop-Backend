@@ -13,6 +13,7 @@ type UserProfileRepository interface {
 	CreateUserProfile(ctx context.Context, params sqlc.CreateUserProfileParams) (*domain.UserProfile, error)
 	GetUserProfileByID(ctx context.Context, userID string) (*domain.UserProfile, error)
 	UpdateUserProfile(ctx context.Context, params sqlc.UpdateUserProfileParams) (*domain.UserProfile, error)
+	DeleteProfile(ctx context.Context, userID string) error
 }
 
 type userProfileRepository struct {
@@ -89,4 +90,12 @@ func (r *userProfileRepository) UpdateUserProfile(ctx context.Context, params sq
 		CreatedAt:        converter.PgTimeToString(profile.CreatedAt),
 		UpdatedAt:        converter.PgTimeToString(profile.UpdatedAt),
 	}, nil
+}
+
+func (r *userProfileRepository) DeleteProfile(ctx context.Context, userID string) error {
+	err := r.queries.SoftDeleteUserProfile(ctx, converter.StringToPgUUID(userID))
+	if err != nil {
+		return err
+	}
+	return nil
 }
