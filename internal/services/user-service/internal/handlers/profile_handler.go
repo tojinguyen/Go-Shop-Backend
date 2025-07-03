@@ -21,7 +21,7 @@ func NewProfileHandler(sc container.ServiceContainer) *ProfileHandler {
 
 func (h *ProfileHandler) CreateProfile(c *gin.Context) {
 	// Bind the request body to CreateUserRequest
-	var req dto.CreateUserRequest
+	var req dto.CreateUserProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
 		return
@@ -80,7 +80,7 @@ func (h *ProfileHandler) GetProfile(c *gin.Context) {
 
 func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	// Bind the request body to UpdateUserRequest
-	var req dto.UpdateUserRequest
+	var req dto.UpdateUserProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
 		return

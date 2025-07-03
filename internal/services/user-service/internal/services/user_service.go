@@ -22,7 +22,7 @@ func NewUserService(container *container.ServiceContainer) *UserService {
 	}
 }
 
-func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserRequest) (domain.UserProfile, error) {
+func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileRequest) (domain.UserProfile, error) {
 	userIDRaw, exists := ctx.Get("user_id")
 	if !exists {
 		return domain.UserProfile{}, fmt.Errorf("user ID not found in context")
@@ -72,7 +72,7 @@ func (s *UserService) GetProfile(ctx *gin.Context, userID string) (domain.UserPr
 	return *profile, nil
 }
 
-func (s *UserService) UpdateProfile(ctx *gin.Context, req dto.UpdateUserRequest) (domain.UserProfile, error) {
+func (s *UserService) UpdateProfile(ctx *gin.Context, req dto.UpdateUserProfileRequest) (domain.UserProfile, error) {
 	userIDRaw, exists := ctx.Get("user_id")
 	if !exists {
 		return domain.UserProfile{}, fmt.Errorf("user ID not found in context")
