@@ -61,3 +61,16 @@ func NullPgTime() pgtype.Timestamptz {
 func TimeToPgTime(t time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{Time: t, Valid: true}
 }
+
+// String to Timestamp conversion
+func StringToPgTime(s string) pgtype.Timestamptz {
+	var t pgtype.Timestamptz
+	if s != "" {
+		parsedTime, err := time.Parse(time.RFC3339, s)
+		if err == nil {
+			t.Time = parsedTime
+			t.Valid = true
+		}
+	}
+	return t
+}
