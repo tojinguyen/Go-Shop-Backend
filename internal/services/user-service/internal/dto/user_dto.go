@@ -49,6 +49,15 @@ type UserListResponse struct {
 	Pagination *PaginationResponse `json:"pagination"`
 }
 
+// PublicUserResponse represents public user profile (limited information)
+type PublicUserResponse struct {
+	ID        string `json:"id"`
+	FullName  string `json:"full_name"`
+	Avatar    string `json:"avatar,omitempty"`
+	Role      string `json:"role"`
+	CreatedAt string `json:"created_at"`
+}
+
 // UserSearchRequest represents the user search request
 type UserSearchRequest struct {
 	PaginationRequest

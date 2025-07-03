@@ -144,3 +144,18 @@ func (s *UserService) DeleteProfile(ctx *gin.Context, userID string) error {
 	}
 	return nil
 }
+
+func (s *UserService) GetProfileByID(ctx *gin.Context, userID string) (domain.UserProfile, error) {
+	// Validate UUID format
+	_, err := uuid.Parse(userID)
+	if err != nil {
+		return domain.UserProfile{}, fmt.Errorf("invalid user ID format")
+	}
+
+	// Get user profile by ID
+	profile, err := s.container.GetUserProfileRepo().GetUserProfileByID(ctx, userID)
+	if err != nil {
+		return domain.UserProfile{}, fmt.Errorf("user not found")
+	}
+	return *profile, nil
+}

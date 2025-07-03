@@ -104,14 +104,56 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 	// Get user ID from URL parameters
 	userID := c.Param("id")
 	if userID == "" {
-		response.BadRequest(c, "INVALID_USER_ID", "User ID is required", "User not authenticated")
+		response.BadRequest(c, "INVALID_USER_ID", "User ID is required", "User ID parameter is missing")
 		return
 	}
 
-	// Here you would typically fetch user details from database
-	// For demo purposes, we'll return mock data
-	user := &dto.UserInfo{}
-	response.Success(c, "Profile retrieved successfully", user)
+	// Get user profile by ID
+	userProfile, err := h.userService.GetProfileByID(c, userID)
+	if err != nil {
+		if err.Error() == "user not found" {
+			response.NotFound(c, "USER_NOT_FOUND", "User profile not found")
+			return
+		}
+		if err.Error() == "invalid user ID format" {
+			response.BadRequest(c, "INVALID_USER_ID", "Invalid user ID format", "User ID must be a valid UUID")
+			return
+		}
+		response.InternalServerError(c, "PROFILE_RETRIEVAL_FAILED", "Failed to retrieve profile")
+		return
+	}
+
+	// Check if the requesting user is viewing their own profile
+	currentUserID, exists := c.Get("user_id")
+	isOwnProfile := exists && currentUserID == userID
+
+	if isOwnProfile {
+		// Return full profile information for own profile
+		userResponse := &dto.UserResponse{
+			ID:               userProfile.UserID,
+			Email:            userProfile.Email,
+			FullName:         userProfile.FullName,
+			Birthday:         userProfile.Birthday,
+			Phone:            userProfile.Phone,
+			Avatar:           userProfile.AvatarURL,
+			Role:             userProfile.Role,
+			Gender:           userProfile.Gender,
+			DefaultAddressID: userProfile.DefaultAddressID,
+			CreatedAt:        userProfile.CreatedAt,
+			UpdatedAt:        userProfile.UpdatedAt,
+		}
+		response.Success(c, "Profile retrieved successfully", userResponse)
+	} else {
+		// Return limited public profile information
+		publicResponse := &dto.PublicUserResponse{
+			ID:        userProfile.UserID,
+			FullName:  userProfile.FullName,
+			Avatar:    userProfile.AvatarURL,
+			Role:      userProfile.Role,
+			CreatedAt: userProfile.CreatedAt,
+		}
+		response.Success(c, "Public profile retrieved successfully", publicResponse)
+	}
 }
 
 func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
