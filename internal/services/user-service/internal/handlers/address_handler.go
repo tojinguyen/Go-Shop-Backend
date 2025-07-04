@@ -127,10 +127,58 @@ func (h *AddressHandler) UpdateAddress(c *gin.Context) {
 
 // DeleteAddress handles the request to delete an address.
 func (h *AddressHandler) DeleteAddress(c *gin.Context) {
-	// Implementation pending
+	addressID := c.Param("id")
+	if addressID == "" {
+		response.BadRequest(c, "INVALID_REQUEST", "Address ID is required", "Address ID should not be empty")
+		return
+	}
+
+	var userID string
+	if userIDParam, exists := c.Get("user_id"); exists {
+		userID = userIDParam.(string)
+	} else {
+		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
+		return
+	}
+
+	err := h.addressService.DeleteAddress(c, userID, addressID)
+	if err != nil {
+		if err.Error() == "address not found" {
+			response.NotFound(c, "ADDRESS_NOT_FOUND", "Address with this ID does not exist")
+			return
+		}
+		response.InternalServerError(c, "DELETE_ADDRESS_FAILED", "Failed to delete address")
+		return
+	}
+
+	response.Success(c, "Address deleted successfully", nil)
 }
 
 // SetDefaultAddress handles the request to set an address as the default.
 func (h *AddressHandler) SetDefaultAddress(c *gin.Context) {
-	// Implementation pending
+	addressID := c.Param("id")
+	if addressID == "" {
+		response.BadRequest(c, "INVALID_REQUEST", "Address ID is required", "Address ID should not be empty")
+		return
+	}
+
+	var userID string
+	if userIDParam, exists := c.Get("user_id"); exists {
+		userID = userIDParam.(string)
+	} else {
+		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
+		return
+	}
+
+	address, err := h.addressService.SetDefaultAddress(c, userID, addressID)
+	if err != nil {
+		if err.Error() == "address not found" {
+			response.NotFound(c, "ADDRESS_NOT_FOUND", "Address with this ID does not exist")
+			return
+		}
+		response.InternalServerError(c, "SET_DEFAULT_ADDRESS_FAILED", "Failed to set default address")
+		return
+	}
+
+	response.Success(c, "Default address set successfully", address)
 }

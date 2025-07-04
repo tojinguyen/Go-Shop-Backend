@@ -181,3 +181,64 @@ func (s *AddressService) UpdateAddress(ctx *gin.Context, userID string, addressI
 
 	return response, nil
 }
+
+func (s *AddressService) DeleteAddress(ctx *gin.Context, userID string, addressID string) error {
+	// Kiểm tra xem địa chỉ có thuộc về người dùng không
+	checkAddress, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
+	if err != nil {
+		return err
+	}
+	if checkAddress.UserID != userID {
+		return fmt.Errorf("address does not belong to user")
+	}
+
+	// Xoá địa chỉ trong database
+	err = s.container.GetAddressRepo().DeleteAddress(ctx, addressID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *AddressService) SetDefaultAddress(ctx *gin.Context, userID string, addressID string) (*dto.AddressResponse, error) {
+	// Kiểm tra xem địa chỉ có thuộc về người dùng không
+	checkAddress, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
+	if err != nil {
+		return nil, err
+	}
+	if checkAddress.UserID != userID {
+		return nil, fmt.Errorf("address does not belong to user")
+	}
+
+	// Tạo parameters cho sqlc
+	params := sqlc.SetDefaultAddressParams{
+		UserID: converter.StringToPgUUID(userID),
+		ID:     converter.StringToPgUUID(addressID),
+	}
+
+	// Cập nhật địa chỉ thành mặc định
+	address, err := s.container.GetAddressRepo().SetDefaultAddress(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Chuyển đổi sang DTO response
+	response := &dto.AddressResponse{
+		ID:        address.ID,
+		UserID:    address.UserID,
+		IsDefault: address.IsDefault,
+		Street:    address.Street,
+		Ward:      address.Ward,
+		District:  address.District,
+		City:      address.City,
+		Country:   address.Country,
+		Lat:       address.Lat,
+		Long:      address.Long,
+		DeletedAt: address.DeletedAt,
+		CreatedAt: address.CreatedAt,
+		UpdatedAt: address.UpdatedAt,
+	}
+
+	return response, nil
+}
