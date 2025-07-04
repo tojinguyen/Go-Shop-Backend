@@ -92,6 +92,37 @@ func (h *AddressHandler) AddAddress(c *gin.Context) {
 // UpdateAddress handles the request to update an existing address.
 func (h *AddressHandler) UpdateAddress(c *gin.Context) {
 	// Implementation pending
+	var req dto.UpdateAddressRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	addressID := c.Param("id")
+	if addressID == "" {
+		response.BadRequest(c, "INVALID_REQUEST", "Address ID is required", "Address ID should not be empty")
+		return
+	}
+
+	var userID string
+	if userIDParam, exists := c.Get("user_id"); exists {
+		userID = userIDParam.(string)
+	} else {
+		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
+		return
+	}
+
+	address, err := h.addressService.UpdateAddress(c, userID, addressID, req)
+	if err != nil {
+		if err.Error() == "address not found" {
+			response.NotFound(c, "ADDRESS_NOT_FOUND", "Address with this ID does not exist")
+			return
+		}
+		response.InternalServerError(c, "UPDATE_ADDRESS_FAILED", "Failed to update address")
+		return
+	}
+
+	response.Success(c, "Address updated successfully", address)
 }
 
 // DeleteAddress handles the request to delete an address.

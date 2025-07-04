@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
@@ -129,4 +131,53 @@ func (s *AddressService) GetAddressesByUserID(ctx *gin.Context, userID string) (
 		Addresses: addressResponses,
 		Total:     len(addressResponses),
 	}, nil
+}
+
+func (s *AddressService) UpdateAddress(ctx *gin.Context, userID string, addressID string, req dto.UpdateAddressRequest) (*dto.AddressResponse, error) {
+	// Need to check if address is owned by user
+	checkAddress, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
+	if err != nil {
+		return nil, err
+	}
+	if checkAddress.UserID != userID {
+		return nil, fmt.Errorf("address does not belong to user")
+	}
+
+	// Tạo parameters cho sqlc
+	params := sqlc.UpdateAddressParams{
+		ID:        converter.StringToPgUUID(addressID),
+		IsDefault: converter.BoolToPgBool(req.IsDefault),
+		Street:    req.Street,
+		Ward:      converter.StringToPgText(req.Ward),
+		District:  converter.StringToPgText(req.District),
+		City:      converter.StringToPgText(req.City),
+		Country:   converter.StringToPgText(&req.Country),
+		Lat:       converter.Float64ToPgFloat8(req.Lat),
+		Long:      converter.Float64ToPgFloat8(req.Long),
+	}
+
+	// Cập nhật address trong database
+	address, err := s.container.GetAddressRepo().UpdateAddress(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Chuyển đổi sang DTO response
+	response := &dto.AddressResponse{
+		ID:        address.ID,
+		UserID:    address.UserID,
+		IsDefault: address.IsDefault,
+		Street:    address.Street,
+		Ward:      address.Ward,
+		District:  address.District,
+		City:      address.City,
+		Country:   address.Country,
+		Lat:       address.Lat,
+		Long:      address.Long,
+		DeletedAt: address.DeletedAt,
+		CreatedAt: address.CreatedAt,
+		UpdatedAt: address.UpdatedAt,
+	}
+
+	return response, nil
 }
