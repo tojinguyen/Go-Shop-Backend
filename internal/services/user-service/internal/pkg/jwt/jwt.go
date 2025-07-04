@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	timeUtils "github.com/toji-dev/go-shop/internal/pkg/time"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	errorConstants "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/errors"
-	timeUtils "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/time"
 )
 
 type CustomJwtClaims struct {

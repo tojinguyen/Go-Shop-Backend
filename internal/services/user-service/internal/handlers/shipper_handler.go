@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 

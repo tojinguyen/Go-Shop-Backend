@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/router"
 )
 
 func main() {
@@ -17,9 +16,6 @@ func main() {
 
 	// Create Gin router
 	r := gin.Default()
-
-	// Setup routes
-	router.SetupRoutes(r)
 
 	// Start server
 	log.Printf("Starting shop service on %s", cfg.GetServerAddress())

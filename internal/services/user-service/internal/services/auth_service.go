@@ -10,11 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
+	timeUtils "github.com/toji-dev/go-shop/internal/pkg/time"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
 	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
-	timeUtils "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/time"
 )
 
 type AuthService struct {
