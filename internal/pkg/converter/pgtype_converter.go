@@ -74,3 +74,48 @@ func StringToPgTime(s string) pgtype.Timestamptz {
 	}
 	return t
 }
+
+// Text conversions
+func PgTextToStringPtr(t pgtype.Text) *string {
+	if t.Valid {
+		return &t.String
+	}
+	return nil
+}
+
+func StringToPgText(s *string) pgtype.Text {
+	if s != nil {
+		return pgtype.Text{String: *s, Valid: true}
+	}
+	return pgtype.Text{}
+}
+
+// Float conversions
+func PgFloat8ToFloat64Ptr(f pgtype.Float8) *float64 {
+	if f.Valid {
+		return &f.Float64
+	}
+	return nil
+}
+
+func Float64ToPgFloat8(f *float64) pgtype.Float8 {
+	if f != nil {
+		return pgtype.Float8{Float64: *f, Valid: true}
+	}
+	return pgtype.Float8{}
+}
+
+// Time pointer conversions
+func PgTimeToTimePtr(t pgtype.Timestamptz) *time.Time {
+	if t.Valid {
+		return &t.Time
+	}
+	return nil
+}
+
+func TimePtrToPgTime(t *time.Time) pgtype.Timestamptz {
+	if t != nil {
+		return pgtype.Timestamptz{Time: *t, Valid: true}
+	}
+	return pgtype.Timestamptz{}
+}
