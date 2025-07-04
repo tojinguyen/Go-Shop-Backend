@@ -13,12 +13,14 @@ import (
 type Querier interface {
 	CheckUserExistsByEmail(ctx context.Context, email string) (pgtype.UUID, error)
 	CreateAddress(ctx context.Context, arg CreateAddressParams) (Address, error)
+	CreateShipper(ctx context.Context, arg CreateShipperParams) (ShipperProfile, error)
 	CreateUserAccount(ctx context.Context, arg CreateUserAccountParams) (CreateUserAccountRow, error)
 	CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error)
 	DeleteAddress(ctx context.Context, id pgtype.UUID) error
 	GetAddressById(ctx context.Context, id pgtype.UUID) (Address, error)
 	GetAddressesByUserId(ctx context.Context, userID pgtype.UUID) ([]Address, error)
 	GetDefaultAddressByUserId(ctx context.Context, userID pgtype.UUID) (Address, error)
+	GetShipperByUserID(ctx context.Context, userID pgtype.UUID) (ShipperProfile, error)
 	GetUserAccountByEmail(ctx context.Context, email string) (GetUserAccountByEmailRow, error)
 	GetUserAccountByID(ctx context.Context, id pgtype.UUID) (GetUserAccountByIDRow, error)
 	GetUserProfileByUserId(ctx context.Context, userID pgtype.UUID) (UserProfile, error)
@@ -27,6 +29,7 @@ type Querier interface {
 	SoftDeleteUserProfile(ctx context.Context, userID pgtype.UUID) error
 	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (Address, error)
 	UpdateLastLoginAt(ctx context.Context, id pgtype.UUID) error
+	UpdateShipperByUserID(ctx context.Context, arg UpdateShipperByUserIDParams) (ShipperProfile, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error)
 }

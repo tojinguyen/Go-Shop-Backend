@@ -30,7 +30,6 @@ type ShipperProfile struct {
 	VehicleImageUrl pgtype.Text `json:"vehicle_image_url"`
 	IdentifyCardUrl pgtype.Text `json:"identify_card_url"`
 	LicensePlate    pgtype.Text `json:"license_plate"`
-	Status          string      `json:"status"`
 }
 
 type UserAccount struct {

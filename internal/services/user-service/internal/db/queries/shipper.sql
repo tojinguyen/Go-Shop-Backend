@@ -4,7 +4,7 @@ INSERT INTO shipper_profiles (
     vehicle_type,
     vehicle_image_url,
     identify_card_url,
-    license_plate,
+    license_plate
 ) VALUES (
     $1, $2, $3, $4, $5
 ) RETURNING *;
