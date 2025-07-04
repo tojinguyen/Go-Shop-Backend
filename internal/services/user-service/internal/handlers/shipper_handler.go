@@ -42,17 +42,81 @@ func (h *ShipperHandler) RegisterShipper(c *gin.Context) {
 }
 
 func (h *ShipperHandler) GetShipperProfile(c *gin.Context) {
-	// Implementation pending
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
+		return
+	}
+
+	shipper, err := h.shipperService.GetShipperProfile(c, userID.(string))
+	if err != nil {
+		response.InternalServerError(c, "INTERNAL_SERVER_ERROR", "Failed to retrieve shipper profile")
+		return
+	}
+
+	if shipper == nil {
+		response.NotFound(c, "NOT_FOUND", "Shipper profile not found")
+		return
+	}
+
+	response.Success(c, "Shipper profile retrieved successfully", shipper)
 }
 
 func (h *ShipperHandler) GetShipperProfileByID(c *gin.Context) {
-	// Implementation pending
+	userID := c.Param("id")
+	if userID == "" {
+		response.BadRequest(c, "INVALID_REQUEST", "User ID is required", "User ID cannot be empty")
+		return
+	}
+
+	shipper, err := h.shipperService.GetShipperProfile(c, userID)
+	if err != nil {
+		response.InternalServerError(c, "INTERNAL_SERVER_ERROR", "Failed to retrieve shipper profile")
+		return
+	}
+
+	if shipper == nil {
+		response.NotFound(c, "NOT_FOUND", "Shipper profile not found")
+		return
+	}
+
+	response.Success(c, "Shipper profile retrieved successfully", shipper)
 }
 
 func (h *ShipperHandler) UpdateShipperProfile(c *gin.Context) {
-	// Implementation pending
+	var req dto.ShipperUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
+		return
+	}
+
+	shipper, err := h.shipperService.UpdateShipperProfile(c, userID.(string), &req)
+	if err != nil {
+		response.InternalServerError(c, "INTERNAL_SERVER_ERROR", "Failed to update shipper profile")
+		return
+	}
+
+	response.Success(c, "Shipper profile updated successfully", shipper)
 }
 
 func (h *ShipperHandler) DeleteShipperProfile(c *gin.Context) {
-	// Implementation pending
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
+		return
+	}
+
+	err := h.shipperService.DeleteShipperProfile(c, userID.(string))
+	if err != nil {
+		response.InternalServerError(c, "INTERNAL_SERVER_ERROR", "Failed to delete shipper profile")
+		return
+	}
+
+	response.Success(c, "Shipper profile deleted successfully", nil)
 }
