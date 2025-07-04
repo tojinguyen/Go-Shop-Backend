@@ -50,6 +50,16 @@ func (q *Queries) CreateShipper(ctx context.Context, arg CreateShipperParams) (S
 	return i, err
 }
 
+const deleteShipperByUserID = `-- name: DeleteShipperByUserID :exec
+DELETE FROM shipper_profiles
+WHERE user_id = $1
+`
+
+func (q *Queries) DeleteShipperByUserID(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteShipperByUserID, userID)
+	return err
+}
+
 const getShipperByUserID = `-- name: GetShipperByUserID :one
 SELECT user_id, vehicle_type, vehicle_image_url, identify_card_url, license_plate FROM shipper_profiles
 WHERE user_id = $1

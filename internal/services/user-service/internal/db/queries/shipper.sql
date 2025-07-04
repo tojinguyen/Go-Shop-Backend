@@ -19,7 +19,11 @@ SET
     vehicle_type = $2,
     vehicle_image_url = $3,
     identify_card_url = $4,
-    license_plate = $5,
-    updated_at = NOW()
+    license_plate = $5
 WHERE user_id = $1
 RETURNING *;
+
+
+-- name: DeleteShipperByUserID :exec
+DELETE FROM shipper_profiles
+WHERE user_id = $1;

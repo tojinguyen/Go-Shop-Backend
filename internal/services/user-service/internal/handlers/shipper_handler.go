@@ -31,3 +31,7 @@ func (h *ShipperHandler) GetShipperProfileByID(c *gin.Context) {
 func (h *ShipperHandler) UpdateShipperProfile(c *gin.Context) {
 	// Implementation pending
 }
+
+func (h *ShipperHandler) DeleteShipperProfile(c *gin.Context) {
+	// Implementation pending
+}

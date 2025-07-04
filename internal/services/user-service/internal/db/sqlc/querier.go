@@ -17,6 +17,7 @@ type Querier interface {
 	CreateUserAccount(ctx context.Context, arg CreateUserAccountParams) (CreateUserAccountRow, error)
 	CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error)
 	DeleteAddress(ctx context.Context, id pgtype.UUID) error
+	DeleteShipperByUserID(ctx context.Context, userID pgtype.UUID) error
 	GetAddressById(ctx context.Context, id pgtype.UUID) (Address, error)
 	GetAddressesByUserId(ctx context.Context, userID pgtype.UUID) ([]Address, error)
 	GetDefaultAddressByUserId(ctx context.Context, userID pgtype.UUID) (Address, error)

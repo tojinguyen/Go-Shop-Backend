@@ -131,6 +131,7 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 				shippers.GET("/profile", shipperHandler.GetShipperProfile)
 				shippers.GET("/:id/profile", shipperHandler.GetShipperProfileByID)
 				shippers.PUT("/profile", shipperHandler.UpdateShipperProfile)
+				shippers.DELETE("/profile", shipperHandler.DeleteShipperProfile)
 			}
 		}
 	}
