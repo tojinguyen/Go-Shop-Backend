@@ -18,8 +18,27 @@ func NewAddressHandler(sc container.ServiceContainer) *AddressHandler {
 	}
 }
 
-// GetAddress handles the request to get all addresses for a user.
-func (h *AddressHandler) GetAddress(c *gin.Context) {
+// GetAddresses handles the request to get all addresses for a user.
+func (h *AddressHandler) GetAddresses(c *gin.Context) {
+	var userID string
+	if userIDParam, exists := c.Get("user_id"); exists {
+		userID = userIDParam.(string)
+	} else {
+		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
+		return
+	}
+
+	addresses, err := h.addressService.GetAddressesByUserID(c, userID)
+	if err != nil {
+		response.InternalServerError(c, "GET_ADDRESSES_FAILED", "Failed to retrieve addresses")
+		return
+	}
+
+	response.Success(c, "Addresses retrieved successfully", addresses)
+}
+
+// GetAddressByID handles the request to get a single address by ID.
+func (h *AddressHandler) GetAddressByID(c *gin.Context) {
 	// Implementation pending
 	addressID := c.Param("id")
 	if addressID != "" {
@@ -38,11 +57,6 @@ func (h *AddressHandler) GetAddress(c *gin.Context) {
 		return
 	}
 	response.Success(c, "Address retrieved successfully", address)
-}
-
-// GetAddressByID handles the request to get a single address by ID.
-func (h *AddressHandler) GetAddressByID(c *gin.Context) {
-	// Implementation pending
 }
 
 // AddAddress handles the request to add a new address.

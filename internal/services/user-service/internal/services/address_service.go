@@ -97,3 +97,36 @@ func (s *AddressService) GetAddressByID(ctx *gin.Context, addressID string) (*dt
 
 	return response, nil
 }
+
+func (s *AddressService) GetAddressesByUserID(ctx *gin.Context, userID string) (*dto.AddressListResponse, error) {
+	// Lấy danh sách địa chỉ từ repository
+	addresses, err := s.container.GetAddressRepo().GetAddressesByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Chuyển đổi sang DTO response
+	var addressResponses []dto.AddressResponse
+	for _, address := range addresses {
+		addressResponses = append(addressResponses, dto.AddressResponse{
+			ID:        address.ID,
+			UserID:    address.UserID,
+			IsDefault: address.IsDefault,
+			Street:    address.Street,
+			Ward:      address.Ward,
+			District:  address.District,
+			City:      address.City,
+			Country:   address.Country,
+			Lat:       address.Lat,
+			Long:      address.Long,
+			DeletedAt: address.DeletedAt,
+			CreatedAt: address.CreatedAt,
+			UpdatedAt: address.UpdatedAt,
+		})
+	}
+
+	return &dto.AddressListResponse{
+		Addresses: addressResponses,
+		Total:     len(addressResponses),
+	}, nil
+}

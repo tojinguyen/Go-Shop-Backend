@@ -117,7 +117,7 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 
 			addresses := protected.Group("users/addresses")
 			{
-				addresses.GET("", addressHandler.GetAddress)
+				addresses.GET("", addressHandler.GetAddresses)
 				addresses.GET("/:id", addressHandler.GetAddressByID)
 				addresses.POST("", addressHandler.AddAddress)
 				addresses.PUT("/:id", addressHandler.UpdateAddress)
