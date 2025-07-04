@@ -12,13 +12,20 @@ import (
 
 type Querier interface {
 	CheckUserExistsByEmail(ctx context.Context, email string) (pgtype.UUID, error)
+	CreateAddress(ctx context.Context, arg CreateAddressParams) (Address, error)
 	CreateUserAccount(ctx context.Context, arg CreateUserAccountParams) (CreateUserAccountRow, error)
 	CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error)
+	DeleteAddress(ctx context.Context, id pgtype.UUID) error
+	GetAddressById(ctx context.Context, id pgtype.UUID) (Address, error)
+	GetAddressesByUserId(ctx context.Context, userID pgtype.UUID) ([]Address, error)
+	GetDefaultAddressByUserId(ctx context.Context, userID pgtype.UUID) (Address, error)
 	GetUserAccountByEmail(ctx context.Context, email string) (GetUserAccountByEmailRow, error)
 	GetUserAccountByID(ctx context.Context, id pgtype.UUID) (GetUserAccountByIDRow, error)
 	GetUserProfileByUserId(ctx context.Context, userID pgtype.UUID) (UserProfile, error)
+	SetDefaultAddress(ctx context.Context, arg SetDefaultAddressParams) error
 	SoftDeleteUserAccount(ctx context.Context, id pgtype.UUID) error
 	SoftDeleteUserProfile(ctx context.Context, userID pgtype.UUID) error
+	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (Address, error)
 	UpdateLastLoginAt(ctx context.Context, id pgtype.UUID) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error)
