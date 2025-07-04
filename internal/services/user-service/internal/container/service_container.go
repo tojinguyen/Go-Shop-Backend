@@ -22,6 +22,7 @@ type ServiceContainer struct {
 	userAccountRepo repository.UserAccountRepository
 	userProfileRepo repository.UserProfileRepository
 	addressRepo     repository.AddressRepository
+	shipperRepo     repository.ShipperRepository
 }
 
 // NewServiceContainer creates and initializes all services
@@ -56,6 +57,9 @@ func NewServiceContainer(cfg *config.Config) (ServiceContainer, error) {
 
 	// Initialize AddressRepository
 	container.initAddressRepository()
+
+	// Initialize ShipperRepository
+	container.initShipperRepository()
 
 	log.Println("All services initialized successfully")
 	return container, nil
@@ -145,6 +149,11 @@ func (sc *ServiceContainer) initAddressRepository() {
 	log.Println("AddressRepository initialized")
 }
 
+func (sc *ServiceContainer) initShipperRepository() {
+	sc.shipperRepo = repository.NewShipperRepository(sc.postgreSQL)
+	log.Println("ShipperRepository initialized")
+}
+
 // Close gracefully closes all services
 func (sc *ServiceContainer) Close() {
 	log.Println("Shutting down services...")
@@ -195,6 +204,11 @@ func (sc *ServiceContainer) GetUserProfileRepo() repository.UserProfileRepositor
 // GetAddressRepo returns AddressRepository
 func (sc *ServiceContainer) GetAddressRepo() repository.AddressRepository {
 	return sc.addressRepo
+}
+
+// GetShipperRepo returns ShipperRepository
+func (sc *ServiceContainer) GetShipperRepo() repository.ShipperRepository {
+	return sc.shipperRepo
 }
 
 // GetEmail returns Email service

@@ -1,6 +1,12 @@
 package services
 
-import "github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
+import (
+	"context"
+
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+)
 
 type ShipperService struct {
 	container *container.ServiceContainer
@@ -8,4 +14,27 @@ type ShipperService struct {
 
 func NewShipperService(container *container.ServiceContainer) *ShipperService {
 	return &ShipperService{container: container}
+}
+
+func (s *ShipperService) RegisterShipper(ctx context.Context, userID string, request *dto.ShipperRegisterRequest) (*dto.ShipperResponse, error) {
+	shipper, err := s.container.GetShipperRepo().CreateShipper(ctx, &domain.Shipper{
+		UserID:          userID,
+		VehicleType:     request.VehicleType,
+		VehicleImageURL: request.VehicleImageURL,
+		IdentifyCardURL: request.IdentifyCardURL,
+		LicensePlate:    request.LicensePlate,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.ShipperResponse{
+		UserID:          shipper.UserID,
+		VehicleType:     shipper.VehicleType,
+		VehicleImageURL: shipper.VehicleImageURL,
+		IdentifyCardURL: shipper.IdentifyCardURL,
+		LicensePlate:    shipper.LicensePlate,
+		CreatedAt:       shipper.CreatedAt,
+		UpdatedAt:       shipper.UpdatedAt,
+	}, nil
 }
