@@ -1,6 +1,12 @@
 package services
 
-import "github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/converter"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+)
 
 type AddressService struct {
 	container *container.ServiceContainer
@@ -10,4 +16,57 @@ func NewAddressService(container *container.ServiceContainer) *AddressService {
 	return &AddressService{
 		container: container,
 	}
+}
+
+func (s *AddressService) CreateAddress(ctx *gin.Context, userID string, req dto.CreateAddressRequest) (*dto.AddressResponse, error) {
+	// Tạo parameters cho sqlc
+	params := sqlc.CreateAddressParams{
+		UserID:    converter.StringToPgUUID(userID),
+		IsDefault: converter.BoolToPgBool(req.IsDefault),
+		Street:    req.Street,
+		Ward:      converter.StringToPgText(req.Ward),
+		District:  converter.StringToPgText(req.District),
+		City:      converter.StringToPgText(req.City),
+		Country:   converter.StringToPgText(&req.Country),
+		Lat:       converter.Float64ToPgFloat8(req.Lat),
+		Long:      converter.Float64ToPgFloat8(req.Long),
+	}
+
+	// Tạo address trong database
+	address, err := s.container.GetAddressRepo().CreateAddress(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Nếu address này được đặt làm default, cần reset tất cả address khác của user thành false
+	if req.IsDefault {
+		setDefaultParams := sqlc.SetDefaultAddressParams{
+			UserID: converter.StringToPgUUID(userID),
+			ID:     converter.StringToPgUUID(address.ID),
+		}
+		// Update để đảm bảo chỉ address này là default
+		_, err = s.container.GetAddressRepo().SetDefaultAddress(ctx, setDefaultParams)
+		if err != nil {
+			// Log error nhưng không fail request vì address đã được tạo thành công
+		}
+	}
+
+	// Convert domain model sang DTO response
+	response := &dto.AddressResponse{
+		ID:        address.ID,
+		UserID:    address.UserID,
+		IsDefault: address.IsDefault,
+		Street:    address.Street,
+		Ward:      address.Ward,
+		District:  address.District,
+		City:      address.City,
+		Country:   address.Country,
+		Lat:       address.Lat,
+		Long:      address.Long,
+		DeletedAt: address.DeletedAt,
+		CreatedAt: address.CreatedAt,
+		UpdatedAt: address.UpdatedAt,
+	}
+
+	return response, nil
 }

@@ -119,3 +119,15 @@ func TimePtrToPgTime(t *time.Time) pgtype.Timestamptz {
 	}
 	return pgtype.Timestamptz{}
 }
+
+// Bool conversions
+func BoolToPgBool(b bool) pgtype.Bool {
+	return pgtype.Bool{Bool: b, Valid: true}
+}
+
+func PgBoolToBool(b pgtype.Bool) bool {
+	if b.Valid {
+		return b.Bool
+	}
+	return false
+}

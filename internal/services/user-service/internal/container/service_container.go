@@ -21,6 +21,7 @@ type ServiceContainer struct {
 	email           email.EmailService
 	userAccountRepo repository.UserAccountRepository
 	userProfileRepo repository.UserProfileRepository
+	addressRepo     repository.AddressRepository
 }
 
 // NewServiceContainer creates and initializes all services
@@ -52,6 +53,9 @@ func NewServiceContainer(cfg *config.Config) (ServiceContainer, error) {
 
 	// Initialize UserProfileRepository
 	container.initUserProfileRepository()
+
+	// Initialize AddressRepository
+	container.initAddressRepository()
 
 	log.Println("All services initialized successfully")
 	return container, nil
@@ -136,6 +140,11 @@ func (sc *ServiceContainer) initUserProfileRepository() {
 	log.Println("UserProfileRepository initialized")
 }
 
+func (sc *ServiceContainer) initAddressRepository() {
+	sc.addressRepo = repository.NewAddressRepository(sc.postgreSQL)
+	log.Println("AddressRepository initialized")
+}
+
 // Close gracefully closes all services
 func (sc *ServiceContainer) Close() {
 	log.Println("Shutting down services...")
@@ -181,6 +190,11 @@ func (sc *ServiceContainer) GetUserAccountRepo() repository.UserAccountRepositor
 // GetUserProfileRepo returns UserProfileRepository
 func (sc *ServiceContainer) GetUserProfileRepo() repository.UserProfileRepository {
 	return sc.userProfileRepo
+}
+
+// GetAddressRepo returns AddressRepository
+func (sc *ServiceContainer) GetAddressRepo() repository.AddressRepository {
+	return sc.addressRepo
 }
 
 // GetEmail returns Email service

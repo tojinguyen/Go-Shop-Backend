@@ -3,6 +3,8 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
@@ -29,6 +31,31 @@ func (h *AddressHandler) GetAddressByID(c *gin.Context) {
 // AddAddress handles the request to add a new address.
 func (h *AddressHandler) AddAddress(c *gin.Context) {
 	// Implementation pending
+	var req dto.CreateAddressRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
+		return
+	}
+
+	var userID string
+	if userIDParam, exists := c.Get("user_id"); exists {
+		userID = userIDParam.(string)
+	} else {
+		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
+		return
+	}
+
+	address, err := h.addressService.CreateAddress(c, userID, req)
+	if err != nil {
+		if err.Error() == "address already exists" {
+			response.Conflict(c, "ADDRESS_ALREADY_EXISTS", "Address with this details already exists")
+			return
+		}
+		response.InternalServerError(c, "CREATE_ADDRESS_FAILED", "Failed to create address")
+		return
+	}
+
+	response.Created(c, "Address created successfully", address)
 }
 
 // UpdateAddress handles the request to update an existing address.
