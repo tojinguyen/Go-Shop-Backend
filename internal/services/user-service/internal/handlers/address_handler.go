@@ -18,9 +18,26 @@ func NewAddressHandler(sc container.ServiceContainer) *AddressHandler {
 	}
 }
 
-// GetAddresses handles the request to get all addresses for a user.
-func (h *AddressHandler) GetAddresses(c *gin.Context) {
+// GetAddress handles the request to get all addresses for a user.
+func (h *AddressHandler) GetAddress(c *gin.Context) {
 	// Implementation pending
+	addressID := c.Param("id")
+	if addressID != "" {
+		response.BadRequest(c, "INVALID_REQUEST", "Address ID is required", "Address ID should not be empty")
+		return
+	}
+
+	address, err := h.addressService.GetAddressByID(c, addressID)
+
+	if err != nil {
+		if err.Error() == "address not found" {
+			response.NotFound(c, "ADDRESS_NOT_FOUND", "Address with this ID does not exist")
+			return
+		}
+		response.InternalServerError(c, "GET_ADDRESS_FAILED", "Failed to retrieve address")
+		return
+	}
+	response.Success(c, "Address retrieved successfully", address)
 }
 
 // GetAddressByID handles the request to get a single address by ID.

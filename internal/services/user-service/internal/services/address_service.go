@@ -70,3 +70,30 @@ func (s *AddressService) CreateAddress(ctx *gin.Context, userID string, req dto.
 
 	return response, nil
 }
+
+func (s *AddressService) GetAddressByID(ctx *gin.Context, addressID string) (*dto.AddressResponse, error) {
+	// Lấy address từ repository
+	address, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Chuyển đổi sang DTO response
+	response := &dto.AddressResponse{
+		ID:        address.ID,
+		UserID:    address.UserID,
+		IsDefault: address.IsDefault,
+		Street:    address.Street,
+		Ward:      address.Ward,
+		District:  address.District,
+		City:      address.City,
+		Country:   address.Country,
+		Lat:       address.Lat,
+		Long:      address.Long,
+		DeletedAt: address.DeletedAt,
+		CreatedAt: address.CreatedAt,
+		UpdatedAt: address.UpdatedAt,
+	}
+
+	return response, nil
+}
