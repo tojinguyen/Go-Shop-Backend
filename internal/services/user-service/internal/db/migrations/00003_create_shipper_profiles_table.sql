@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS shipper_profiles (
     vehicle_image_url VARCHAR(500),
     identify_card_url VARCHAR(500),
     license_plate VARCHAR(20),
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- Enum: PENDING, APPROVED, REJECTED
 
     CONSTRAINT fk_shipper_user FOREIGN KEY (user_id) REFERENCES user_profiles(user_id) ON DELETE CASCADE
 );
