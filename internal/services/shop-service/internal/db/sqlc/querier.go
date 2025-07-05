@@ -12,7 +12,10 @@ import (
 
 type Querier interface {
 	CreateShop(ctx context.Context, arg CreateShopParams) (Shop, error)
-	GetShopByID(ctx context.Context, id pgtype.UUID) (GetShopByIDRow, error)
+	DeleteShop(ctx context.Context, id pgtype.UUID) error
+	GetShopByID(ctx context.Context, id pgtype.UUID) (Shop, error)
+	GetShopsByOwnerID(ctx context.Context, ownerID pgtype.UUID) ([]Shop, error)
+	UpdateShop(ctx context.Context, arg UpdateShopParams) (Shop, error)
 }
 
 var _ Querier = (*Queries)(nil)

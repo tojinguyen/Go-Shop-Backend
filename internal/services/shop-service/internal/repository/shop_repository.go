@@ -10,4 +10,7 @@ import (
 type ShopRepository interface {
 	Create(ctx context.Context, shop *domain.Shop) error
 	GetShopByID(ctx context.Context, shopID string) (*domain.Shop, error)
+	GetShopsByOwnerID(ctx context.Context, ownerID string) ([]*domain.Shop, error)
+	Update(ctx context.Context, shop *domain.Shop) error
+	Delete(ctx context.Context, shopID string) error
 }

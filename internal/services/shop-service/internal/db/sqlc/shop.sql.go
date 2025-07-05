@@ -79,6 +79,15 @@ func (q *Queries) CreateShop(ctx context.Context, arg CreateShopParams) (Shop, e
 	return i, err
 }
 
+const deleteShop = `-- name: DeleteShop :exec
+DELETE FROM shops WHERE id = $1
+`
+
+func (q *Queries) DeleteShop(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteShop, id)
+	return err
+}
+
 const getShopByID = `-- name: GetShopByID :one
 SELECT 
   id,
@@ -92,31 +101,16 @@ SELECT
   email,
   rating,
   active_at,
+  banned_at,
   created_at,
   updated_at
 FROM shops
 WHERE id = $1
 `
 
-type GetShopByIDRow struct {
-	ID              pgtype.UUID        `json:"id"`
-	OwnerID         pgtype.UUID        `json:"owner_id"`
-	ShopName        string             `json:"shop_name"`
-	AvatarUrl       string             `json:"avatar_url"`
-	BannerUrl       string             `json:"banner_url"`
-	ShopDescription pgtype.Text        `json:"shop_description"`
-	AddressID       pgtype.UUID        `json:"address_id"`
-	Phone           string             `json:"phone"`
-	Email           string             `json:"email"`
-	Rating          pgtype.Numeric     `json:"rating"`
-	ActiveAt        pgtype.Timestamptz `json:"active_at"`
-	CreatedAt       pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetShopByID(ctx context.Context, id pgtype.UUID) (GetShopByIDRow, error) {
+func (q *Queries) GetShopByID(ctx context.Context, id pgtype.UUID) (Shop, error) {
 	row := q.db.QueryRow(ctx, getShopByID, id)
-	var i GetShopByIDRow
+	var i Shop
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
@@ -129,6 +123,129 @@ func (q *Queries) GetShopByID(ctx context.Context, id pgtype.UUID) (GetShopByIDR
 		&i.Email,
 		&i.Rating,
 		&i.ActiveAt,
+		&i.BannedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getShopsByOwnerID = `-- name: GetShopsByOwnerID :many
+SELECT 
+  id,
+  owner_id,
+  shop_name,
+  avatar_url,
+  banner_url,
+  shop_description,
+  address_id,
+  phone,
+  email,
+  rating,
+  active_at,
+  banned_at,
+  created_at,
+  updated_at
+FROM shops
+WHERE owner_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetShopsByOwnerID(ctx context.Context, ownerID pgtype.UUID) ([]Shop, error) {
+	rows, err := q.db.Query(ctx, getShopsByOwnerID, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Shop{}
+	for rows.Next() {
+		var i Shop
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.ShopName,
+			&i.AvatarUrl,
+			&i.BannerUrl,
+			&i.ShopDescription,
+			&i.AddressID,
+			&i.Phone,
+			&i.Email,
+			&i.Rating,
+			&i.ActiveAt,
+			&i.BannedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateShop = `-- name: UpdateShop :one
+UPDATE shops
+SET 
+  shop_name = $2,
+  avatar_url = $3,
+  banner_url = $4,
+  shop_description = $5,
+  address_id = $6,
+  phone = $7,
+  email = $8,
+  rating = $9,
+  active_at = $10,
+  banned_at = $11,
+  updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, owner_id, shop_name, avatar_url, banner_url, shop_description, address_id, phone, email, rating, active_at, banned_at, created_at, updated_at
+`
+
+type UpdateShopParams struct {
+	ID              pgtype.UUID        `json:"id"`
+	ShopName        string             `json:"shop_name"`
+	AvatarUrl       string             `json:"avatar_url"`
+	BannerUrl       string             `json:"banner_url"`
+	ShopDescription pgtype.Text        `json:"shop_description"`
+	AddressID       pgtype.UUID        `json:"address_id"`
+	Phone           string             `json:"phone"`
+	Email           string             `json:"email"`
+	Rating          pgtype.Numeric     `json:"rating"`
+	ActiveAt        pgtype.Timestamptz `json:"active_at"`
+	BannedAt        pgtype.Timestamptz `json:"banned_at"`
+}
+
+func (q *Queries) UpdateShop(ctx context.Context, arg UpdateShopParams) (Shop, error) {
+	row := q.db.QueryRow(ctx, updateShop,
+		arg.ID,
+		arg.ShopName,
+		arg.AvatarUrl,
+		arg.BannerUrl,
+		arg.ShopDescription,
+		arg.AddressID,
+		arg.Phone,
+		arg.Email,
+		arg.Rating,
+		arg.ActiveAt,
+		arg.BannedAt,
+	)
+	var i Shop
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ShopName,
+		&i.AvatarUrl,
+		&i.BannerUrl,
+		&i.ShopDescription,
+		&i.AddressID,
+		&i.Phone,
+		&i.Email,
+		&i.Rating,
+		&i.ActiveAt,
+		&i.BannedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

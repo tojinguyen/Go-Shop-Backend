@@ -11,7 +11,10 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/api"
 	createshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/create_shop"
+	deleteshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/delete_shop"
+	updateshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/update_shop"
 	getshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shop"
+	getshops "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shops"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
 )
 
@@ -77,15 +80,35 @@ func main() {
 	})
 
 	// Initialize feature handlers
+	// Create shop
 	createShopHandler := createshop.NewHandler(shopRepo)
 	createShopAPIHandler := createshop.NewAPIHandler(createShopHandler)
 
+	// Get shop by ID
 	getShopHandler := getshop.NewHandler(shopRepo)
 	getShopAPIHandler := getshop.NewAPIHandler(getShopHandler)
 
+	// Get shops by owner
+	getShopsHandler := getshops.NewQueryHandler(shopRepo)
+	getShopsAPIHandler := getshops.NewAPIHandler(getShopsHandler)
+
+	// Update shop
+	updateShopHandler := updateshop.NewCommandHandler(shopRepo)
+	updateShopAPIHandler := updateshop.NewAPIHandler(updateShopHandler)
+
+	// Delete shop
+	deleteShopHandler := deleteshop.NewCommandHandler(shopRepo)
+	deleteShopAPIHandler := deleteshop.NewAPIHandler(deleteShopHandler)
+
 	// Register shop routes
-	api.RegisterShopRoutes(r, createShopAPIHandler)
-	api.RegisterGetShopRoutes(r, getShopAPIHandler)
+	api.RegisterShopRoutes(
+		r,
+		createShopAPIHandler,
+		getShopAPIHandler,
+		getShopsAPIHandler,
+		updateShopAPIHandler,
+		deleteShopAPIHandler,
+	)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
