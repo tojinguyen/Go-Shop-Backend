@@ -19,7 +19,7 @@ func RegisterShopRoutes(r *gin.Engine, createShopAPIHandler *createshop.APIHandl
 // RegisterGetShopRoutes registers routes for getting shop details
 func RegisterGetShopRoutes(r *gin.Engine, getShopAPIHandler *getshop.APIHandler) {
 	// Shop retrieval routes
-	shops := r.Group("/api/v1/shops")
+	shops := r.Group("/api/v1/shops/{id}")
 	{
 		// Get shop details by ID
 		shops.GET("/:id", getShopAPIHandler.GetShop) // Get shop by ID
