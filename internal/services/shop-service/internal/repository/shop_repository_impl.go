@@ -3,41 +3,63 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/domain"
 )
 
 // PostgresShopRepository implements the ShopRepository interface using PostgreSQL
 type PostgresShopRepository struct {
-	db *postgresql_infra.PostgreSQLService
+	db      *postgresql_infra.PostgreSQLService
+	queries *sqlc.Queries
 }
 
 // NewPostgresShopRepository creates a new PostgreSQL shop repository
 func NewPostgresShopRepository(db *postgresql_infra.PostgreSQLService) ShopRepository {
 	return &PostgresShopRepository{
-		db: db,
+		db:      db,
+		queries: sqlc.New(db.GetPool()),
 	}
 }
 
 // Create creates a new shop
 func (r *PostgresShopRepository) Create(ctx context.Context, shop *domain.Shop) error {
-	query := `
-		INSERT INTO shops (
-			id, owner_id, shop_name, avatar_url, banner_url, shop_description,
-			address_id, phone, email, rating, active_at, banned_at, created_at, updated_at
-		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-		)`
+	var rating pgtype.Numeric
+	if err := rating.Scan(shop.Rating); err != nil {
+		log.Println("Error converting rating:", err)
+		return fmt.Errorf("failed to convert rating: %w", err)
+	}
 
-	_, err := r.db.GetPool().Exec(ctx, query,
-		shop.ID, shop.OwnerID, shop.ShopName, shop.AvatarURL, shop.BannerURL,
-		shop.ShopDescription, shop.AddressID, shop.Phone, shop.Email,
-		shop.Rating, shop.ActiveAt, shop.BannedAt, shop.CreatedAt, shop.UpdatedAt,
-	)
+	sqlcParams := sqlc.CreateShopParams{
+		ID:              converter.UUIDToPgUUID(shop.ID),
+		OwnerID:         converter.UUIDToPgUUID(shop.OwnerID),
+		ShopName:        shop.ShopName,
+		AvatarUrl:       shop.AvatarURL,
+		BannerUrl:       shop.BannerURL,
+		ShopDescription: converter.StringToPgText(shop.ShopDescription),
+		AddressID:       converter.UUIDToPgUUID(shop.AddressID),
+		Phone:           shop.Phone,
+		Email:           shop.Email,
+		Rating:          rating,
+		ActiveAt:        converter.TimePtrToPgTime(shop.ActiveAt),
+	}
 
+	createdShop, err := r.queries.CreateShop(ctx, sqlcParams)
 	if err != nil {
+		log.Println("Error creating shop:", err)
 		return fmt.Errorf("failed to create shop: %w", err)
+	}
+
+	// Update the shop with the created values (like timestamps)
+	if createdShop.CreatedAt.Valid {
+		shop.CreatedAt = createdShop.CreatedAt.Time
+	}
+	if createdShop.UpdatedAt.Valid {
+		shop.UpdatedAt = createdShop.UpdatedAt.Time
 	}
 
 	return nil
