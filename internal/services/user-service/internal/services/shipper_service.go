@@ -72,8 +72,6 @@ func (s *ShipperService) UpdateShipperProfile(ctx context.Context, userID string
 		VehicleImageURL: shipper.VehicleImageURL,
 		IdentifyCardURL: shipper.IdentifyCardURL,
 		LicensePlate:    shipper.LicensePlate,
-		CreatedAt:       shipper.CreatedAt,
-		UpdatedAt:       shipper.UpdatedAt,
 	}, nil
 }
 

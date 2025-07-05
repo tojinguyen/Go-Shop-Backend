@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
@@ -102,6 +103,7 @@ func (r *shipperRepository) UpdateShipper(ctx context.Context, userID string, up
 
 	result, err := r.queries.UpdateShipperByUserID(ctx, params)
 	if err != nil {
+		log.Printf("Error updating shipper: %v", err)
 		return nil, err
 	}
 

@@ -84,8 +84,7 @@ SET
     vehicle_type = $2,
     vehicle_image_url = $3,
     identify_card_url = $4,
-    license_plate = $5,
-    updated_at = NOW()
+    license_plate = $5
 WHERE user_id = $1
 RETURNING user_id, vehicle_type, vehicle_image_url, identify_card_url, license_plate
 `

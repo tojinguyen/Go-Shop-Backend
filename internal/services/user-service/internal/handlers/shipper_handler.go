@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
@@ -138,18 +140,21 @@ func (h *ShipperHandler) GetShipperProfileByID(c *gin.Context) {
 func (h *ShipperHandler) UpdateShipperProfile(c *gin.Context) {
 	var req dto.ShipperUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Invalid request payload: %v", err)
 		response.BadRequest(c, "INVALID_REQUEST", "Invalid request payload", err.Error())
 		return
 	}
 
 	userID, exists := c.Get("user_id")
 	if !exists {
+		log.Println("User ID not found in context")
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
 		return
 	}
 
 	shipper, err := h.shipperService.UpdateShipperProfile(c, userID.(string), &req)
 	if err != nil {
+		log.Printf("Failed to update shipper profile: %v", err)
 		response.InternalServerError(c, "INTERNAL_SERVER_ERROR", "Failed to update shipper profile")
 		return
 	}
