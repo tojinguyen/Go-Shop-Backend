@@ -6,16 +6,57 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
 
+	_ "github.com/toji-dev/go-shop/internal/services/user-service/docs"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
 )
 
+//	@title			User Service API
+//	@version		1.0
+//	@description	User management service for Go-Shop application
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+
+//	@host		localhost:8081
+//	@BasePath	/api/v1
+
+//	@securityDefinitions.apikey	Bearer
+//	@in							header
+//	@name						Authorization
+//	@description				Description for what is this security definition being used
+
+// generateSwaggerDocs automatically generates swagger documentation
+func generateSwaggerDocs() {
+	log.Println("🔄 Generating swagger documentation...")
+
+	cmd := exec.Command("swag", "init", "-g", "cmd/main.go", "-o", "docs")
+	cmd.Dir = "."
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("⚠️ Warning: Failed to generate swagger docs: %v\nOutput: %s", err, output)
+		log.Println("📝 Please ensure 'swag' is installed: go install github.com/swaggo/swag/cmd/swag@latest")
+	} else {
+		log.Println("✅ Swagger documentation generated successfully")
+	}
+}
+
 func main() {
+	// Auto-generate swagger docs
+	generateSwaggerDocs()
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {

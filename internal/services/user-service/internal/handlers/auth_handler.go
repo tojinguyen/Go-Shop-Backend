@@ -24,6 +24,17 @@ func NewAuthHandler(sc container.ServiceContainer) *AuthHandler {
 }
 
 // Register handles user registration
+// @Summary Register a new user
+// @Description Register a new user with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RegisterRequest true "User registration request"
+// @Success 201 {object} map[string]interface{} "User registered successfully"
+// @Failure 400 {object} map[string]interface{} "Bad Request"
+// @Failure 409 {object} map[string]interface{} "Email already exists"
+// @Failure 500 {object} map[string]interface{} "Internal Server Error"
+// @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -65,6 +76,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 // Login handles user login
+// @Summary User login
+// @Description Authenticate user with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LoginRequest true "User login request"
+// @Success 200 {object} map[string]interface{} "Login successful"
+// @Failure 400 {object} map[string]interface{} "Bad Request"
+// @Failure 401 {object} map[string]interface{} "Invalid credentials"
+// @Failure 500 {object} map[string]interface{} "Internal Server Error"
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
