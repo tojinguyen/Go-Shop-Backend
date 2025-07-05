@@ -1,5 +1,5 @@
 # Build stage 
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24.2-alpine AS builder
 
 # Install essential packages and clean cache
 RUN apk update && apk upgrade && \
@@ -10,11 +10,11 @@ RUN apk update && apk upgrade && \
 # Set working directory
 WORKDIR /app
 
+# Copy shared pkg directory first
+COPY internal/pkg ../../pkg
+
 # Copy go mod and sum files from the service directory
 COPY internal/services/shop-service/go.mod internal/services/shop-service/go.sum ./
-
-# Copy shared pkg directory
-COPY internal/pkg ./internal/pkg
 
 # Download dependencies
 RUN go mod download

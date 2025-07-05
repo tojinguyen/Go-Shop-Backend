@@ -27,12 +27,15 @@ func main() {
 
 	// Initialize database
 	dbConfig := &postgresql_infra.DatabaseConfig{
-		Host:     cfg.Database.Host,
-		Port:     cfg.Database.Port,
-		User:     cfg.Database.User,
-		Password: cfg.Database.Password,
-		Name:     cfg.Database.DBName,
-		SSLMode:  cfg.Database.SSLMode,
+		Host:         cfg.Database.Host,
+		Port:         cfg.Database.Port,
+		User:         cfg.Database.User,
+		Password:     cfg.Database.Password,
+		Name:         cfg.Database.DBName,
+		SSLMode:      cfg.Database.SSLMode,
+		MaxOpenConns: cfg.Database.MaxOpenConns,
+		MaxIdleConns: cfg.Database.MaxIdleConns,
+		MaxLifetime:  cfg.Database.MaxLifetime,
 	}
 
 	db, err := postgresql_infra.NewPostgreSQLService(dbConfig)

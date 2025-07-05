@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -30,12 +31,15 @@ type ServerConfig struct {
 
 // DatabaseConfig holds database configuration
 type DatabaseConfig struct {
-	Host     string `json:"host"`
-	Port     string `json:"port"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	DBName   string `json:"db_name"`
-	SSLMode  string `json:"ssl_mode"`
+	Host         string        `json:"host"`
+	Port         string        `json:"port"`
+	User         string        `json:"user"`
+	Password     string        `json:"password"`
+	DBName       string        `json:"db_name"`
+	SSLMode      string        `json:"ssl_mode"`
+	MaxOpenConns int           `json:"max_open_conns"`
+	MaxIdleConns int           `json:"max_idle_conns"`
+	MaxLifetime  time.Duration `json:"max_lifetime"`
 }
 
 // JWTConfig holds JWT configuration
@@ -75,24 +79,27 @@ func LoadConfig() (*Config, error) {
 
 	config := &Config{
 		Server: ServerConfig{
-			Host:         getEnv("SERVER_HOST", "localhost"),
-			Port:         getEnv("SERVER_PORT", "8083"),
+			Host:         getEnv("SHOP_SERVICE_SERVICE_HOST", "localhost"),
+			Port:         getEnv("SHOP_SERVICE_SERVICE_PORT", "8081"),
 			ReadTimeout:  getDurationEnv("SERVER_READ_TIMEOUT", 10*time.Second),
 			WriteTimeout: getDurationEnv("SERVER_WRITE_TIMEOUT", 10*time.Second),
 			IdleTimeout:  getDurationEnv("SERVER_IDLE_TIMEOUT", 60*time.Second),
 		},
 		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "5432"),
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", ""),
-			DBName:   getEnv("DB_NAME", "shop_service"),
-			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+			Host:         getEnv("SHOP_SERVICE_POSTGRES_HOST", "localhost"),
+			Port:         getEnv("SHOP_SERVICE_POSTGRES_PORT", "6001"),
+			User:         getEnv("SHOP_SERVICE_POSTGRES_USER", "postgres"),
+			Password:     getEnv("SHOP_SERVICE_POSTGRES_PASSWORD", ""),
+			DBName:       getEnv("SHOP_SERVICE_POSTGRES_DB", "shop_service_go_shop_db"),
+			SSLMode:      getEnv("DB_SSL_MODE", "disable"),
+			MaxOpenConns: getIntEnv("DB_MAX_OPEN_CONNS", 25),
+			MaxIdleConns: getIntEnv("DB_MAX_IDLE_CONNS", 25),
+			MaxLifetime:  getDurationEnv("DB_MAX_LIFETIME", 5*time.Minute),
 		},
 		JWT: JWTConfig{
-			SecretKey:            getEnv("JWT_SECRET", "your-secret-key"),
-			AccessTokenDuration:  getDurationEnv("JWT_ACCESS_DURATION", 15*time.Minute),
-			RefreshTokenDuration: getDurationEnv("JWT_REFRESH_DURATION", 7*24*time.Hour),
+			SecretKey:            getEnv("JWT_SECRET_KEY", "your-secret-key"),
+			AccessTokenDuration:  getDurationEnv("JWT_ACCESS_TOKEN_EXPIRY", 24*time.Hour),
+			RefreshTokenDuration: getDurationEnv("JWT_REFRESH_TOKEN_EXPIRY", 168*time.Hour),
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),
@@ -101,14 +108,14 @@ func LoadConfig() (*Config, error) {
 			DB:       getIntEnv("REDIS_DB", 0),
 		},
 		CORS: CORSConfig{
-			AllowOrigins: []string{"*"},
+			AllowOrigins: getStringSliceEnv("SHOP_SERVICE_CORS_ALLOWED_ORIGINS", []string{"*"}),
 			AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders: []string{"*"},
 		},
 		App: AppConfig{
-			Name:        getEnv("APP_NAME", "shop-service"),
+			Name:        getEnv("SHOP_SERVICE_SERVICE_NAME", "shop-service"),
 			Version:     getEnv("APP_VERSION", "1.0.0"),
-			Environment: getEnv("APP_ENV", "development"),
+			Environment: getEnv("ENVIRONMENT", "development"),
 			LogLevel:    getEnv("LOG_LEVEL", "info"),
 		},
 	}
@@ -137,6 +144,23 @@ func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 	if value := os.Getenv(key); value != "" {
 		if duration, err := time.ParseDuration(value); err == nil {
 			return duration
+		}
+	}
+	return defaultValue
+}
+
+func getStringSliceEnv(key string, defaultValue []string) []string {
+	if value := os.Getenv(key); value != "" {
+		// Split by comma and trim spaces
+		parts := strings.Split(value, ",")
+		result := make([]string, 0, len(parts))
+		for _, part := range parts {
+			if trimmed := strings.TrimSpace(part); trimmed != "" {
+				result = append(result, trimmed)
+			}
+		}
+		if len(result) > 0 {
+			return result
 		}
 	}
 	return defaultValue
