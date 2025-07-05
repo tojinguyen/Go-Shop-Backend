@@ -5,18 +5,17 @@ import (
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/handlers"
+	createshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/create_shop"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/service"
 )
 
 // Container holds all the dependencies
 type Container struct {
-	Config      *config.Config
-	DB          *postgresql_infra.PostgreSQLService
-	ShopRepo    repository.ShopRepository
-	ShopService service.ShopService
-	ShopHandler *handlers.ShopHandler
+	Config               *config.Config
+	DB                   *postgresql_infra.PostgreSQLService
+	ShopRepo             repository.ShopRepository
+	CreateShopHandler    *createshop.Handler
+	CreateShopAPIHandler *createshop.APIHandler
 }
 
 // NewContainer creates a new container with all dependencies
@@ -39,18 +38,16 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 	// Initialize repositories
 	shopRepo := repository.NewPostgresShopRepository(db)
 
-	// Initialize services
-	shopService := service.NewShopService(shopRepo)
-
-	// Initialize handlers
-	shopHandler := handlers.NewShopHandler(shopService)
+	// Initialize feature handlers
+	createShopHandler := createshop.NewHandler(shopRepo)
+	createShopAPIHandler := createshop.NewAPIHandler(createShopHandler)
 
 	return &Container{
-		Config:      cfg,
-		DB:          db,
-		ShopRepo:    shopRepo,
-		ShopService: shopService,
-		ShopHandler: shopHandler,
+		Config:               cfg,
+		DB:                   db,
+		ShopRepo:             shopRepo,
+		CreateShopHandler:    createShopHandler,
+		CreateShopAPIHandler: createShopAPIHandler,
 	}, nil
 }
 

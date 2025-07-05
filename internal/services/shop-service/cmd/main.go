@@ -62,7 +62,7 @@ func main() {
 	})
 
 	// Register shop routes
-	api.RegisterShopRoutes(r, c.ShopHandler)
+	api.RegisterShopRoutes(r, c.CreateShopAPIHandler)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
