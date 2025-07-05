@@ -11,6 +11,7 @@ services:
       - "${NGINX_PORT:-80}:80"
     depends_on:
       - user-service
+      - shop-service
     networks:
       - go-shop-network
     restart: unless-stopped
@@ -82,23 +83,23 @@ services:
 
 ############### Shop Service Section ##############
   # Shop Service
-  # shop-service:
-  #   build:
-  #     context: .
-  #     dockerfile: ./internal/services/shop-service/Dockerfile
-  #   container_name: ${PROJECT_NAME:-go-shop}-shop-service
-  #   expose:
-  #     - "${SHOP_SERVICE_SERVICE_PORT:-8081}"
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     postgres-shop-service:
-  #       condition: service_healthy
-  #     redis-cache:
-  #       condition: service_started
-  #   networks:
-  #     - go-shop-network
-  #   restart: unless-stopped
+  shop-service:
+    build:
+      context: .
+      dockerfile: ./internal/services/shop-service/Dockerfile
+    container_name: ${PROJECT_NAME:-go-shop}-shop-service
+    expose:
+      - "${SHOP_SERVICE_SERVICE_PORT:-8081}"
+    env_file:
+      - .env
+    depends_on:
+      postgres-shop-service:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+    networks:
+      - go-shop-network
+    restart: unless-stopped
 
   # PostgreSQL Database User Service
   postgres-shop-service:
