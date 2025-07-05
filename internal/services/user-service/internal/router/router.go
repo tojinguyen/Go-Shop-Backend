@@ -4,8 +4,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/handlers"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/middleware"
@@ -82,9 +80,6 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "pong")
 	})
-
-	// Swagger documentation endpoint
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// API versioning
 	v1 := router.Group("/api/v1")

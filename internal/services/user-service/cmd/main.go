@@ -6,12 +6,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
 
-	_ "github.com/toji-dev/go-shop/internal/services/user-service/docs"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
@@ -37,26 +35,7 @@ import (
 //	@name						Authorization
 //	@description				Description for what is this security definition being used
 
-// generateSwaggerDocs automatically generates swagger documentation
-func generateSwaggerDocs() {
-	log.Println("🔄 Generating swagger documentation...")
-
-	cmd := exec.Command("swag", "init", "-g", "cmd/main.go", "-o", "docs")
-	cmd.Dir = "."
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("⚠️ Warning: Failed to generate swagger docs: %v\nOutput: %s", err, output)
-		log.Println("📝 Please ensure 'swag' is installed: go install github.com/swaggo/swag/cmd/swag@latest")
-	} else {
-		log.Println("✅ Swagger documentation generated successfully")
-	}
-}
-
 func main() {
-	// Auto-generate swagger docs
-	generateSwaggerDocs()
-
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
