@@ -7,9 +7,11 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/api"
+	createshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/create_shop"
+	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
 )
 
 func main() {
@@ -19,12 +21,28 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Initialize container with dependencies
-	c, err := container.NewContainer(cfg)
-	if err != nil {
-		log.Fatalf("Failed to initialize container: %v", err)
+	// Initialize database
+	dbConfig := &postgresql_infra.DatabaseConfig{
+		Host:     cfg.Database.Host,
+		Port:     cfg.Database.Port,
+		User:     cfg.Database.User,
+		Password: cfg.Database.Password,
+		Name:     cfg.Database.DBName,
+		SSLMode:  cfg.Database.SSLMode,
 	}
-	defer c.Close()
+
+	db, err := postgresql_infra.NewPostgreSQLService(dbConfig)
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer db.Close()
+
+	// Initialize repositories
+	shopRepo := repository.NewPostgresShopRepository(db)
+
+	// Initialize feature handlers
+	createShopHandler := createshop.NewHandler(shopRepo)
+	createShopAPIHandler := createshop.NewAPIHandler(createShopHandler)
 
 	// Set Gin mode based on environment
 	if cfg.App.Environment == "production" {
@@ -62,7 +80,7 @@ func main() {
 	})
 
 	// Register shop routes
-	api.RegisterShopRoutes(r, c.CreateShopAPIHandler)
+	api.RegisterShopRoutes(r, createShopAPIHandler)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
