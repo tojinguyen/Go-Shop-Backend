@@ -13,15 +13,6 @@ SHIPPING_MIGRATION_DIR := internal/services/shipping-service/internal/db/migrati
 lint:
 	golangci-lint run
 
-# Generic migration function
-define run_migration
-	@echo "$(2) $(1) Service..."
-	@$(eval SERVICE_UPPER := $(shell echo $(1) | tr '[:lower:]' '[:upper:]'))
-	@set GOOSE_DRIVER=$$($(SERVICE_UPPER)_SERVICE_GOOSE_DRIVER) && \
-	 set GOOSE_DBSTRING=$$($(SERVICE_UPPER)_SERVICE_GOOSE_DBSTRING) && \
-	 goose -dir $$($(SERVICE_UPPER)_MIGRATION_DIR) $(3)
-endef
-
 # Create migration for specific service
 define create_migration_service
 create-migration-$(1):
