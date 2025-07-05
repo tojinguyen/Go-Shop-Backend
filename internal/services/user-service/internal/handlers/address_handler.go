@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
@@ -66,6 +68,7 @@ func (h *AddressHandler) GetAddressByID(c *gin.Context) {
 	// Implementation pending
 	addressID := c.Param("id")
 	if addressID == "" {
+		log.Println("Address ID is required")
 		response.BadRequest(c, "INVALID_REQUEST", "Address ID is required", "Address ID should not be empty")
 		return
 	}
@@ -74,9 +77,11 @@ func (h *AddressHandler) GetAddressByID(c *gin.Context) {
 
 	if err != nil {
 		if err.Error() == "address not found" {
+			log.Printf("Address with ID %s not found: %v", addressID, err)
 			response.NotFound(c, "ADDRESS_NOT_FOUND", "Address with this ID does not exist")
 			return
 		}
+		log.Printf("Failed to retrieve address by ID %s: %v", addressID, err)
 		response.InternalServerError(c, "GET_ADDRESS_FAILED", "Failed to retrieve address")
 		return
 	}

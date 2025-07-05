@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,32 +26,39 @@ func NewUserService(container *container.ServiceContainer) *UserService {
 func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileRequest) (domain.UserProfile, error) {
 	userIDRaw, exists := ctx.Get("user_id")
 	if !exists {
+		log.Printf("user ID not found in context")
 		return domain.UserProfile{}, fmt.Errorf("user ID not found in context")
 	}
 	userIDStr, ok := userIDRaw.(string)
 	if !ok {
+		log.Printf("user ID is not a string")
 		return domain.UserProfile{}, fmt.Errorf("user ID is not a string")
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
+		log.Printf("invalid user ID format: %v", err)
 		return domain.UserProfile{}, fmt.Errorf("invalid user ID format: %w", err)
 	}
 
 	roleRaw, exists := ctx.Get("user_role")
 	if !exists {
+		log.Printf("user role not found in context")
 		return domain.UserProfile{}, fmt.Errorf("user role not found in context")
 	}
 	role, ok := roleRaw.(string)
 	if !ok {
+		log.Printf("user role is not a string")
 		return domain.UserProfile{}, fmt.Errorf("user role is not a string")
 	}
 
-	email, exists := ctx.Get("email")
+	email, exists := ctx.Get("user_email")
 	if !exists {
+		log.Printf("email not found in context")
 		return domain.UserProfile{}, fmt.Errorf("email not found in context: %w", err)
 	}
 	emailStr, ok := email.(string)
 	if !ok {
+		log.Printf("email is not a string")
 		return domain.UserProfile{}, fmt.Errorf("email is not a string")
 	}
 
@@ -64,10 +72,12 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileR
 		BannedAt:         converter.NullPgTime(),
 		AvatarUrl:        req.AvatarURL,
 		DefaultAddressID: converter.NullPgUUID(),
+		Gender:           req.Gender,
 	}
 
 	profile, err := s.container.GetUserProfileRepo().CreateUserProfile(ctx, params)
 	if err != nil {
+		log.Printf("failed to create user profile: %v", err)
 		return domain.UserProfile{}, err
 	}
 	return *profile, nil

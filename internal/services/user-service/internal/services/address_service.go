@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
@@ -77,6 +78,7 @@ func (s *AddressService) GetAddressByID(ctx *gin.Context, addressID string) (*dt
 	// Lấy address từ repository
 	address, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
 	if err != nil {
+		log.Printf("Error retrieving address by ID %s: %v", addressID, err)
 		return nil, err
 	}
 
