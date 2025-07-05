@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
 )
@@ -36,26 +37,7 @@ type CreateShopResponse struct {
 }
 
 func (h *Handler) Handle(ctx context.Context, cmd CreateShopCommand) (*CreateShopResponse, error) {
-	// Business logic: Check if owner already has a shop
-	exists, err := h.shopRepo.ExistsByOwnerID(ctx, cmd.OwnerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check owner existence: %w", err)
-	}
-	if exists {
-		return nil, fmt.Errorf("owner already has a shop")
-	}
-
-	// Business logic: Check if email is already taken
-	emailExists, err := h.shopRepo.ExistsByEmail(ctx, cmd.Email)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check email existence: %w", err)
-	}
-	if emailExists {
-		return nil, fmt.Errorf("email already in use")
-	}
-
-	// Create shop domain object
-	now := time.Now()
+	now := time_utils.GetUtcTime()
 	shop := &domain.Shop{
 		ID:              uuid.New(),
 		OwnerID:         cmd.OwnerID,
@@ -67,7 +49,7 @@ func (h *Handler) Handle(ctx context.Context, cmd CreateShopCommand) (*CreateSho
 		Phone:           cmd.Phone,
 		Email:           cmd.Email,
 		Rating:          0.0,
-		ActiveAt:        nil, // Shop starts inactive until approved
+		ActiveAt:        nil,
 		BannedAt:        nil,
 		CreatedAt:       now,
 		UpdatedAt:       now,

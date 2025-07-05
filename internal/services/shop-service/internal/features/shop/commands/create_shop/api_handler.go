@@ -28,11 +28,8 @@ func (h *APIHandler) CreateShop(c *gin.Context) {
 
 	cmd := req.ToCommand()
 	result, err := h.handler.Handle(c.Request.Context(), cmd)
+
 	if err != nil {
-		if err.Error() == "owner already has a shop" || err.Error() == "email already in use" {
-			response.Conflict(c, constant.ErrorCodeDuplicate, err.Error())
-			return
-		}
 		response.InternalServerError(c, constant.ErrorCodeInternalError, "Failed to create shop")
 		return
 	}
