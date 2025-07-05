@@ -74,8 +74,8 @@ type AppConfig struct {
 
 // LoadConfig loads configuration from environment variables
 func LoadConfig() (*Config, error) {
-	// Load .env file if it exists
-	_ = godotenv.Load()
+	// Load .env file from project root
+	_ = godotenv.Load("../../../../.env")
 
 	config := &Config{
 		Server: ServerConfig{
