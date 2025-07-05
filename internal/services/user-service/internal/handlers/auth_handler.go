@@ -115,6 +115,17 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 // RefreshToken handles token refresh
+// @Summary Refresh access token
+// @Description Refresh an expired access token using a valid refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RefreshTokenRequest true "Refresh token request"
+// @Success 200 {object} map[string]interface{} "Token refreshed successfully"
+// @Failure 400 {object} map[string]interface{} "Bad Request"
+// @Failure 401 {object} map[string]interface{} "Invalid refresh token"
+// @Failure 500 {object} map[string]interface{} "Internal Server Error"
+// @Router /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -137,6 +148,16 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 }
 
 // Logout handles user logout
+// @Summary User logout
+// @Description Logout user and blacklist the access token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "Logout successful"
+// @Failure 400 {object} map[string]interface{} "Bad Request"
+// @Failure 500 {object} map[string]interface{} "Internal Server Error"
+// @Router /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// Get token from middleware context (it's already validated by AuthMiddlewareWithBlacklist)
 	token, exists := c.Get("token")
@@ -162,6 +183,16 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 }
 
 // ValidateToken validates the provided token
+// @Summary Validate access token
+// @Description Validate an access token and return token information
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "Token is valid"
+// @Failure 400 {object} map[string]interface{} "Bad Request"
+// @Failure 401 {object} map[string]interface{} "Invalid or expired token"
+// @Router /auth/validate [post]
 func (h *AuthHandler) ValidateToken(c *gin.Context) {
 	// This endpoint is useful for other services to validate tokens
 	authHeader := c.GetHeader("Authorization")
@@ -197,6 +228,17 @@ func (h *AuthHandler) ValidateToken(c *gin.Context) {
 	response.Success(c, "Token is valid", tokenInfo)
 }
 
+// ForgotPassword handles password reset request
+// @Summary Request password reset
+// @Description Send a password reset link to the user's email
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.ForgotPasswordRequest true "Forgot password request"
+// @Success 200 {object} map[string]interface{} "Password reset link sent successfully"
+// @Failure 400 {object} map[string]interface{} "Bad Request"
+// @Failure 500 {object} map[string]interface{} "Internal Server Error"
+// @Router /auth/forgot-password [post]
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req dto.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -220,6 +262,18 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	response.Success(c, "Password reset link sent successfully", nil)
 }
 
+// ResetPassword handles password reset with token
+// @Summary Reset user password
+// @Description Reset user password using the reset token from email
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.ResetPasswordRequest true "Reset password request"
+// @Success 200 {object} map[string]interface{} "Password reset successfully"
+// @Failure 400 {object} map[string]interface{} "Bad Request"
+// @Failure 404 {object} map[string]interface{} "User not found"
+// @Failure 500 {object} map[string]interface{} "Internal Server Error"
+// @Router /auth/reset-password [post]
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req dto.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -241,6 +295,19 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	response.Success(c, "Password reset successfully", nil)
 }
 
+// ChangePassword handles password change for authenticated users
+// @Summary Change user password
+// @Description Change password for authenticated users
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.ChangePasswordRequest true "Change password request"
+// @Success 200 {object} map[string]interface{} "Password changed successfully"
+// @Failure 400 {object} map[string]interface{} "Bad Request"
+// @Failure 404 {object} map[string]interface{} "User not found"
+// @Failure 500 {object} map[string]interface{} "Internal Server Error"
+// @Router /auth/change-password [post]
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	var req dto.ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
