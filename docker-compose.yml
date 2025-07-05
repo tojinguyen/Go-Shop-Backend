@@ -64,7 +64,7 @@ services:
     image: postgres:15
     container_name: postgres-user-service
     ports:
-      - "${USER_SERVICE_POSTGRES_PORT:-5432}:5432"
+      - "${USER_SERVICE_POSTGRES_PORT:-6000}:5432"
     environment: 
       POSTGRES_USER: ${USER_SERVICE_POSTGRES_USER}
       POSTGRES_PASSWORD: ${USER_SERVICE_POSTGRES_PASSWORD}
@@ -106,7 +106,7 @@ services:
     image: postgres:15
     container_name: postgres-shop-service
     ports:
-      - "${SHOP_SERVICE_POSTGRES_PORT:-6001}:6001"
+      - "${SHOP_SERVICE_POSTGRES_PORT:-6001}:5432"
     environment: 
       POSTGRES_USER: ${SHOP_SERVICE_POSTGRES_USER}
       POSTGRES_PASSWORD: ${SHOP_SERVICE_POSTGRES_PASSWORD}
