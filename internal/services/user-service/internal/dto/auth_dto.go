@@ -76,8 +76,3 @@ type ChangePasswordRequest struct {
 	NewPassword     string `json:"new_password" binding:"required" validate:"required,min=8"`
 	ConfirmPassword string `json:"confirm_password" binding:"required" validate:"required,eqfield=NewPassword"`
 }
-
-type VerifyOTPRequest struct {
-	Email string `json:"email" binding:"required" validate:"required,email"`
-	OTP   string `json:"otp" binding:"required" validate:"required"`
-}
