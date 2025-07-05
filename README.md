@@ -126,10 +126,6 @@ POST   /api/v1/shops
 GET    /api/v1/shops/{id}
 PUT    /api/v1/shops/{id}
 DELETE /api/v1/shops/{id}
-GET    /api/v1/shops/search?location={lat,lng}&category={category}&radius={radius}
-
-# Shop Profile Management
-PUT    /api/v1/shops/{id}/profile
 
 # Shop Product Management
 GET    /api/v1/shops/{id}/products
