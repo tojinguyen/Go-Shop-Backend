@@ -3,6 +3,7 @@ package createshop
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -57,6 +58,7 @@ func (h *Handler) Handle(ctx context.Context, cmd CreateShopCommand) (*CreateSho
 
 	// Save to repository
 	if err := h.shopRepo.Create(ctx, shop); err != nil {
+		log.Printf("Error creating shop: %v", err)
 		return nil, fmt.Errorf("failed to create shop: %w", err)
 	}
 

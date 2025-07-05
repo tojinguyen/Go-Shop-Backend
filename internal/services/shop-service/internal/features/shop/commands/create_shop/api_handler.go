@@ -1,6 +1,8 @@
 package createshop
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/constant"
@@ -27,9 +29,10 @@ func (h *APIHandler) CreateShop(c *gin.Context) {
 	}
 
 	cmd := req.ToCommand()
-	result, err := h.handler.Handle(c.Request.Context(), cmd)
+	result, err := h.handler.Handle(c, cmd)
 
 	if err != nil {
+		log.Printf("Error creating shop: %v", err)
 		response.InternalServerError(c, constant.ErrorCodeInternalError, "Failed to create shop")
 		return
 	}

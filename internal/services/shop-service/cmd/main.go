@@ -8,8 +8,6 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	_ "github.com/toji-dev/go-shop/internal/services/shop-service/docs"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
@@ -124,9 +122,6 @@ func main() {
 			"version": cfg.App.Version,
 		})
 	})
-
-	// Swagger documentation endpoint
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Initialize feature handlers
 	// Create shop

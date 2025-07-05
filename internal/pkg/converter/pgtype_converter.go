@@ -112,6 +112,13 @@ func Float64ToPgFloat8(f *float64) pgtype.Float8 {
 	return pgtype.Float8{}
 }
 
+// Convert float64 to pgtype.Numeric
+func Float64ToPgNumeric(f float64) pgtype.Numeric {
+	var numeric pgtype.Numeric
+	_ = numeric.Scan(f)
+	return numeric
+}
+
 // Add this to your converter package
 func PgNumericToFloat64Ptr(numeric pgtype.Numeric) *float64 {
 	if !numeric.Valid {

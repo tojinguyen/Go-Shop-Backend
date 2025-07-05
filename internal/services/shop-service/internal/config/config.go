@@ -79,7 +79,7 @@ func LoadConfig() (*Config, error) {
 
 	config := &Config{
 		Server: ServerConfig{
-			Host:         getEnv("SHOP_SERVICE_SERVICE_HOST", "localhost"),
+			Host:         getEnv("SHOP_SERVICE_SERVICE_HOST", "0.0.0.0"),
 			Port:         getEnv("SHOP_SERVICE_SERVICE_PORT", "8081"),
 			ReadTimeout:  getDurationEnv("SERVER_READ_TIMEOUT", 10*time.Second),
 			WriteTimeout: getDurationEnv("SERVER_WRITE_TIMEOUT", 10*time.Second),

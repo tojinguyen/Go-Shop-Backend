@@ -28,11 +28,7 @@ func NewPostgresShopRepository(db *postgresql_infra.PostgreSQLService) ShopRepos
 
 // Create creates a new shop
 func (r *PostgresShopRepository) Create(ctx context.Context, shop *domain.Shop) error {
-	var rating pgtype.Numeric
-	if err := rating.Scan(shop.Rating); err != nil {
-		log.Println("Error converting rating:", err)
-		return fmt.Errorf("failed to convert rating: %w", err)
-	}
+	rating := converter.Float64ToPgNumeric(shop.Rating)
 
 	sqlcParams := sqlc.CreateShopParams{
 		ID:              converter.UUIDToPgUUID(shop.ID),
