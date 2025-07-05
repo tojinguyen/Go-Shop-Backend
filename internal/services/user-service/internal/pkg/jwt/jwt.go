@@ -3,6 +3,7 @@ package jwt
 import (
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -80,24 +81,52 @@ func (s *jwtService) GenerateRefreshToken(input *GenerateTokenInput) (string, er
 }
 
 func (s *jwtService) ValidateAccessToken(ctx context.Context, tokenString string) (*CustomJwtClaims, error) {
+	// Remove "Bearer " prefix if present
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+	tokenString = strings.TrimSpace(tokenString)
+
+	if len(tokenString) == 0 {
+		log.Println("Token string is empty after processing")
+		return nil, errorConstants.ErrTokenInvalid
+	}
+
 	claims := &CustomJwtClaims{}
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		// Kiểm tra thuật toán
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			log.Println("Invalid signing method")
 			return nil, errorConstants.ErrTokenInvalid
 		}
 		return []byte(s.cfg.JWT.SecretKey), nil
 	})
 
 	if err != nil {
-		log.Println("Error parsing token:", err)
+		log.Printf("Error parsing token: %v (Type: %T)", err, err)
 
 		// Kiểm tra lỗi cụ thể
 		if ve, ok := err.(*jwt.ValidationError); ok {
+			log.Printf("ValidationError details: Errors=%d, Inner=%v", ve.Errors, ve.Inner)
+
 			if ve.Errors&jwt.ValidationErrorExpired != 0 {
 				log.Println("Token expired")
 				return nil, errorConstants.ErrTokenExpired
+			}
+			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+				log.Println("Token malformed")
+				return nil, errorConstants.ErrTokenInvalid
+			}
+			if ve.Errors&jwt.ValidationErrorSignatureInvalid != 0 {
+				log.Println("Token signature invalid")
+				return nil, errorConstants.ErrTokenInvalid
+			}
+			if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
+				log.Println("Token not valid yet")
+				return nil, errorConstants.ErrTokenInvalid
+			}
+			if ve.Errors&jwt.ValidationErrorUnverifiable != 0 {
+				log.Println("Token unverifiable")
+				return nil, errorConstants.ErrTokenInvalid
 			}
 		}
 

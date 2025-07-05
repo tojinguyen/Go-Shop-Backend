@@ -45,9 +45,18 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileR
 		return domain.UserProfile{}, fmt.Errorf("user role is not a string")
 	}
 
+	email, exists := ctx.Get("email")
+	if !exists {
+		return domain.UserProfile{}, fmt.Errorf("email not found in context: %w", err)
+	}
+	emailStr, ok := email.(string)
+	if !ok {
+		return domain.UserProfile{}, fmt.Errorf("email is not a string")
+	}
+
 	params := sqlc.CreateUserProfileParams{
 		UserID:           converter.UUIDToPgUUID(userID),
-		Email:            req.Email,
+		Email:            emailStr,
 		FullName:         req.FullName,
 		Birthday:         converter.StringToPgDate(req.Birthday),
 		Phone:            req.Phone,
