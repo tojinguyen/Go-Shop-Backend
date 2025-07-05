@@ -87,7 +87,7 @@ func LoadConfig() (*Config, error) {
 		},
 		Database: DatabaseConfig{
 			Host:         getEnv("SHOP_SERVICE_POSTGRES_HOST", "localhost"),
-			Port:         getEnv("SHOP_SERVICE_POSTGRES_PORT", "6001"),
+			Port:         getEnv("SHOP_SERVICE_POSTGRES_PORT_INTERNAL", "6001"),
 			User:         getEnv("SHOP_SERVICE_POSTGRES_USER", "postgres"),
 			Password:     getEnv("SHOP_SERVICE_POSTGRES_PASSWORD", ""),
 			DBName:       getEnv("SHOP_SERVICE_POSTGRES_DB", "shop_service_go_shop_db"),

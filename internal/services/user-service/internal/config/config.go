@@ -104,7 +104,7 @@ func Load() (*Config, error) {
 		},
 		Database: DatabaseConfig{
 			Host:         getEnvWithDefault("USER_SERVICE_POSTGRES_HOST", "localhost"),
-			Port:         getEnvWithDefault("USER_SERVICE_POSTGRES_PORT", "5432"),
+			Port:         getEnvWithDefault("USER_SERVICE_POSTGRES_PORT_INTERNAL", "5432"),
 			User:         getEnvWithDefault("USER_SERVICE_POSTGRES_USER", "postgres"),
 			Password:     getEnvWithDefault("USER_SERVICE_POSTGRES_PASSWORD", "postgres123"),
 			Name:         getEnvWithDefault("USER_SERVICE_POSTGRES_DB", "go_shop_user_service"),
