@@ -10,14 +10,17 @@ RUN apk update && apk upgrade && \
 # Set working directory
 WORKDIR /app
 
-# Copy go mod and sum files
-COPY go.mod go.sum ./
+# Copy go mod and sum files from the service directory
+COPY internal/services/shop-service/go.mod internal/services/shop-service/go.sum ./
+
+# Copy shared pkg directory
+COPY internal/pkg ./internal/pkg
 
 # Download dependencies
 RUN go mod download
 
-# Copy source code
-COPY . .
+# Copy source code from the service directory
+COPY internal/services/shop-service/ .
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.go
