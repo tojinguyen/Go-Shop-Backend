@@ -78,3 +78,59 @@ func (q *Queries) CreateShop(ctx context.Context, arg CreateShopParams) (Shop, e
 	)
 	return i, err
 }
+
+const getShopByID = `-- name: GetShopByID :one
+SELECT 
+  id,
+  owner_id,
+  shop_name,
+  avatar_url,
+  banner_url,
+  shop_description,
+  address_id,
+  phone,
+  email,
+  rating,
+  active_at,
+  created_at,
+  updated_at
+FROM shops
+WHERE id = $1
+`
+
+type GetShopByIDRow struct {
+	ID              pgtype.UUID        `json:"id"`
+	OwnerID         pgtype.UUID        `json:"owner_id"`
+	ShopName        string             `json:"shop_name"`
+	AvatarUrl       string             `json:"avatar_url"`
+	BannerUrl       string             `json:"banner_url"`
+	ShopDescription pgtype.Text        `json:"shop_description"`
+	AddressID       pgtype.UUID        `json:"address_id"`
+	Phone           string             `json:"phone"`
+	Email           string             `json:"email"`
+	Rating          pgtype.Numeric     `json:"rating"`
+	ActiveAt        pgtype.Timestamptz `json:"active_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetShopByID(ctx context.Context, id pgtype.UUID) (GetShopByIDRow, error) {
+	row := q.db.QueryRow(ctx, getShopByID, id)
+	var i GetShopByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ShopName,
+		&i.AvatarUrl,
+		&i.BannerUrl,
+		&i.ShopDescription,
+		&i.AddressID,
+		&i.Phone,
+		&i.Email,
+		&i.Rating,
+		&i.ActiveAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

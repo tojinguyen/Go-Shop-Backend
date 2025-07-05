@@ -12,6 +12,13 @@ func UUIDToPgUUID(u uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: u, Valid: true}
 }
 
+func PgUUIDToUUID(u pgtype.UUID) uuid.UUID {
+	if u.Valid {
+		return uuid.UUID(u.Bytes)
+	}
+	return uuid.Nil
+}
+
 func PgUUIDToString(u pgtype.UUID) string {
 	if u.Valid {
 		return u.String()
@@ -103,6 +110,20 @@ func Float64ToPgFloat8(f *float64) pgtype.Float8 {
 		return pgtype.Float8{Float64: *f, Valid: true}
 	}
 	return pgtype.Float8{}
+}
+
+// Add this to your converter package
+func PgNumericToFloat64Ptr(numeric pgtype.Numeric) *float64 {
+	if !numeric.Valid {
+		return nil
+	}
+
+	float64Val, err := numeric.Float64Value()
+	if err != nil {
+		return nil
+	}
+
+	return PgFloat8ToFloat64Ptr(float64Val)
 }
 
 // Time pointer conversions

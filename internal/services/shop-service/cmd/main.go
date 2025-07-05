@@ -11,6 +11,7 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/api"
 	createshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/create_shop"
+	getshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shop"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
 )
 
@@ -39,10 +40,6 @@ func main() {
 
 	// Initialize repositories
 	shopRepo := repository.NewPostgresShopRepository(db)
-
-	// Initialize feature handlers
-	createShopHandler := createshop.NewHandler(shopRepo)
-	createShopAPIHandler := createshop.NewAPIHandler(createShopHandler)
 
 	// Set Gin mode based on environment
 	if cfg.App.Environment == "production" {
@@ -79,8 +76,16 @@ func main() {
 		})
 	})
 
+	// Initialize feature handlers
+	createShopHandler := createshop.NewHandler(shopRepo)
+	createShopAPIHandler := createshop.NewAPIHandler(createShopHandler)
+
+	getShopHandler := getshop.NewHandler(shopRepo)
+	getShopAPIHandler := getshop.NewAPIHandler(getShopHandler)
+
 	// Register shop routes
 	api.RegisterShopRoutes(r, createShopAPIHandler)
+	api.RegisterGetShopRoutes(r, getShopAPIHandler)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)

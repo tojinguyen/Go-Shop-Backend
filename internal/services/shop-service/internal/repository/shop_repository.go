@@ -8,6 +8,6 @@ import (
 
 // ShopRepository defines the interface for shop data operations
 type ShopRepository interface {
-	// Create creates a new shop
 	Create(ctx context.Context, shop *domain.Shop) error
+	GetShopByID(ctx context.Context, shopID string) (*domain.Shop, error)
 }

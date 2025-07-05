@@ -6,10 +6,13 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	CreateShop(ctx context.Context, arg CreateShopParams) (Shop, error)
+	GetShopByID(ctx context.Context, id pgtype.UUID) (GetShopByIDRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

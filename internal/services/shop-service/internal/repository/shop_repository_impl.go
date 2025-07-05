@@ -64,3 +64,27 @@ func (r *PostgresShopRepository) Create(ctx context.Context, shop *domain.Shop) 
 
 	return nil
 }
+
+func (r *PostgresShopRepository) GetShopByID(ctx context.Context, shopID string) (*domain.Shop, error) {
+	shopIDUUID := converter.StringToPgUUID(shopID)
+
+	shop, err := r.queries.GetShopByID(ctx, shopIDUUID)
+	if err != nil {
+		log.Println("Error fetching shop by ID:", err)
+		return nil, fmt.Errorf("failed to get shop by ID: %w", err)
+	}
+
+	return &domain.Shop{
+		ID:              converter.PgUUIDToUUID(shop.ID),
+		OwnerID:         converter.PgUUIDToUUID(shop.OwnerID),
+		ShopName:        shop.ShopName,
+		AvatarURL:       shop.AvatarUrl,
+		BannerURL:       shop.BannerUrl,
+		ShopDescription: converter.PgTextToStringPtr(shop.ShopDescription),
+		AddressID:       converter.PgUUIDToUUID(shop.AddressID),
+		Phone:           shop.Phone,
+		Email:           shop.Email,
+		Rating:          *converter.PgNumericToFloat64Ptr(shop.Rating),
+		CreatedAt:       shop.CreatedAt.Time,
+	}, nil
+}
