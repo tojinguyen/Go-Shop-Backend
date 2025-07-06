@@ -7,19 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 )
 
 type UserService struct {
-	container *container.ServiceContainer
+	userProfileRepo repository.UserProfileRepository
 }
 
-func NewUserService(container *container.ServiceContainer) *UserService {
+func NewUserService(userProfileRepo repository.UserProfileRepository) *UserService {
 	return &UserService{
-		container: container,
+		userProfileRepo: userProfileRepo,
 	}
 }
 
@@ -75,7 +75,7 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileR
 		Gender:           req.Gender,
 	}
 
-	profile, err := s.container.GetUserProfileRepo().CreateUserProfile(ctx, params)
+	profile, err := s.userProfileRepo.CreateUserProfile(ctx, params)
 	if err != nil {
 		log.Printf("failed to create user profile: %v", err)
 		return domain.UserProfile{}, err
@@ -84,7 +84,7 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileR
 }
 
 func (s *UserService) GetProfile(ctx *gin.Context, userID string) (domain.UserProfile, error) {
-	profile, err := s.container.GetUserProfileRepo().GetUserProfileByID(ctx, userID)
+	profile, err := s.userProfileRepo.GetUserProfileByID(ctx, userID)
 	if err != nil {
 		return domain.UserProfile{}, err
 	}
@@ -106,7 +106,7 @@ func (s *UserService) UpdateProfile(ctx *gin.Context, req dto.UpdateUserProfileR
 	}
 
 	// Get current profile to preserve existing values
-	currentProfile, err := s.container.GetUserProfileRepo().GetUserProfileByID(ctx, userIDStr)
+	currentProfile, err := s.userProfileRepo.GetUserProfileByID(ctx, userIDStr)
 	if err != nil {
 		return domain.UserProfile{}, fmt.Errorf("failed to get current profile: %w", err)
 	}
@@ -142,7 +142,7 @@ func (s *UserService) UpdateProfile(ctx *gin.Context, req dto.UpdateUserProfileR
 		params.Birthday = converter.StringToPgDate(req.Birthday)
 	}
 
-	profile, err := s.container.GetUserProfileRepo().UpdateUserProfile(ctx, params)
+	profile, err := s.userProfileRepo.UpdateUserProfile(ctx, params)
 	if err != nil {
 		return domain.UserProfile{}, fmt.Errorf("failed to update profile: %w", err)
 	}
@@ -151,13 +151,13 @@ func (s *UserService) UpdateProfile(ctx *gin.Context, req dto.UpdateUserProfileR
 
 func (s *UserService) DeleteProfile(ctx *gin.Context, userID string) error {
 	// Verify that the user exists before attempting to delete
-	_, err := s.container.GetUserProfileRepo().GetUserProfileByID(ctx, userID)
+	_, err := s.userProfileRepo.GetUserProfileByID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("user not found: %w", err)
 	}
 
 	// Perform soft delete
-	err = s.container.GetUserProfileRepo().DeleteProfile(ctx, userID)
+	err = s.userProfileRepo.DeleteProfile(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to delete profile: %w", err)
 	}
@@ -172,7 +172,7 @@ func (s *UserService) GetProfileByID(ctx *gin.Context, userID string) (domain.Us
 	}
 
 	// Get user profile by ID
-	profile, err := s.container.GetUserProfileRepo().GetUserProfileByID(ctx, userID)
+	profile, err := s.userProfileRepo.GetUserProfileByID(ctx, userID)
 	if err != nil {
 		return domain.UserProfile{}, fmt.Errorf("user not found")
 	}

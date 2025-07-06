@@ -18,7 +18,7 @@ type ShipperHandler struct {
 // NewShipperHandler creates a new shipper handler
 func NewShipperHandler(sc container.ServiceContainer) *ShipperHandler {
 	return &ShipperHandler{
-		shipperService: services.NewShipperService(&sc),
+		shipperService: services.NewShipperService(sc.GetShipperRepo()),
 	}
 }
 

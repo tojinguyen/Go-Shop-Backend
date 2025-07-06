@@ -45,5 +45,11 @@ func (hf *HandlerFactory) CreateShipperHandler() *ShipperHandler {
 
 // GetAuthService returns the auth service for middleware use
 func (hf *HandlerFactory) GetAuthService() *services.AuthService {
-	return services.NewAuthService(&hf.container)
+	return services.NewAuthService(
+		hf.container.GetUserAccountRepo(),
+		hf.container.GetJWT(),
+		hf.container.GetRedis(),
+		hf.container.GetEmail(),
+		hf.container.GetConfig(),
+	)
 }

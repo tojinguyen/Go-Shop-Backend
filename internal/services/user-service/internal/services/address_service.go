@@ -6,18 +6,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 )
 
 type AddressService struct {
-	container *container.ServiceContainer
+	addressRepo repository.AddressRepository
 }
 
-func NewAddressService(container *container.ServiceContainer) *AddressService {
+func NewAddressService(addressRepo repository.AddressRepository) *AddressService {
 	return &AddressService{
-		container: container,
+		addressRepo: addressRepo,
 	}
 }
 
@@ -36,7 +36,7 @@ func (s *AddressService) CreateAddress(ctx *gin.Context, userID string, req dto.
 	}
 
 	// Tạo address trong database
-	address, err := s.container.GetAddressRepo().CreateAddress(ctx, params)
+	address, err := s.addressRepo.CreateAddress(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (s *AddressService) CreateAddress(ctx *gin.Context, userID string, req dto.
 			ID:     converter.StringToPgUUID(address.ID),
 		}
 		// Update để đảm bảo chỉ address này là default
-		_, err = s.container.GetAddressRepo().SetDefaultAddress(ctx, setDefaultParams)
+		_, err = s.addressRepo.SetDefaultAddress(ctx, setDefaultParams)
 		if err != nil {
 			// Log error nhưng không fail request vì address đã được tạo thành công
 		}
@@ -76,7 +76,7 @@ func (s *AddressService) CreateAddress(ctx *gin.Context, userID string, req dto.
 
 func (s *AddressService) GetAddressByID(ctx *gin.Context, addressID string) (*dto.AddressResponse, error) {
 	// Lấy address từ repository
-	address, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
+	address, err := s.addressRepo.GetAddressByID(ctx, addressID)
 	if err != nil {
 		log.Printf("Error retrieving address by ID %s: %v", addressID, err)
 		return nil, err
@@ -104,7 +104,7 @@ func (s *AddressService) GetAddressByID(ctx *gin.Context, addressID string) (*dt
 
 func (s *AddressService) GetAddressesByUserID(ctx *gin.Context, userID string) (*dto.AddressListResponse, error) {
 	// Lấy danh sách địa chỉ từ repository
-	addresses, err := s.container.GetAddressRepo().GetAddressesByUserID(ctx, userID)
+	addresses, err := s.addressRepo.GetAddressesByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (s *AddressService) GetAddressesByUserID(ctx *gin.Context, userID string) (
 
 func (s *AddressService) UpdateAddress(ctx *gin.Context, userID string, addressID string, req dto.UpdateAddressRequest) (*dto.AddressResponse, error) {
 	// Need to check if address is owned by user
-	checkAddress, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
+	checkAddress, err := s.addressRepo.GetAddressByID(ctx, addressID)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (s *AddressService) UpdateAddress(ctx *gin.Context, userID string, addressI
 	}
 
 	// Cập nhật address trong database
-	address, err := s.container.GetAddressRepo().UpdateAddress(ctx, params)
+	address, err := s.addressRepo.UpdateAddress(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (s *AddressService) UpdateAddress(ctx *gin.Context, userID string, addressI
 
 func (s *AddressService) DeleteAddress(ctx *gin.Context, userID string, addressID string) error {
 	// Kiểm tra xem địa chỉ có thuộc về người dùng không
-	checkAddress, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
+	checkAddress, err := s.addressRepo.GetAddressByID(ctx, addressID)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (s *AddressService) DeleteAddress(ctx *gin.Context, userID string, addressI
 	}
 
 	// Xoá địa chỉ trong database
-	err = s.container.GetAddressRepo().DeleteAddress(ctx, addressID)
+	err = s.addressRepo.DeleteAddress(ctx, addressID)
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (s *AddressService) DeleteAddress(ctx *gin.Context, userID string, addressI
 
 func (s *AddressService) SetDefaultAddress(ctx *gin.Context, userID string, addressID string) (*dto.AddressResponse, error) {
 	// Kiểm tra xem địa chỉ có thuộc về người dùng không
-	checkAddress, err := s.container.GetAddressRepo().GetAddressByID(ctx, addressID)
+	checkAddress, err := s.addressRepo.GetAddressByID(ctx, addressID)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func (s *AddressService) SetDefaultAddress(ctx *gin.Context, userID string, addr
 	}
 
 	// Cập nhật địa chỉ thành mặc định
-	address, err := s.container.GetAddressRepo().SetDefaultAddress(ctx, params)
+	address, err := s.addressRepo.SetDefaultAddress(ctx, params)
 	if err != nil {
 		return nil, err
 	}

@@ -10,26 +10,43 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/toji-dev/go-shop/internal/pkg/email"
+	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	timeUtils "github.com/toji-dev/go-shop/internal/pkg/time"
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
 	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 )
 
 type AuthService struct {
-	container *container.ServiceContainer
+	userAccountRepo repository.UserAccountRepository
+	jwtService      jwtService.JwtService
+	redisService    *redis_infra.RedisService
+	emailService    email.EmailService
+	config          *config.Config
 }
 
-func NewAuthService(container *container.ServiceContainer) *AuthService {
+func NewAuthService(
+	userAccountRepo repository.UserAccountRepository,
+	jwtService jwtService.JwtService,
+	redisService *redis_infra.RedisService,
+	emailService email.EmailService,
+	config *config.Config,
+) *AuthService {
 	return &AuthService{
-		container: container,
+		userAccountRepo: userAccountRepo,
+		jwtService:      jwtService,
+		redisService:    redisService,
+		emailService:    emailService,
+		config:          config,
 	}
 }
 
 func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.RegisterResponse, error) {
 	// Check if user already exists
-	exists, err := s.container.GetUserAccountRepo().CheckUserExistsByEmail(ctx, req.Email)
+	exists, err := s.userAccountRepo.CheckUserExistsByEmail(ctx, req.Email)
 	if err != nil {
 		log.Println("Error checking user existence:", err)
 		return dto.RegisterResponse{}, fmt.Errorf("failed to check user existence: %w", err)
@@ -54,7 +71,7 @@ func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.R
 	}
 
 	// Create the user account
-	userAccount, err := s.container.GetUserAccountRepo().CreateUserAccount(ctx, params)
+	userAccount, err := s.userAccountRepo.CreateUserAccount(ctx, params)
 	if err != nil {
 		log.Println("Error creating user account:", err)
 		return dto.RegisterResponse{}, fmt.Errorf("failed to create user account: %w", err)
@@ -68,7 +85,7 @@ func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.R
 
 func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthResponse, error) {
 	// Get user by email
-	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(ctx, req.Email)
+	userAccount, err := s.userAccountRepo.GetUserAccountByEmail(ctx, req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return dto.AuthResponse{}, fmt.Errorf("invalid email or password")
@@ -89,18 +106,18 @@ func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthRes
 		Role:   userAccount.Role,
 	}
 
-	accessToken, err := s.container.GetJWT().GenerateAccessToken(tokenInput)
+	accessToken, err := s.jwtService.GenerateAccessToken(tokenInput)
 	if err != nil {
 		return dto.AuthResponse{}, fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	refreshToken, err := s.container.GetJWT().GenerateRefreshToken(tokenInput)
+	refreshToken, err := s.jwtService.GenerateRefreshToken(tokenInput)
 	if err != nil {
 		return dto.AuthResponse{}, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
 	// Update last login time
-	err = s.container.GetUserAccountRepo().UpdateLastLoginAt(ctx, userAccount.Id)
+	err = s.userAccountRepo.UpdateLastLoginAt(ctx, userAccount.Id)
 	if err != nil {
 		// Log error but don't fail the login
 		fmt.Printf("Failed to update last login time: %v\n", err)
@@ -120,13 +137,13 @@ func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthRes
 
 func (s *AuthService) RefreshToken(ctx *gin.Context, req dto.RefreshTokenRequest) (dto.AuthResponse, error) {
 	// Validate refresh token
-	claims, err := s.container.GetJWT().ValidateRefreshToken(req.RefreshToken)
+	claims, err := s.jwtService.ValidateRefreshToken(req.RefreshToken)
 	if err != nil {
 		return dto.AuthResponse{}, fmt.Errorf("invalid refresh token: %w", err)
 	}
 
 	// Get user account to ensure user still exists
-	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByID(context.Background(), claims.UserId)
+	userAccount, err := s.userAccountRepo.GetUserAccountByID(context.Background(), claims.UserId)
 	if err != nil {
 		return dto.AuthResponse{}, fmt.Errorf("user not found: %w", err)
 	}
@@ -138,12 +155,12 @@ func (s *AuthService) RefreshToken(ctx *gin.Context, req dto.RefreshTokenRequest
 		Role:   claims.Role,
 	}
 
-	accessToken, err := s.container.GetJWT().GenerateAccessToken(tokenInput)
+	accessToken, err := s.jwtService.GenerateAccessToken(tokenInput)
 	if err != nil {
 		return dto.AuthResponse{}, fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	newRefreshToken, err := s.container.GetJWT().GenerateRefreshToken(tokenInput)
+	newRefreshToken, err := s.jwtService.GenerateRefreshToken(tokenInput)
 	if err != nil {
 		return dto.AuthResponse{}, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
@@ -162,7 +179,7 @@ func (s *AuthService) RefreshToken(ctx *gin.Context, req dto.RefreshTokenRequest
 
 func (s *AuthService) ValidateToken(ctx *gin.Context, token string) (*dto.TokenValidationResponse, error) {
 	// Validate access token
-	claims, err := s.container.GetJWT().ValidateAccessToken(ctx.Request.Context(), token)
+	claims, err := s.jwtService.ValidateAccessToken(ctx.Request.Context(), token)
 	if err != nil {
 		return nil, fmt.Errorf("token validation failed: %w", err)
 	}
@@ -181,7 +198,7 @@ func (s *AuthService) ValidateToken(ctx *gin.Context, token string) (*dto.TokenV
 
 func (s *AuthService) Logout(ctx *gin.Context, token string) error {
 	// Extract user ID from token for logging purposes
-	claims, err := s.container.GetJWT().ValidateAccessToken(ctx.Request.Context(), token)
+	claims, err := s.jwtService.ValidateAccessToken(ctx.Request.Context(), token)
 	if err != nil {
 		// Even if token is invalid, we consider logout successful
 		return nil
@@ -198,7 +215,7 @@ func (s *AuthService) Logout(ctx *gin.Context, token string) error {
 		remainingTTL := timeUtils.CalculateDurationFromSeconds(secondsUntilExpiry)
 
 		// Store token in Redis blacklist with remaining TTL
-		err = s.container.GetRedis().Set(blacklistKey, "blacklisted", remainingTTL)
+		err = s.redisService.Set(blacklistKey, "blacklisted", remainingTTL)
 		if err != nil {
 			// Log error but don't fail the logout
 			fmt.Printf("Warning: Failed to blacklist token in Redis: %v\n", err)
@@ -215,7 +232,7 @@ func (s *AuthService) Logout(ctx *gin.Context, token string) error {
 
 func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordRequest) error {
 	// Check if user exists
-	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(ctx, req.Email)
+	userAccount, err := s.userAccountRepo.GetUserAccountByEmail(ctx, req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Don't reveal if email exists or not for security
@@ -232,13 +249,13 @@ func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordReq
 
 	// Store reset token in Redis with 15 minutes expiry
 	resetTokenKey := fmt.Sprintf("password_reset_token:%s", userAccount.Id)
-	err = s.container.GetRedis().Set(resetTokenKey, resetToken, 15*time.Minute)
+	err = s.redisService.Set(resetTokenKey, resetToken, 15*time.Minute)
 	if err != nil {
 		return fmt.Errorf("failed to store reset token: %w", err)
 	}
 
 	// Get frontend URL from config
-	frontendURL := s.container.GetConfig().App.FrontendURL
+	frontendURL := s.config.App.FrontendURL
 	if frontendURL == "" {
 		frontendURL = "http://localhost:3000" // fallback
 	}
@@ -258,7 +275,7 @@ func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordReq
 	subject := "Password Reset Request - Go-Shop"
 
 	// Try to use template first, fallback to HTML if template fails
-	err = s.container.GetEmail().SendTemplateEmail([]string{userAccount.Email}, subject, "password_reset.html", emailData)
+	err = s.emailService.SendTemplateEmail([]string{userAccount.Email}, subject, "password_reset.html", emailData)
 	if err != nil {
 		// Fallback to simple HTML email if template fails
 		htmlBody := fmt.Sprintf(`
@@ -283,7 +300,7 @@ func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordReq
 			</html>
 		`, emailData.ResetLink)
 
-		err = s.container.GetEmail().SendHTMLEmail([]string{userAccount.Email}, subject, htmlBody)
+		err = s.emailService.SendHTMLEmail([]string{userAccount.Email}, subject, htmlBody)
 		if err != nil {
 			// Don't fail the request if email fails, but log the error
 			fmt.Printf("Warning: Failed to send password reset email to %s: %v\n", userAccount.Email, err)
@@ -298,7 +315,7 @@ func (s *AuthService) ForgotPassword(ctx *gin.Context, req dto.ForgotPasswordReq
 
 func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordRequest) error {
 	// Validate the reset token
-	claims, err := s.container.GetJWT().ValidateAccessToken(ctx, req.Token)
+	claims, err := s.jwtService.ValidateAccessToken(ctx, req.Token)
 	if err != nil {
 		return fmt.Errorf("invalid or expired reset token")
 	}
@@ -310,7 +327,7 @@ func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordReque
 
 	// Check if the token exists in Redis
 	resetTokenKey := fmt.Sprintf("password_reset_token:%s", claims.UserId)
-	exists, err := s.container.GetRedis().Exists(resetTokenKey)
+	exists, err := s.redisService.Exists(resetTokenKey)
 	if err != nil {
 		return fmt.Errorf("failed to verify reset token: %w", err)
 	}
@@ -320,7 +337,7 @@ func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordReque
 	}
 
 	// Get user account to ensure user still exists
-	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByID(context.Background(), claims.UserId)
+	userAccount, err := s.userAccountRepo.GetUserAccountByID(context.Background(), claims.UserId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("user not found")
@@ -335,13 +352,13 @@ func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordReque
 	}
 
 	// Update password in database
-	err = s.container.GetUserAccountRepo().UpdateUserPassword(context.Background(), userAccount.Id, string(hashedPassword))
+	err = s.userAccountRepo.UpdateUserPassword(context.Background(), userAccount.Id, string(hashedPassword))
 	if err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 
 	// Remove the reset token from Redis to prevent reuse
-	err = s.container.GetRedis().Delete(resetTokenKey)
+	err = s.redisService.Delete(resetTokenKey)
 	if err != nil {
 		// Log error but don't fail the password reset
 		fmt.Printf("Warning: Failed to remove reset token from Redis: %v\n", err)
@@ -353,7 +370,7 @@ func (s *AuthService) ResetPassword(ctx *gin.Context, req dto.ResetPasswordReque
 
 func (s *AuthService) ChangePassword(ctx *gin.Context, req dto.ChangePasswordRequest) error {
 	// Get user account
-	userAccount, err := s.container.GetUserAccountRepo().GetUserAccountByEmail(context.Background(), req.Email)
+	userAccount, err := s.userAccountRepo.GetUserAccountByEmail(context.Background(), req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("user not found")
@@ -374,7 +391,7 @@ func (s *AuthService) ChangePassword(ctx *gin.Context, req dto.ChangePasswordReq
 	}
 
 	// Update password in database
-	err = s.container.GetUserAccountRepo().UpdateUserPassword(context.Background(), userAccount.Id, string(hashedPassword))
+	err = s.userAccountRepo.UpdateUserPassword(context.Background(), userAccount.Id, string(hashedPassword))
 	if err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
 	}
@@ -386,7 +403,7 @@ func (s *AuthService) ChangePassword(ctx *gin.Context, req dto.ChangePasswordReq
 func (s *AuthService) IsTokenBlacklisted(token string) bool {
 	blacklistKey := fmt.Sprintf("blacklisted_token:%s", token)
 
-	exists, err := s.container.GetRedis().Exists(blacklistKey)
+	exists, err := s.redisService.Exists(blacklistKey)
 	if err != nil {
 		// If Redis is unavailable, log error but don't block authentication
 		fmt.Printf("Warning: Failed to check token blacklist: %v\n", err)
@@ -406,7 +423,7 @@ func (s *AuthService) generatePasswordResetToken(userID string) (string, error) 
 	}
 
 	// Generate a short-lived reset token
-	resetToken, err := s.container.GetJWT().GenerateAccessToken(tokenInput)
+	resetToken, err := s.jwtService.GenerateAccessToken(tokenInput)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate reset token: %w", err)
 	}

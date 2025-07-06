@@ -16,7 +16,7 @@ type ProfileHandler struct {
 // NewProfileHandler creates a new profile handler
 func NewProfileHandler(sc container.ServiceContainer) *ProfileHandler {
 	return &ProfileHandler{
-		userService: services.NewUserService(&sc),
+		userService: services.NewUserService(sc.GetUserProfileRepo()),
 	}
 }
 

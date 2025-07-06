@@ -19,7 +19,13 @@ type AuthHandler struct {
 // NewAuthHandler creates a new auth handler
 func NewAuthHandler(sc container.ServiceContainer) *AuthHandler {
 	return &AuthHandler{
-		authService: services.NewAuthService(&sc),
+		authService: services.NewAuthService(
+			sc.GetUserAccountRepo(),
+			sc.GetJWT(),
+			sc.GetRedis(),
+			sc.GetEmail(),
+			sc.GetConfig(),
+		),
 	}
 }
 

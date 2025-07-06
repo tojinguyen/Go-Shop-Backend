@@ -18,7 +18,7 @@ type AddressHandler struct {
 // NewAddressHandler creates a new address handler
 func NewAddressHandler(sc container.ServiceContainer) *AddressHandler {
 	return &AddressHandler{
-		addressService: services.NewAddressService(&sc),
+		addressService: services.NewAddressService(sc.GetAddressRepo()),
 	}
 }
 

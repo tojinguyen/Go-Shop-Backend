@@ -3,21 +3,23 @@ package services
 import (
 	"context"
 
-	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 )
 
 type ShipperService struct {
-	container *container.ServiceContainer
+	shipperRepo repository.ShipperRepository
 }
 
-func NewShipperService(container *container.ServiceContainer) *ShipperService {
-	return &ShipperService{container: container}
+func NewShipperService(shipperRepo repository.ShipperRepository) *ShipperService {
+	return &ShipperService{
+		shipperRepo: shipperRepo,
+	}
 }
 
 func (s *ShipperService) RegisterShipper(ctx context.Context, userID string, request *dto.ShipperRegisterRequest) (*dto.ShipperResponse, error) {
-	shipper, err := s.container.GetShipperRepo().CreateShipper(ctx, &domain.Shipper{
+	shipper, err := s.shipperRepo.CreateShipper(ctx, &domain.Shipper{
 		UserID:          userID,
 		VehicleType:     request.VehicleType,
 		VehicleImageURL: request.VehicleImageURL,
@@ -40,7 +42,7 @@ func (s *ShipperService) RegisterShipper(ctx context.Context, userID string, req
 }
 
 func (s *ShipperService) GetShipperProfile(ctx context.Context, userID string) (*dto.ShipperResponse, error) {
-	shipper, err := s.container.GetShipperRepo().GetShipperByUserID(ctx, userID)
+	shipper, err := s.shipperRepo.GetShipperByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +63,7 @@ func (s *ShipperService) GetShipperProfile(ctx context.Context, userID string) (
 }
 
 func (s *ShipperService) UpdateShipperProfile(ctx context.Context, userID string, request *dto.ShipperUpdateRequest) (*dto.ShipperResponse, error) {
-	shipper, err := s.container.GetShipperRepo().UpdateShipper(ctx, userID, request)
+	shipper, err := s.shipperRepo.UpdateShipper(ctx, userID, request)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (s *ShipperService) UpdateShipperProfile(ctx context.Context, userID string
 }
 
 func (s *ShipperService) DeleteShipperProfile(ctx context.Context, userID string) error {
-	err := s.container.GetShipperRepo().DeleteShipper(ctx, userID)
+	err := s.shipperRepo.DeleteShipper(ctx, userID)
 	if err != nil {
 		return err
 	}
