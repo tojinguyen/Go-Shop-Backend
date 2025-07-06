@@ -158,9 +158,6 @@ POST   /api/v1/shops/{id}/promotions
 GET    /api/v1/shops/{id}/promotions/{promo_id}
 PUT    /api/v1/shops/{id}/promotions/{promo_id}
 DELETE /api/v1/shops/{id}/promotions/{promo_id}
-POST   /api/v1/shops/{id}/campaigns
-GET    /api/v1/shops/{id}/campaigns
-PUT    /api/v1/shops/{id}/campaigns/{campaign_id}/status
 ```
 
 ### Product Catalog APIs
