@@ -23,7 +23,7 @@ import (
 type AuthService struct {
 	userAccountRepo repository.UserAccountRepository
 	jwtService      jwtService.JwtService
-	redisService    *redis_infra.RedisService
+	redisService    redis_infra.RedisServiceInterface
 	emailService    email.EmailService
 	config          *config.Config
 }
@@ -31,7 +31,7 @@ type AuthService struct {
 func NewAuthService(
 	userAccountRepo repository.UserAccountRepository,
 	jwtService jwtService.JwtService,
-	redisService *redis_infra.RedisService,
+	redisService redis_infra.RedisServiceInterface,
 	emailService email.EmailService,
 	config *config.Config,
 ) *AuthService {
