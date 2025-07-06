@@ -1,0 +1,135 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Job 1: Xác định các service đã thay đổi
+  get-changed-services:
+    runs-on: ubuntu-latest
+    outputs:
+      # Output này sẽ chứa một chuỗi JSON, ví dụ: '["user-service", "shop-service"]'
+      services: ${{ steps.set-matrix.outputs.services }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Lấy toàn bộ lịch sử để so sánh file giữa các commit
+          fetch-depth: 0
+
+      # Sử dụng action để lấy danh sách các file đã thay đổi
+      - name: Get changed files
+        id: changed_files
+        uses: tj-actions/changed-files@v44 # Một action rất phổ biến cho việc này
+        with:
+          files: |
+            internal/services/**
+            internal/pkg/**
+
+      # Xử lý logic để tạo ra ma trận động
+      - name: Determine changed services
+        id: set-matrix
+        run: |
+          # Lấy danh sách tất cả các service có trong project
+          ALL_SERVICES='["user-service", "shop-service"]' # <-- Cập nhật danh sách này khi có service mới
+
+          # Kiểm tra xem code chung (pkg) có thay đổi không
+          HAS_PKG_CHANGES=false
+          for file in ${{ steps.changed_files.outputs.all_changed_files }}; do
+            if [[ "$file" == internal/pkg/* ]]; then
+              HAS_PKG_CHANGES=true
+              break
+            fi
+          done
+
+          # Nếu code chung thay đổi, chạy CI cho tất cả các service
+          if [ "$HAS_PKG_CHANGES" = true ]; then
+            echo "Shared code in 'internal/pkg' changed. Running CI for all services."
+            echo "services=$ALL_SERVICES" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Nếu không, chỉ xác định các service cụ thể đã thay đổi
+          CHANGED_SERVICES=$(
+            for file in ${{ steps.changed_files.outputs.all_changed_files }}; do
+              # Trích xuất tên service từ đường dẫn file
+              if [[ "$file" == internal/services/* ]]; then
+                echo "$file" | cut -d'/' -f3
+              fi
+            done | sort -u | jq -R . | jq -s .
+          )
+
+          echo "Changed services: $CHANGED_SERVICES"
+          echo "services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
+
+  # Job 2: Build và Test các service đã thay đổi
+  build-and-test:
+    name: CI for ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    # Phụ thuộc vào job `get-changed-services`
+    needs: get-changed-services
+    
+    # Chỉ chạy job này nếu có service thay đổi
+    if: ${{ needs.get-changed-services.outputs.services != '[]' }}
+
+    strategy:
+      fail-fast: false
+      # Tạo matrix từ output của job trước
+      matrix:
+        service: ${{ fromJSON(needs.get-changed-services.outputs.services) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.2'
+
+      - name: Cache Go modules for ${{ matrix.service }}
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.service }}-${{ hashFiles(format('internal/services/{0}/go.sum', matrix.service)) }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.service }}-
+
+      - name: Install Dependencies
+        working-directory: ./internal/services/${{ matrix.service }}
+        run: go mod download
+
+      - name: Lint Go Code
+        working-directory: ./internal/services/${{ matrix.service }}
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
+          golangci-lint run
+
+      - name: Run Unit Tests
+        working-directory: ./internal/services/${{ matrix.service }}
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ matrix.service }}
+          path: ./internal/services/${{ matrix.service }}/coverage.out
+      
+      - name: Build Go App
+        working-directory: ./internal/services/${{ matrix.service }}
+        run: go build -v -o ./app-build ./cmd/main.go
+      
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./internal/services/${{ matrix.service }}/Dockerfile
+          push: false 
+          tags: your-docker-repo/${{ matrix.service }}:${{ github.sha }}
