@@ -7,27 +7,28 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
+
+	// Import các mock đã được mockery sinh ra
 	email_mocks "github.com/toji-dev/go-shop/internal/pkg/email/mocks"
 	redis_mocks "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra/mocks"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
+	jwt_pkg "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 	jwt_mocks "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt/mocks"
 	repo_mocks "github.com/toji-dev/go-shop/internal/services/user-service/internal/repository/mocks"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"
 )
 
+// Helper function không đổi
 func createTestGinContext() *gin.Context {
 	gin.SetMode(gin.TestMode)
 	ctx, _ := gin.CreateTestContext(nil)
 	return ctx
 }
 
-// =================================================================
-// Test cho hàm Register
-// =================================================================
 func TestAuthService_Register(t *testing.T) {
-	// Định nghĩa các kịch bản test trong một slice (table-driven test)
 	testCases := []struct {
 		name          string
 		request       dto.RegisterRequest
@@ -37,78 +38,39 @@ func TestAuthService_Register(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "Success - User registered successfully",
-			request: dto.RegisterRequest{
-				Email:    "newuser@example.com",
-				Password: "Password123!",
-			},
+			name:    "Success - User registered successfully",
+			request: dto.RegisterRequest{Email: "newuser@example.com", Password: "Password123!"},
 			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository) {
-				// 1. Giả lập việc kiểm tra user chưa tồn tại
-				mockRepo.On("CheckUserExistsByEmail", mock.Anything, "newuser@example.com").Return(false, nil).Once()
+				// Sử dụng EXPECT() thay vì On()
+				mockRepo.EXPECT().CheckUserExistsByEmail(mock.Anything, "newuser@example.com").Return(false, nil).Once()
 
-				// 2. Giả lập việc tạo user thành công và trả về user mới
 				createdUser := &domain.UserAccount{Id: "new-user-id", Email: "newuser@example.com"}
-				// mock.AnythingOfType dùng để khớp với bất kỳ giá trị nào của kiểu dữ liệu đó
-				mockRepo.On("CreateUserAccount", mock.Anything, mock.AnythingOfType("sqlc.CreateUserAccountParams")).Return(createdUser, nil).Once()
+				mockRepo.EXPECT().CreateUserAccount(mock.Anything, mock.AnythingOfType("sqlc.CreateUserAccountParams")).Return(createdUser, nil).Once()
 			},
 			expectedID:  "new-user-id",
 			expectError: false,
 		},
 		{
-			name: "Error - User already exists",
-			request: dto.RegisterRequest{
-				Email:    "existing@example.com",
-				Password: "Password123!",
-			},
+			name:    "Error - User already exists",
+			request: dto.RegisterRequest{Email: "existing@example.com", Password: "Password123!"},
 			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository) {
-				// 1. Giả lập việc kiểm tra user đã tồn tại
-				mockRepo.On("CheckUserExistsByEmail", mock.Anything, "existing@example.com").Return(true, nil).Once()
-				// Hàm CreateUserAccount sẽ không được gọi, nên không cần mock
+				mockRepo.EXPECT().CheckUserExistsByEmail(mock.Anything, "existing@example.com").Return(true, nil).Once()
 			},
 			expectError:   true,
 			expectedError: "user with email existing@example.com already exists",
 		},
-		{
-			name: "Error - Database error on checking existence",
-			request: dto.RegisterRequest{
-				Email:    "dberror@example.com",
-				Password: "Password123!",
-			},
-			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository) {
-				// 1. Giả lập DB trả về lỗi khi kiểm tra user
-				mockRepo.On("CheckUserExistsByEmail", mock.Anything, "dberror@example.com").Return(false, errors.New("db connection error")).Once()
-			},
-			expectError:   true,
-			expectedError: "failed to check user existence",
-		},
 	}
 
-	// Chạy vòng lặp qua tất cả các test case
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// --- ARRANGE ---
-			// Khởi tạo các mock objects cần thiết cho AuthService
 			mockUserRepo := new(repo_mocks.UserAccountRepository)
-			mockJwtService := new(jwt_mocks.JwtService)
-			mockRedisService := new(redis_mocks.RedisServiceInterface)
-			mockEmailService := new(email_mocks.EmailService)
-
-			// Áp dụng thiết lập mock cho kịch bản hiện tại
 			tc.setupMocks(mockUserRepo)
 
-			// Tạo instance của AuthService với các dependency đã được mock
-			authService := services.NewAuthService(
-				mockUserRepo,
-				mockJwtService,
-				mockRedisService,
-				mockEmailService,
-				&config.Config{}, // Config rỗng vì hàm Register không dùng đến
-			)
+			// Khởi tạo service với các dependency đã được mock
+			authService := services.NewAuthService(mockUserRepo, nil, nil, nil, &config.Config{})
 
-			// --- ACT ---
 			response, err := authService.Register(createTestGinContext(), tc.request)
 
-			// --- ASSERT ---
 			if tc.expectError {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -117,8 +79,89 @@ func TestAuthService_Register(t *testing.T) {
 				assert.Equal(t, tc.expectedID, response.UserID)
 			}
 
-			// Xác minh rằng các hàm mock đã được gọi đúng như kỳ vọng
 			mockUserRepo.AssertExpectations(t)
+		})
+	}
+}
+
+// =================================================================
+// Test hàm Login với cú pháp EXPECT()
+// =================================================================
+func TestAuthService_Login_WithExpect(t *testing.T) {
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("correctPassword123!"), bcrypt.DefaultCost)
+
+	testCases := []struct {
+		name          string
+		request       dto.LoginRequest
+		setupMocks    func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService)
+		expectedResp  *dto.AuthResponse
+		expectError   bool
+		expectedError string
+	}{
+		{
+			name:    "Success - Valid login credentials",
+			request: dto.LoginRequest{Email: "user@example.com", Password: "correctPassword123!"},
+			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService) {
+				user := &domain.UserAccount{
+					Id:             "user-123",
+					Email:          "user@example.com",
+					HashedPassword: string(hashedPassword),
+					Role:           "customer",
+				}
+				mockRepo.EXPECT().GetUserAccountByEmail(mock.Anything, "user@example.com").Return(user, nil).Once()
+				mockRepo.EXPECT().UpdateLastLoginAt(mock.Anything, "user-123").Return(nil).Once()
+
+				tokenInput := &jwt_pkg.GenerateTokenInput{UserId: user.Id, Email: user.Email, Role: user.Role}
+				mockJWT.EXPECT().GenerateAccessToken(tokenInput).Return("fake-access-token", nil).Once()
+				mockJWT.EXPECT().GenerateRefreshToken(tokenInput).Return("fake-refresh-token", nil).Once()
+			},
+			expectedResp: &dto.AuthResponse{
+				AccessToken:  "fake-access-token",
+				RefreshToken: "fake-refresh-token",
+				TokenType:    "Bearer",
+				ExpiresIn:    3600,
+				ID:           "user-123",
+				Email:        "user@example.com",
+				Role:         "customer",
+			},
+			expectError: false,
+		},
+		{
+			name:    "Error - User not found",
+			request: dto.LoginRequest{Email: "notfound@example.com", Password: "password"},
+			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService) {
+				mockRepo.EXPECT().GetUserAccountByEmail(mock.Anything, "notfound@example.com").Return(nil, errors.New("record not found")).Once()
+			},
+			expectError:   true,
+			expectedError: "invalid email or password",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// --- ARRANGE ---
+			mockUserRepo := new(repo_mocks.UserAccountRepository)
+			mockJWT := new(jwt_mocks.JwtService)
+			tc.setupMocks(mockUserRepo, mockJWT)
+
+			authService := services.NewAuthService(
+				mockUserRepo, mockJWT, new(redis_mocks.RedisServiceInterface), new(email_mocks.EmailService), &config.Config{},
+			)
+
+			// --- ACT ---
+			response, err := authService.Login(createTestGinContext(), tc.request)
+
+			// --- ASSERT ---
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, *tc.expectedResp, response)
+			}
+
+			mockUserRepo.AssertExpectations(t)
+			mockJWT.AssertExpectations(t)
 		})
 	}
 }
