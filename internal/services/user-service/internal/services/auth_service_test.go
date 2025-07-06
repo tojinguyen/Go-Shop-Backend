@@ -1,7 +1,7 @@
 package services_test
 
 import (
-	"errors"
+	"database/sql"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -130,7 +130,7 @@ func TestAuthService_Login_WithExpect(t *testing.T) {
 			name:    "Error - User not found",
 			request: dto.LoginRequest{Email: "notfound@example.com", Password: "password"},
 			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService) {
-				mockRepo.EXPECT().GetUserAccountByEmail(mock.Anything, "notfound@example.com").Return(nil, errors.New("record not found")).Once()
+				mockRepo.EXPECT().GetUserAccountByEmail(mock.Anything, "notfound@example.com").Return(nil, sql.ErrNoRows).Once()
 			},
 			expectError:   true,
 			expectedError: "invalid email or password",
