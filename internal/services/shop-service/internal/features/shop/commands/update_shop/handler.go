@@ -26,14 +26,12 @@ func NewCommandHandler(shopRepo repository.ShopRepository) UpdateShopCommandHand
 func (h *CommandHandler) Handle(ctx context.Context, command UpdateShopCommand) (*domain.Shop, error) {
 	log.Printf("Updating shop with ID: %s", command.ID)
 
-	// First, get the existing shop to ensure it exists
 	existingShop, err := h.shopRepo.GetShopByID(ctx, command.ID)
 	if err != nil {
 		log.Printf("Error getting shop by ID: %v", err)
 		return nil, fmt.Errorf("shop not found: %w", err)
 	}
 
-	// Parse UUIDs
 	shopID, err := uuid.Parse(command.ID)
 	if err != nil {
 		log.Printf("Error parsing shop ID: %v", err)
@@ -46,10 +44,9 @@ func (h *CommandHandler) Handle(ctx context.Context, command UpdateShopCommand) 
 		return nil, fmt.Errorf("invalid address ID: %w", err)
 	}
 
-	// Update the shop with new values
 	updatedShop := &domain.Shop{
 		ID:              shopID,
-		OwnerID:         existingShop.OwnerID, // Keep the original owner ID
+		OwnerID:         existingShop.OwnerID,
 		ShopName:        command.ShopName,
 		AvatarURL:       command.AvatarURL,
 		BannerURL:       command.BannerURL,
@@ -57,13 +54,12 @@ func (h *CommandHandler) Handle(ctx context.Context, command UpdateShopCommand) 
 		AddressID:       addressID,
 		Phone:           command.Phone,
 		Email:           command.Email,
-		Rating:          existingShop.Rating, // Keep the existing rating
+		Rating:          existingShop.Rating,
 		ActiveAt:        existingShop.ActiveAt,
 		BannedAt:        existingShop.BannedAt,
 		CreatedAt:       existingShop.CreatedAt,
 	}
 
-	// Update the shop
 	err = h.shopRepo.Update(ctx, updatedShop)
 	if err != nil {
 		log.Printf("Error updating shop: %v", err)

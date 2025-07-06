@@ -7,11 +7,11 @@ import (
 
 // APIHandler handles HTTP requests for getting shops
 type APIHandler struct {
-	queryHandler GetShopsQueryHandler
+	queryHandler *QueryHandler
 }
 
 // NewAPIHandler creates a new APIHandler for getting shops
-func NewAPIHandler(queryHandler GetShopsQueryHandler) *APIHandler {
+func NewAPIHandler(queryHandler *QueryHandler) *APIHandler {
 	return &APIHandler{
 		queryHandler: queryHandler,
 	}

@@ -15,7 +15,7 @@ type QueryHandler struct {
 }
 
 // NewQueryHandler creates a new GetShopsQueryHandler
-func NewQueryHandler(shopRepo repository.ShopRepository) GetShopsQueryHandler {
+func NewQueryHandler(shopRepo repository.ShopRepository) *QueryHandler {
 	return &QueryHandler{
 		shopRepo: shopRepo,
 	}
