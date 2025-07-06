@@ -17,7 +17,7 @@ import (
 	updateshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/update_shop"
 	getshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shop"
 	getshops "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shops"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
+	repository "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
 )
 
 //	@title			Shop Service API
