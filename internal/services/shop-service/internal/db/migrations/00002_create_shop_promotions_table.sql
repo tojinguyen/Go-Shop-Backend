@@ -23,8 +23,8 @@ CREATE TABLE shop_promotions (
     
     -- Add constraint for percentage type (should be between 0 and 100)
     CONSTRAINT chk_percentage_value CHECK (
-        (type = 'PERCENTAGE' AND discount_value <= 100) OR 
-        (type = 'VALUE')
+        (promotion_type = 'PERCENTAGE' AND discount_value <= 100) OR 
+        (promotion_type = 'VALUE')
     )
 );
 
