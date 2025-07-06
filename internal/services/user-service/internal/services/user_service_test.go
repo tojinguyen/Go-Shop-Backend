@@ -38,6 +38,7 @@ func TestUserService_CreateProfile(t *testing.T) {
 					CreatedAt:        "2023-10-01T00:00:00Z",
 					UpdatedAt:        "2023-10-01T00:00:00Z",
 				}
+
 				mockRepo.EXPECT().CreateUserProfile(mock.Anything, mock.AnythingOfType("sqlc.CreateUserProfileParams")).Return(createdUserProfile, nil).Once()
 			},
 			expectedID:  "550e8400-e29b-41d4-a716-446655440000",
