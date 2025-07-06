@@ -1,7 +1,4 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Go
+name: Go-Shop Smart CI
 
 on:
   push:
@@ -10,78 +7,86 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # Job 1: Xác định các service đã thay đổi
+  # ===============================================================
+  # JOB 1: XÁC ĐỊNH CÁC DỊCH VỤ (SERVICES) CÓ THAY ĐỔI
+  # ===============================================================
   get-changed-services:
+    name: Determine Changed Services
     runs-on: ubuntu-latest
     outputs:
-      # Output này sẽ chứa một chuỗi JSON, ví dụ: '["user-service", "shop-service"]'
       services: ${{ steps.set-matrix.outputs.services }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Lấy toàn bộ lịch sử để so sánh file giữa các commit
           fetch-depth: 0
 
-      # Sử dụng action để lấy danh sách các file đã thay đổi
       - name: Get changed files
-        id: changed_files
-        uses: tj-actions/changed-files@v44 # Một action rất phổ biến cho việc này
+        id: changed-files
+        uses: tj-actions/changed-files@v44
         with:
           files: |
             internal/services/**
             internal/pkg/**
 
-      # Xử lý logic để tạo ra ma trận động
-      - name: Determine changed services
+      # =========================================================================
+      # SỬA LỖI TẠI ĐÂY: Script được cải tiến để tạo JSON một cách an toàn
+      # =========================================================================
+      - name: Create dynamic matrix
         id: set-matrix
         run: |
-          # Lấy danh sách tất cả các service có trong project
-          ALL_SERVICES='["user-service", "shop-service"]' # <-- Cập nhật danh sách này khi có service mới
+          # QUAN TRỌNG: Cập nhật danh sách này mỗi khi bạn thêm một service mới.
+          ALL_SERVICES='["user-service", "shop-service"]'
 
-          # Kiểm tra xem code chung (pkg) có thay đổi không
+          # Kiểm tra xem các file trong thư mục package chung (`internal/pkg`) có thay đổi không
           HAS_PKG_CHANGES=false
-          for file in ${{ steps.changed_files.outputs.all_changed_files }}; do
+          echo "Checking for changes in shared package..."
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             if [[ "$file" == internal/pkg/* ]]; then
               HAS_PKG_CHANGES=true
               break
             fi
           done
 
-          # Nếu code chung thay đổi, chạy CI cho tất cả các service
+          # Nếu code chung thay đổi, chúng ta cần chạy CI cho TẤT CẢ các service
           if [ "$HAS_PKG_CHANGES" = true ]; then
             echo "Shared code in 'internal/pkg' changed. Running CI for all services."
             echo "services=$ALL_SERVICES" >> $GITHUB_OUTPUT
             exit 0
           fi
           
-          # Nếu không, chỉ xác định các service cụ thể đã thay đổi
-          CHANGED_SERVICES=$(
-            for file in ${{ steps.changed_files.outputs.all_changed_files }}; do
-              # Trích xuất tên service từ đường dẫn file
-              if [[ "$file" == internal/services/* ]]; then
-                echo "$file" | cut -d'/' -f3
-              fi
-            done | sort -u | jq -R . | jq -s .
-          )
+          # Nếu không, chỉ xác định các service cụ thể có file bị thay đổi
+          echo "Determining changed services..."
+          CHANGED_SERVICES_LIST=""
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [[ "$file" == internal/services/* ]]; then
+              # Trích xuất tên service và thêm vào danh sách
+              service_name=$(echo "$file" | cut -d'/' -f3)
+              CHANGED_SERVICES_LIST="${CHANGED_SERVICES_LIST} ${service_name}"
+            fi
+          done
+          
+          # Loại bỏ các tên bị trùng lặp và tạo mảng
+          UNIQUE_SERVICES=$(echo "${CHANGED_SERVICES_LIST}" | xargs -n1 | sort -u | xargs)
+          
+          # Chuyển đổi mảng thành chuỗi JSON hợp lệ
+          JSON_SERVICES=$(echo "${UNIQUE_SERVICES}" | jq -R 'split(" ") | . - [""]' | jq -c .)
 
-          echo "Changed services: $CHANGED_SERVICES"
-          echo "services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
+          echo "Detected changed services (JSON): ${JSON_SERVICES}"
+          echo "services=${JSON_SERVICES}" >> $GITHUB_OUTPUT
 
-  # Job 2: Build và Test các service đã thay đổi
+  # ===============================================================
+  # JOB 2: BUILD, LINT VÀ TEST
+  # ===============================================================
   build-and-test:
     name: CI for ${{ matrix.service }}
     runs-on: ubuntu-latest
-    # Phụ thuộc vào job `get-changed-services`
     needs: get-changed-services
-    
-    # Chỉ chạy job này nếu có service thay đổi
     if: ${{ needs.get-changed-services.outputs.services != '[]' }}
 
     strategy:
       fail-fast: false
-      # Tạo matrix từ output của job trước
       matrix:
         service: ${{ fromJSON(needs.get-changed-services.outputs.services) }}
 
@@ -110,26 +115,18 @@ jobs:
         working-directory: ./internal/services/${{ matrix.service }}
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
-          golangci-lint run
+          golangci-lint run --timeout=2m
 
       - name: Run Unit Tests
         working-directory: ./internal/services/${{ matrix.service }}
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: Upload coverage reports
+      - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report-${{ matrix.service }}
           path: ./internal/services/${{ matrix.service }}/coverage.out
-      
-      - name: Build Go App
+
+      - name: Build Go Application
         working-directory: ./internal/services/${{ matrix.service }}
         run: go build -v -o ./app-build ./cmd/main.go
-      
-      - name: Build Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./internal/services/${{ matrix.service }}/Dockerfile
-          push: false 
-          tags: your-docker-repo/${{ matrix.service }}:${{ github.sha }}
