@@ -10,6 +10,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/toji-dev/go-shop/internal/pkg v0.0.0-00010101000000-000000000000
 	golang.org/x/crypto v0.39.0
+	github.com/go-faker/faker/v4 v4.6.1 
 )
 
 require (
@@ -30,7 +31,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-faker/faker/v4 v4.6.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
@@ -59,3 +59,4 @@ require (
 replace github.com/toji-dev/go-shop => ../../../
 
 replace github.com/toji-dev/go-shop/internal/pkg => ../../pkg
+
