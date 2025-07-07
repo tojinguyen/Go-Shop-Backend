@@ -3,7 +3,9 @@ package domain
 import (
 	"time"
 
-	uuid "github.com/jackc/pgx/pgtype/ext/satori-uuid"
+	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
+
+	uuid "github.com/google/uuid"
 )
 
 type ProductStatus string
@@ -39,4 +41,24 @@ type Product struct {
 	TotalReviews    int
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+}
+
+func NewProduct(shopID, name, thumbnailURL, description string, categoryID *uuid.UUID, price Price, quantity int) *Product {
+	return &Product{
+		ID:              uuid.New(),
+		ShopID:          uuid.MustParse(shopID),
+		Name:            name,
+		ThumbnailURL:    thumbnailURL,
+		Description:     description,
+		CategoryID:      categoryID,
+		Price:           price,
+		Quantity:        quantity,
+		ReserveQuantity: 0,
+		Status:          ProductStatusDraft,
+		SoldCount:       0,
+		RatingAvg:       0.0,
+		TotalReviews:    0,
+		CreatedAt:       time_utils.GetUtcTime(),
+		UpdatedAt:       time_utils.GetUtcTime(),
+	}
 }
