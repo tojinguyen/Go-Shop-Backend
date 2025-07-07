@@ -159,3 +159,14 @@ func PgBoolToBool(b pgtype.Bool) bool {
 	}
 	return false
 }
+
+func Int32ToPgInt4(i int32) pgtype.Int4 {
+	return pgtype.Int4{Int32: i, Valid: true}
+}
+
+func PgInt4ToInt32Ptr(i pgtype.Int4) *int32 {
+	if i.Valid {
+		return &i.Int32
+	}
+	return nil
+}

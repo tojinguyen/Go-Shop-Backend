@@ -9,7 +9,6 @@ import (
 	getshops "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shops"
 )
 
-// RegisterShopRoutes registers shop-related routes
 func RegisterShopRoutes(
 	r *gin.Engine,
 	createShopAPIHandler *createshop.APIHandler,
