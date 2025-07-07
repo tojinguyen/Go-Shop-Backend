@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
@@ -43,7 +44,10 @@ type Product struct {
 	UpdatedAt       time.Time
 }
 
-func NewProduct(shopID, name, thumbnailURL, description string, categoryID *uuid.UUID, price Price, quantity int) *Product {
+func NewProduct(shopID, name, thumbnailURL, description string, categoryID *uuid.UUID, price Price, quantity int) (*Product, error) {
+	if name == "" {
+		return nil, errors.New("product name cannot be empty")
+	}
 	return &Product{
 		ID:              uuid.New(),
 		ShopID:          uuid.MustParse(shopID),
@@ -60,5 +64,30 @@ func NewProduct(shopID, name, thumbnailURL, description string, categoryID *uuid
 		TotalReviews:    0,
 		CreatedAt:       time_utils.GetUtcTime(),
 		UpdatedAt:       time_utils.GetUtcTime(),
+	}, nil
+}
+
+func (p *Product) ChangePrice(newPrice Price) error {
+	if newPrice.Amount < 0 {
+		return errors.New("price cannot be negative")
 	}
+
+	p.Price = newPrice
+	p.UpdatedAt = time_utils.GetUtcTime()
+	return nil
+}
+
+func (p *Product) UpdateQuantity(newQuantity int) error {
+	if newQuantity < 0 {
+		return errors.New("quantity cannot be negative")
+	}
+
+	p.Quantity = newQuantity
+	p.UpdatedAt = time_utils.GetUtcTime()
+	return nil
+}
+
+func (p *Product) Deactivate() {
+	p.Status = ProductStatusInactive
+	p.UpdatedAt = time_utils.GetUtcTime()
 }
