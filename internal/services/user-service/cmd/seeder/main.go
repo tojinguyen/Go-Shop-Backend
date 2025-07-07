@@ -1,3 +1,4 @@
+// internal/services/user-service/cmd/seeder/main.go
 package main
 
 import (
@@ -10,8 +11,9 @@ import (
 )
 
 func main() {
-	// Define a command-line flag for the number of users to create
-	count := flag.Int("count", 10, "Number of users to seed")
+	// Define command-line flags
+	userCount := flag.Int("users", 10, "Number of regular customer users to seed")
+	shipperCount := flag.Int("shippers", 5, "Number of shipper users to seed")
 	flag.Parse()
 
 	log.Println("Starting database seeder...")
@@ -40,8 +42,9 @@ func main() {
 	defer dbService.Close()
 	log.Println("Database connection successful.")
 
-	// 3. Run the seeder function
-	seeder.SeedUsers(dbService.GetPool(), *count)
+	// 3. Run the seeder
+	s := seeder.NewSeeder(dbService.GetPool())
+	s.SeedAll(*userCount, *shipperCount)
 
 	log.Println("Seeding complete.")
 }
