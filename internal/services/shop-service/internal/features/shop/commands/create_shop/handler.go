@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/domain"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
+	repository "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
 )
 
 type Handler struct {

@@ -11,13 +11,20 @@ import (
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	_ "github.com/toji-dev/go-shop/internal/services/shop-service/docs"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/api"
+	promotion_api "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/api"
+	createpromotion "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/commands/create_promotion"
+	deletepromotion "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/commands/delete_promotion"
+	updatepromotion "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/commands/update_promotion"
+	getpromotionbyid "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/queries/get_promotion_by_id"
+	getpromotions "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/queries/get_promotions"
+	shop_api "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/api"
 	createshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/create_shop"
 	deleteshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/delete_shop"
 	updateshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/update_shop"
 	getshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shop"
 	getshops "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shops"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
+	promotion_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/promotion"
+	shop_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
 )
 
 //	@title			Shop Service API
@@ -86,7 +93,8 @@ func main() {
 	defer db.Close()
 
 	// Initialize repositories
-	shopRepo := repository.NewPostgresShopRepository(db)
+	shopRepo := shop_repo.NewPostgresShopRepository(db)
+	promoRepo := promotion_repo.NewPostgresPromotionRepository(db)
 
 	// Set Gin mode based on environment
 	if cfg.App.Environment == "production" {
@@ -144,14 +152,43 @@ func main() {
 	deleteShopHandler := deleteshop.NewCommandHandler(shopRepo)
 	deleteShopAPIHandler := deleteshop.NewAPIHandler(deleteShopHandler)
 
+	// Create promotion
+	createPromotionHandler := createpromotion.NewHandler(promoRepo)
+	createPromotionApiHandler := createpromotion.NewAPIHandler(createPromotionHandler)
+
+	// Get promotions
+	getPromotionsHandler := getpromotions.NewHandler(promoRepo)
+	getPromotionsAPIHandler := getpromotions.NewAPIHandler(getPromotionsHandler)
+
+	// Get promotion by ID
+	getPromotionByIDHandler := getpromotionbyid.NewHandler(promoRepo)
+	getPromotionByIDAPIHandler := getpromotionbyid.NewAPIHandler(getPromotionByIDHandler)
+
+	// Update promotion
+	updatePromotionHandler := updatepromotion.NewHandler(promoRepo)
+	updatePromotionAPIHandler := updatepromotion.NewAPIHandler(updatePromotionHandler)
+
+	// Delete promotion
+	deletePromotionHandler := deletepromotion.NewHandler(promoRepo)
+	deletePromotionAPIHandler := deletepromotion.NewAPIHandler(deletePromotionHandler)
+
 	// Register shop routes
-	api.RegisterShopRoutes(
+	shop_api.RegisterShopRoutes(
 		r,
 		createShopAPIHandler,
 		getShopAPIHandler,
 		getShopsAPIHandler,
 		updateShopAPIHandler,
 		deleteShopAPIHandler,
+	)
+
+	promotion_api.RegisterPromotionRoutes(
+		r,
+		createPromotionApiHandler,
+		getPromotionsAPIHandler,
+		getPromotionByIDAPIHandler,
+		updatePromotionAPIHandler,
+		deletePromotionAPIHandler,
 	)
 
 	// Graceful shutdown
