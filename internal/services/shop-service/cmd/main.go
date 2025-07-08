@@ -97,7 +97,7 @@ func main() {
 	promoRepo := promotion_repo.NewPostgresPromotionRepository(db)
 
 	// Set Gin mode based on environment
-	if cfg.App.Environment == "production" {
+	if cfg.App.IsProduction() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 

@@ -72,6 +72,10 @@ type AppConfig struct {
 	LogLevel    string `json:"log_level"`
 }
 
+func (a *AppConfig) IsProduction() bool {
+	return a.Environment == "production"
+}
+
 // LoadConfig loads configuration from environment variables
 func LoadConfig() (*Config, error) {
 	// Load .env file from project root
