@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/domain"
-	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository"
+	repository "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
 )
 
 // QueryHandler implements GetShopsQueryHandler

@@ -11,10 +11,16 @@ import (
 )
 
 type Querier interface {
+	CreatePromotion(ctx context.Context, arg CreatePromotionParams) (ShopPromotion, error)
 	CreateShop(ctx context.Context, arg CreateShopParams) (Shop, error)
+	DeletePromotion(ctx context.Context, id pgtype.UUID) error
 	DeleteShop(ctx context.Context, id pgtype.UUID) error
+	GetAllPromotionsByStatus(ctx context.Context, promotionStatus NullPromotionStatus) ([]ShopPromotion, error)
+	GetPromotionByID(ctx context.Context, id pgtype.UUID) (ShopPromotion, error)
+	GetPromotionsByShopID(ctx context.Context, shopID pgtype.UUID) ([]ShopPromotion, error)
 	GetShopByID(ctx context.Context, id pgtype.UUID) (Shop, error)
 	GetShopsByOwnerID(ctx context.Context, ownerID pgtype.UUID) ([]Shop, error)
+	UpdatePromotion(ctx context.Context, arg UpdatePromotionParams) (ShopPromotion, error)
 	UpdateShop(ctx context.Context, arg UpdateShopParams) (Shop, error)
 }
 
