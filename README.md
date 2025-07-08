@@ -24,16 +24,6 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 - Địa chỉ giao hàng (Nhiều địa chỉ)
 
 
-### Search & Recommendation Service
-- Gợi ý sản phẩm khi người dùng đăng nhập (tương tác hành vi người dùng)
-- Advanced search với filters
-- Auto-complete và search suggestions
-- Personalized recommendations
-- Recently viewed products
-- Trending products 
-- Price comparison và similar products
-
-
 ### Product Catalog Service
 - CRUD shop
 - Quản lý thông tin profile shop 
@@ -81,6 +71,14 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 - Quản lý comments và rating
 - Verified purchase reviews
 
+### Search & Recommendation Service
+- Gợi ý sản phẩm khi người dùng đăng nhập (tương tác hành vi người dùng)
+- Advanced search với filters
+- Auto-complete và search suggestions
+- Personalized recommendations
+- Recently viewed products
+- Trending products 
+- Price comparison và similar products
 
 ## 🔗 Thiết kế API
 
