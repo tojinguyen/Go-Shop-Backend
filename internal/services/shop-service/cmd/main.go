@@ -13,6 +13,10 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
 	promotion_api "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/api"
 	createpromotion "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/commands/create_promotion"
+	deletepromotion "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/commands/delete_promotion"
+	updatepromotion "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/commands/update_promotion"
+	getpromotionbyid "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/queries/get_promotion_by_id"
+	getpromotions "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/queries/get_promotions"
 	shop_api "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/api"
 	createshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/create_shop"
 	deleteshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/delete_shop"
@@ -152,6 +156,22 @@ func main() {
 	createPromotionHandler := createpromotion.NewHandler(promoRepo)
 	createPromotionApiHandler := createpromotion.NewAPIHandler(createPromotionHandler)
 
+	// Get promotions
+	getPromotionsHandler := getpromotions.NewHandler(promoRepo)
+	getPromotionsAPIHandler := getpromotions.NewAPIHandler(getPromotionsHandler)
+
+	// Get promotion by ID
+	getPromotionByIDHandler := getpromotionbyid.NewHandler(promoRepo)
+	getPromotionByIDAPIHandler := getpromotionbyid.NewAPIHandler(getPromotionByIDHandler)
+
+	// Update promotion
+	updatePromotionHandler := updatepromotion.NewHandler(promoRepo)
+	updatePromotionAPIHandler := updatepromotion.NewAPIHandler(updatePromotionHandler)
+
+	// Delete promotion
+	deletePromotionHandler := deletepromotion.NewHandler(promoRepo)
+	deletePromotionAPIHandler := deletepromotion.NewAPIHandler(deletePromotionHandler)
+
 	// Register shop routes
 	shop_api.RegisterShopRoutes(
 		r,
@@ -165,6 +185,10 @@ func main() {
 	promotion_api.RegisterPromotionRoutes(
 		r,
 		createPromotionApiHandler,
+		getPromotionsAPIHandler,
+		getPromotionByIDAPIHandler,
+		updatePromotionAPIHandler,
+		deletePromotionAPIHandler,
 	)
 
 	// Graceful shutdown
