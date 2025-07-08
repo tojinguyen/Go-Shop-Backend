@@ -10,11 +10,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config holds all configuration for the shop service
 type Config struct {
 	Server   ServerConfig   `json:"server"`
 	Database DatabaseConfig `json:"database"`
-	JWT      JWTConfig      `json:"jwt"`
 	Redis    RedisConfig    `json:"redis"`
 	CORS     CORSConfig     `json:"cors"`
 	App      AppConfig      `json:"app"`
@@ -29,6 +27,10 @@ type ServerConfig struct {
 	IdleTimeout  time.Duration `json:"idle_timeout"`
 }
 
+func (s *ServerConfig) GetServerAddress() string {
+	return fmt.Sprintf("%s:%s", s.Host, s.Port)
+}
+
 // DatabaseConfig holds database configuration
 type DatabaseConfig struct {
 	Host         string        `json:"host"`
@@ -40,13 +42,6 @@ type DatabaseConfig struct {
 	MaxOpenConns int           `json:"max_open_conns"`
 	MaxIdleConns int           `json:"max_idle_conns"`
 	MaxLifetime  time.Duration `json:"max_lifetime"`
-}
-
-// JWTConfig holds JWT configuration
-type JWTConfig struct {
-	SecretKey            string        `json:"secret_key"`
-	AccessTokenDuration  time.Duration `json:"access_token_duration"`
-	RefreshTokenDuration time.Duration `json:"refresh_token_duration"`
 }
 
 // RedisConfig holds Redis configuration
@@ -99,11 +94,6 @@ func LoadConfig() (*Config, error) {
 			MaxOpenConns: getIntEnv("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns: getIntEnv("DB_MAX_IDLE_CONNS", 25),
 			MaxLifetime:  getDurationEnv("DB_MAX_LIFETIME", 5*time.Minute),
-		},
-		JWT: JWTConfig{
-			SecretKey:            getEnv("JWT_SECRET_KEY", "your-secret-key"),
-			AccessTokenDuration:  getDurationEnv("JWT_ACCESS_TOKEN_EXPIRY", 24*time.Hour),
-			RefreshTokenDuration: getDurationEnv("JWT_REFRESH_TOKEN_EXPIRY", 168*time.Hour),
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),

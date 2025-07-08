@@ -1,8 +1,9 @@
 async function verifyToken(r) {
     try {
-        const secret = r.variables.jwt_secret;
+        // Lấy JWT secret từ environment variable
+        const secret = process.env.JWT_SECRET_KEY;
         if (!secret) {
-            r.error("JWT secret key is not set in Nginx variables.");
+            r.error("JWT secret key is not set in environment variables.");
             r.return(500, "Internal Server Configuration Error");
             return;
         }
