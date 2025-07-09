@@ -8,24 +8,26 @@ import (
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/repository"
 )
 
 type DependencyContainer struct {
-	config     *config.Config
-	postgreSQL *postgresql_infra.PostgreSQLService
-	redis      *redis_infra.RedisService
+	config      *config.Config
+	postgreSQL  *postgresql_infra.PostgreSQLService
+	redis       *redis_infra.RedisService
+	productRepo repository.ProductRepository
 }
 
 func (sc *DependencyContainer) GetConfig() *config.Config {
 	return sc.config
 }
 
-func (sc *DependencyContainer) GetPostgreSQL() *postgresql_infra.PostgreSQLService {
-	return sc.postgreSQL
-}
-
 func (sc *DependencyContainer) GetRedis() *redis_infra.RedisService {
 	return sc.redis
+}
+
+func (sc *DependencyContainer) GetProductRepository() repository.ProductRepository {
+	return sc.productRepo
 }
 
 func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
@@ -42,6 +44,9 @@ func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
 	if err := container.initRedis(); err != nil {
 		return nil, err
 	}
+
+	// Initialize repositories
+	container.initProductRepository()
 
 	return container, nil
 }
@@ -82,6 +87,11 @@ func (sc *DependencyContainer) initRedis() error {
 	sc.redis = redisService
 	log.Println("Redis service initialized")
 	return nil
+}
+
+func (sc *DependencyContainer) initProductRepository() {
+	sc.productRepo = repository.NewProductRepository(sc.postgreSQL)
+	log.Println("Product repository initialized")
 }
 
 func (sc *DependencyContainer) Close() {
