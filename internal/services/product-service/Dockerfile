@@ -10,19 +10,15 @@ RUN apk add --no-cache git ca-certificates
 # <--- THAY ĐỔI QUAN TRỌNG: Đây là thay đổi cốt lõi
 WORKDIR /app/internal/services/product-service
 
-# ---- Tối ưu hóa caching của Docker ----
-# Sao chép các file dependency của product-service VÀ package dùng chung
-# Docker sẽ chỉ build lại lớp này nếu các file go.mod/sum thay đổi
-COPY internal/pkg/go.mod internal/pkg/go.sum /app/internal/pkg/
-COPY internal/services/product-service/go.mod internal/services/product-service/go.sum ./
-
-# Tải dependencies. Lệnh này giờ được chạy trong đúng thư mục của module.
-RUN go mod download
-
 # Sao chép TOÀN BỘ mã nguồn của dự án vào.
 # Lý do cần copy toàn bộ là vì product-service có `replace` và `import` các package khác
 # trong cùng một monorepo (như `internal/pkg`).
+# Phải copy trước khi chạy go mod download vì có replace directives
 COPY . /app
+
+# Tải dependencies. Lệnh này phải chạy sau khi copy toàn bộ source code
+# vì go.mod có replace directives trỏ đến các path local
+RUN go mod download
 
 # Biên dịch ứng dụng Go.
 # Lệnh `go build` giờ đây rất đơn giản vì chúng ta đã ở đúng thư mục.

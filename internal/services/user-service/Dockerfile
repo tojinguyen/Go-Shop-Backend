@@ -13,25 +13,13 @@ RUN addgroup -g 10001 appgroup && \
 
 WORKDIR /build
 
-# --- Tối ưu hóa Caching ---
-# 1. Sao chép các file go.mod/go.sum để tải dependencies
-# Chỉ những thay đổi trong các file này mới làm cho bước `go mod download` chạy lại.
-
-# Sao chép go.mod/sum của user-service
-COPY internal/services/user-service/go.mod internal/services/user-service/go.sum ./internal/services/user-service/
-
-# Sao chép go.mod/sum của các package dùng chung (nếu có)
-COPY internal/pkg/go.mod internal/pkg/go.sum ./internal/pkg/
+# Sao chép toàn bộ mã nguồn trước khi tải dependencies
+# Cần thiết vì có replace directives trong go.mod
+COPY . .
 
 # Di chuyển vào thư mục service và tải dependencies
 WORKDIR /build/internal/services/user-service
 RUN go mod download
-
-# 2. Sao chép toàn bộ mã nguồn
-# Bước này sẽ chạy lại khi có bất kỳ thay đổi nào trong mã nguồn,
-# nhưng bước tải dependencies ở trên sẽ được lấy từ cache.
-WORKDIR /build
-COPY . .
 
 # --- Build ---
 # Di chuyển lại vào thư mục service để build
@@ -44,8 +32,18 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -trimpath \
     -o user-service ./cmd/main.go
 
-# Final stage - Use distroless instead of scratch
-FROM gcr.io/distroless/static-debian12:nonroot
+# Final stage - Use Alpine instead of distroless for better compatibility
+FROM alpine:latest
+
+# Install ca-certificates for HTTPS requests
+RUN apk --no-cache add ca-certificates
+
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Set working directory and change ownership
+WORKDIR /app
+RUN chown appuser:appgroup /app
 
 # Copy the binary
 COPY --from=builder /build/internal/services/user-service/user-service /app/user-service
@@ -53,11 +51,11 @@ COPY --from=builder /build/internal/services/user-service/user-service /app/user
 # Copy templates if they exist
 COPY --from=builder /build/internal/services/user-service/templates /app/templates
 
-# Set working directory
-WORKDIR /app
+# Change ownership of copied files
+RUN chown -R appuser:appgroup /app
 
-# Use nonroot user (UID 65532)
-USER 65532:65532
+# Use non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8080
