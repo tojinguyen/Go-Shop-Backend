@@ -22,7 +22,7 @@ func (sc *DependencyContainer) GetConfig() *config.Config {
 	return sc.config
 }
 
-func (sc *DependencyContainer) GetRedis() *redis_infra.RedisService {
+func (sc *DependencyContainer) GetRedisService() *redis_infra.RedisService {
 	return sc.redis
 }
 
