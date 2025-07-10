@@ -19,3 +19,15 @@ func NewProductHandler(repo repository.ProductRepository, redis *redis_infra.Red
 
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 }
+
+func (h *ProductHandler) GetProducts(c *gin.Context) {
+}
+
+func (h *ProductHandler) UpdateProduct(c *gin.Context) {
+}
+
+func (h *ProductHandler) DeleteProduct(c *gin.Context) {
+}
+
+func (h *ProductHandler) GetProductByID(c *gin.Context) {
+}

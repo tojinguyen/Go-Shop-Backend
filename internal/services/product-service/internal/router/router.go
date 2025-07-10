@@ -21,6 +21,10 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 		products := v1.Group(("/products"))
 		{
 			products.POST("", productHandler.CreateProduct)
+			products.GET("", productHandler.GetProducts)
+			products.PUT("/:id", productHandler.UpdateProduct)
+			products.DELETE("/:id", productHandler.DeleteProduct)
+			products.GET("/:id", productHandler.GetProductByID)
 		}
 	}
 
