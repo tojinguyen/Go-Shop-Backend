@@ -125,16 +125,6 @@ GET    /api/v1/shops/{id}
 PUT    /api/v1/shops/{id}
 DELETE /api/v1/shops/{id}
 
-# Shop Product Management
-GET    /api/v1/shops/{id}/products
-POST   /api/v1/shops/{id}/products
-GET    /api/v1/shops/{id}/products/{product_id}
-PUT    /api/v1/shops/{id}/products/{product_id}
-DELETE /api/v1/shops/{id}/products/{product_id}
-GET    /api/v1/shops/{id}/products/categories
-GET    /api/v1/shops/{id}/products/inventory
-PUT    /api/v1/shops/{id}/products/{product_id}/inventory
-GET    /api/v1/shops/{id}/products/low-stock
 
 # Shop Orders & Fulfillment
 GET    /api/v1/shops/{id}/orders
