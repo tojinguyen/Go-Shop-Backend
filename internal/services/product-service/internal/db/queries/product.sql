@@ -6,12 +6,13 @@ INSERT INTO products (
     product_description,
     category_id,
     price,
+    currency,
     quantity,
     reserve_quantity,
     product_status
 )
 VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
 RETURNING *;
 

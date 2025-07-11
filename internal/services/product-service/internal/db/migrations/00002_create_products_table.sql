@@ -20,6 +20,7 @@ CREATE TABLE products (
     product_description TEXT,
     category_id UUID,
     price NUMERIC(12, 2) NOT NULL CHECK (price >= 0),
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
     quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
     reserve_quantity INTEGER NOT NULL DEFAULT 0 CHECK (reserve_quantity >= 0),
     product_status product_status NOT NULL DEFAULT 'DRAFT',

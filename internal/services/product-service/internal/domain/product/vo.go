@@ -1,6 +1,8 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+)
 
 type Price struct {
 	Amount   float64
@@ -15,4 +17,12 @@ func NewPrice(amount float64, currency string) (Price, error) {
 		return Price{}, errors.New("price currency cannot be empty")
 	}
 	return Price{Amount: amount, Currency: currency}, nil
+}
+
+func (p Price) GetAmount() float64 {
+	return p.Amount
+}
+
+func (p Price) GetCurrency() string {
+	return p.Currency
 }

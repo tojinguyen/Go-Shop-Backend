@@ -19,14 +19,15 @@ INSERT INTO products (
     product_description,
     category_id,
     price,
+    currency,
     quantity,
     reserve_quantity,
     product_status
 )
 VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
-RETURNING id, shop_id, product_name, thumbnail_url, product_description, category_id, price, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, updated_at
+RETURNING id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at
 `
 
 type CreateProductParams struct {
@@ -36,6 +37,7 @@ type CreateProductParams struct {
 	ProductDescription pgtype.Text    `json:"product_description"`
 	CategoryID         pgtype.UUID    `json:"category_id"`
 	Price              pgtype.Numeric `json:"price"`
+	Currency           string         `json:"currency"`
 	Quantity           int32          `json:"quantity"`
 	ReserveQuantity    int32          `json:"reserve_quantity"`
 	ProductStatus      ProductStatus  `json:"product_status"`
@@ -49,6 +51,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.ProductDescription,
 		arg.CategoryID,
 		arg.Price,
+		arg.Currency,
 		arg.Quantity,
 		arg.ReserveQuantity,
 		arg.ProductStatus,
@@ -62,6 +65,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.ProductDescription,
 		&i.CategoryID,
 		&i.Price,
+		&i.Currency,
 		&i.Quantity,
 		&i.ReserveQuantity,
 		&i.ProductStatus,
@@ -69,13 +73,14 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.RatingAvg,
 		&i.TotalReviews,
 		&i.CreatedAt,
+		&i.DeleteAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getListProductsByShop = `-- name: GetListProductsByShop :many
-SELECT id, shop_id, product_name, thumbnail_url, product_description, category_id, price, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, updated_at FROM products
+SELECT id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at FROM products
 WHERE shop_id = $1 AND deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
@@ -104,6 +109,7 @@ func (q *Queries) GetListProductsByShop(ctx context.Context, arg GetListProducts
 			&i.ProductDescription,
 			&i.CategoryID,
 			&i.Price,
+			&i.Currency,
 			&i.Quantity,
 			&i.ReserveQuantity,
 			&i.ProductStatus,
@@ -111,6 +117,7 @@ func (q *Queries) GetListProductsByShop(ctx context.Context, arg GetListProducts
 			&i.RatingAvg,
 			&i.TotalReviews,
 			&i.CreatedAt,
+			&i.DeleteAt,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -124,7 +131,7 @@ func (q *Queries) GetListProductsByShop(ctx context.Context, arg GetListProducts
 }
 
 const getProductByID = `-- name: GetProductByID :one
-SELECT id, shop_id, product_name, thumbnail_url, product_description, category_id, price, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, updated_at FROM products
+SELECT id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at FROM products
 WHERE id = $1 AND deleted_at IS NULL
 `
 
@@ -139,6 +146,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, 
 		&i.ProductDescription,
 		&i.CategoryID,
 		&i.Price,
+		&i.Currency,
 		&i.Quantity,
 		&i.ReserveQuantity,
 		&i.ProductStatus,
@@ -146,6 +154,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, 
 		&i.RatingAvg,
 		&i.TotalReviews,
 		&i.CreatedAt,
+		&i.DeleteAt,
 		&i.UpdatedAt,
 	)
 	return i, err

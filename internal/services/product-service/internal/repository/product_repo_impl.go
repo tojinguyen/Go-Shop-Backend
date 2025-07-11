@@ -34,7 +34,7 @@ func (r *pgProductRepository) Save(ctx context.Context, product *domain.Product)
 		ThumbnailUrl:       converter.StringToPgText(product.ThumbnailURL()),
 		ProductDescription: converter.StringToPgText(product.Description()),
 		CategoryID:         converter.UUIDToPgUUID(product.CategoryID()),
-		Price:              converter.Float64ToPgNumeric(product.Price().Amount),
+		Price:              converter.Float64ToPgNumeric(product.Price().GetAmount()),
 		Quantity:           int32(product.Quantity()),
 		ReserveQuantity:    int32(product.Quantity()),
 		ProductStatus:      sqlc.ProductStatus(product.Status()),
@@ -54,13 +54,21 @@ func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*domain.P
 		return nil, fmt.Errorf("failed to get product by ID: %w", err)
 	}
 
+	price, err := domain.NewPrice(
+		*converter.PgNumericToFloat64Ptr(product.Price),
+		"USD",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create price from product data: %w", err)
+	}
+
 	productDomain, err := domain.NewProduct(
 		product.ShopID.String(),
 		product.ProductName,
 		product.ThumbnailUrl.String,
 		product.ProductDescription.String,
 		converter.PgUUIDToUUID(product.CategoryID),
-		domain.Price{Amount: *converter.PgNumericToFloat64Ptr(product.Price)},
+		price,
 		int(product.Quantity),
 	)
 

@@ -14,12 +14,10 @@ import (
 type ProductStatus string
 
 const (
-	ProductStatusDRAFT        ProductStatus = "DRAFT"
 	ProductStatusACTIVE       ProductStatus = "ACTIVE"
 	ProductStatusINACTIVE     ProductStatus = "INACTIVE"
 	ProductStatusOUTOFSTOCK   ProductStatus = "OUT_OF_STOCK"
 	ProductStatusDISCONTINUED ProductStatus = "DISCONTINUED"
-	ProductStatusREJECTED     ProductStatus = "REJECTED"
 	ProductStatusBANNED       ProductStatus = "BANNED"
 )
 
@@ -75,6 +73,7 @@ type Product struct {
 	ProductDescription pgtype.Text        `json:"product_description"`
 	CategoryID         pgtype.UUID        `json:"category_id"`
 	Price              pgtype.Numeric     `json:"price"`
+	Currency           string             `json:"currency"`
 	Quantity           int32              `json:"quantity"`
 	ReserveQuantity    int32              `json:"reserve_quantity"`
 	ProductStatus      ProductStatus      `json:"product_status"`
@@ -82,5 +81,6 @@ type Product struct {
 	RatingAvg          pgtype.Numeric     `json:"rating_avg"`
 	TotalReviews       int32              `json:"total_reviews"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	DeleteAt           pgtype.Timestamptz `json:"delete_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }

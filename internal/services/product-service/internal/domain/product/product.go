@@ -63,7 +63,7 @@ func NewProduct(shopID, name, thumbnailURL, description string, categoryID uuid.
 }
 
 func (p *Product) ChangePrice(newPrice Price) error {
-	if newPrice.Amount < 0 {
+	if newPrice.GetAmount() < 0 {
 		return errors.New("price cannot be negative")
 	}
 
