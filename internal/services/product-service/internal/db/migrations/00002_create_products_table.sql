@@ -30,6 +30,7 @@ CREATE TABLE products (
     total_reviews INTEGER NOT NULL DEFAULT 0 CHECK (total_reviews >= 0),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    delete_at TIMESTAMPTZ DEFAULT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     -- Foreign key
