@@ -5,8 +5,8 @@ import (
 )
 
 type Price struct {
-	Amount   float64
-	Currency string
+	amount   float64
+	currency string
 }
 
 func NewPrice(amount float64, currency string) (Price, error) {
@@ -16,13 +16,13 @@ func NewPrice(amount float64, currency string) (Price, error) {
 	if currency == "" {
 		return Price{}, errors.New("price currency cannot be empty")
 	}
-	return Price{Amount: amount, Currency: currency}, nil
+	return Price{amount: amount, currency: currency}, nil
 }
 
 func (p Price) GetAmount() float64 {
-	return p.Amount
+	return p.amount
 }
 
 func (p Price) GetCurrency() string {
-	return p.Currency
+	return p.currency
 }

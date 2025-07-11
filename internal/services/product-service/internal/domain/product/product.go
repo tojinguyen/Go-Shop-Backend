@@ -4,7 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/db/sqlc"
 
 	uuid "github.com/google/uuid"
 )
@@ -51,13 +53,42 @@ func NewProduct(shopID, name, thumbnailURL, description string, categoryID uuid.
 		categoryID:      categoryID,
 		price:           price,
 		quantity:        quantity,
-		reserveQuantity: 0,
+		reserveQuantity: quantity,
 		status:          ProductStatusActive,
 		soldCount:       0,
 		ratingAvg:       0.0,
 		totalReviews:    0,
 		createdAt:       time_utils.GetUtcTime(),
 		updatedAt:       time_utils.GetUtcTime(),
+		deletedAt:       nil,
+	}, nil
+}
+
+func ConvertFromSqlcProduct(sqlcProduct *sqlc.Product) (*Product, error) {
+	price, err := NewPrice(
+		*converter.PgNumericToFloat64Ptr(sqlcProduct.Price),
+		"USD",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Product{
+		id:              converter.PgUUIDToUUID(sqlcProduct.ID),
+		shopID:          converter.PgUUIDToUUID(sqlcProduct.ShopID),
+		name:            sqlcProduct.ProductName,
+		thumbnailURL:    sqlcProduct.ThumbnailUrl.String,
+		description:     sqlcProduct.ProductDescription.String,
+		categoryID:      converter.PgUUIDToUUID(sqlcProduct.CategoryID),
+		price:           price,
+		quantity:        int(sqlcProduct.Quantity),
+		reserveQuantity: int(sqlcProduct.ReserveQuantity),
+		status:          ProductStatus(sqlcProduct.ProductStatus),
+		soldCount:       int(sqlcProduct.SoldCount),
+		ratingAvg:       *converter.PgNumericToFloat64Ptr(sqlcProduct.RatingAvg),
+		totalReviews:    int(sqlcProduct.TotalReviews),
+		createdAt:       sqlcProduct.CreatedAt.Time,
+		updatedAt:       sqlcProduct.UpdatedAt.Time,
 		deletedAt:       nil,
 	}, nil
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type ProductRepository interface {
-	Save(ctx context.Context, product *domain.Product) error
+	Save(ctx context.Context, product *domain.Product) (*domain.Product, error)
 	GetByID(ctx context.Context, id string) (*domain.Product, error)
 	GetByShopID(ctx context.Context, shopID string) ([]*domain.Product, error)
 }

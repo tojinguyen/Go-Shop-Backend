@@ -32,6 +32,17 @@ func StringToPgUUID(s string) pgtype.UUID {
 	return u
 }
 
+func StringToUUID(s string) uuid.UUID {
+	if s == "" {
+		return uuid.Nil
+	}
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.Nil
+	}
+	return u
+}
+
 func NullPgUUID() pgtype.UUID {
 	return pgtype.UUID{}
 }
