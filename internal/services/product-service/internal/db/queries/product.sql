@@ -29,3 +29,18 @@ LIMIT $2 OFFSET $3;
 -- name: CountProductsByShop :one
 SELECT count(*) FROM products
 WHERE shop_id = $1 AND deleted_at IS NULL;
+
+-- name: UpdateProduct :one
+UPDATE products
+SET
+  product_name = $2,
+  product_description = $3,
+  category_id = $4,
+  price = $5,
+  currency = $6,
+  quantity = $7,
+  thumbnail_url = $8,
+  product_status = $9,
+  updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING *;

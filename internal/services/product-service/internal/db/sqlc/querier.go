@@ -15,6 +15,7 @@ type Querier interface {
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	GetListProductsByShop(ctx context.Context, arg GetListProductsByShopParams) ([]Product, error)
 	GetProductByID(ctx context.Context, id pgtype.UUID) (Product, error)
+	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 }
 
 var _ Querier = (*Queries)(nil)
