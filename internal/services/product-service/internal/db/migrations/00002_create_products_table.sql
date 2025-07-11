@@ -3,12 +3,10 @@
 
 -- 1. Tạo ENUM cho product status
 CREATE TYPE product_status AS ENUM (
-    'DRAFT',
     'ACTIVE',
     'INACTIVE',
     'OUT_OF_STOCK',
     'DISCONTINUED',
-    'REJECTED',
     'BANNED'
 );
 

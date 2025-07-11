@@ -12,53 +12,53 @@ import (
 type ProductStatus string
 
 const (
-	ProductStatusDraft        ProductStatus = "DRAFT"
 	ProductStatusActive       ProductStatus = "ACTIVE"
 	ProductStatusInactive     ProductStatus = "INACTIVE"
 	ProductStatusOutOfStock   ProductStatus = "OUT_OF_STOCK"
 	ProductStatusDiscontinued ProductStatus = "DISCONTINUED"
-	ProductStatusRejected     ProductStatus = "REJECTED"
 	ProductStatusBanned       ProductStatus = "BANNED"
 )
 
 type Product struct {
-	ID              uuid.UUID
-	ShopID          uuid.UUID
-	Name            string
-	ThumbnailURL    string
-	Description     string
-	CategoryID      *uuid.UUID
-	Price           Price
-	Quantity        int
-	ReserveQuantity int
-	Status          ProductStatus
-	SoldCount       int
-	RatingAvg       float64
-	TotalReviews    int
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	id              uuid.UUID
+	shopID          uuid.UUID
+	name            string
+	thumbnailURL    string
+	description     string
+	categoryID      uuid.UUID
+	price           Price
+	quantity        int
+	reserveQuantity int
+	status          ProductStatus
+	soldCount       int
+	ratingAvg       float64
+	totalReviews    int
+	createdAt       time.Time
+	updatedAt       time.Time
+	deletedAt       *time.Time // Nullable field for soft deletion
 }
 
-func NewProduct(shopID, name, thumbnailURL, description string, categoryID *uuid.UUID, price Price, quantity int) (*Product, error) {
+func NewProduct(shopID, name, thumbnailURL, description string, categoryID uuid.UUID, price Price, quantity int) (*Product, error) {
 	if name == "" {
 		return nil, errors.New("product name cannot be empty")
 	}
 	return &Product{
-		ID:              uuid.New(),
-		ShopID:          uuid.MustParse(shopID),
-		Name:            name,
-		ThumbnailURL:    thumbnailURL,
-		Description:     description,
-		CategoryID:      categoryID,
-		Price:           price,
-		Quantity:        quantity,
-		ReserveQuantity: 0,
-		Status:          ProductStatusDraft,
-		SoldCount:       0,
-		RatingAvg:       0.0,
-		TotalReviews:    0,
-		CreatedAt:       time_utils.GetUtcTime(),
-		UpdatedAt:       time_utils.GetUtcTime(),
+		id:              uuid.New(),
+		shopID:          uuid.MustParse(shopID),
+		name:            name,
+		thumbnailURL:    thumbnailURL,
+		description:     description,
+		categoryID:      categoryID,
+		price:           price,
+		quantity:        quantity,
+		reserveQuantity: 0,
+		status:          ProductStatusActive,
+		soldCount:       0,
+		ratingAvg:       0.0,
+		totalReviews:    0,
+		createdAt:       time_utils.GetUtcTime(),
+		updatedAt:       time_utils.GetUtcTime(),
+		deletedAt:       nil,
 	}, nil
 }
 
@@ -67,8 +67,8 @@ func (p *Product) ChangePrice(newPrice Price) error {
 		return errors.New("price cannot be negative")
 	}
 
-	p.Price = newPrice
-	p.UpdatedAt = time_utils.GetUtcTime()
+	p.price = newPrice
+	p.updatedAt = time_utils.GetUtcTime()
 	return nil
 }
 
@@ -77,12 +77,24 @@ func (p *Product) UpdateQuantity(newQuantity int) error {
 		return errors.New("quantity cannot be negative")
 	}
 
-	p.Quantity = newQuantity
-	p.UpdatedAt = time_utils.GetUtcTime()
+	p.quantity = newQuantity
+	p.updatedAt = time_utils.GetUtcTime()
 	return nil
 }
 
 func (p *Product) Deactivate() {
-	p.Status = ProductStatusInactive
-	p.UpdatedAt = time_utils.GetUtcTime()
+	p.status = ProductStatusInactive
+	p.updatedAt = time_utils.GetUtcTime()
 }
+
+func (p *Product) ID() uuid.UUID         { return p.id }
+func (p *Product) ShopID() uuid.UUID     { return p.shopID }
+func (p *Product) Name() string          { return p.name }
+func (p *Product) Description() string   { return p.description }
+func (p *Product) ThumbnailURL() string  { return p.thumbnailURL }
+func (p *Product) CategoryID() uuid.UUID { return p.categoryID }
+func (p *Product) Price() Price          { return p.price }
+func (p *Product) Quantity() int         { return p.quantity }
+func (p *Product) Status() ProductStatus { return p.status }
+func (p *Product) CreatedAt() time.Time  { return p.createdAt }
+func (p *Product) UpdatedAt() time.Time  { return p.updatedAt }
