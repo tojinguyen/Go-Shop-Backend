@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type CreateProductRequest struct {
 	ShopID       string  `json:"shop_id" binding:"required,uuid"`
 	Name         string  `json:"name" binding:"required,min=5"`
@@ -9,4 +11,19 @@ type CreateProductRequest struct {
 	Currency     string  `json:"currency" binding:"required"`
 	ThumbnailURL string  `json:"thumbnail_url" binding:"required,url"`
 	Quantity     int     `json:"quantity" binding:"required,gte=0"`
+}
+
+type ProductResponse struct {
+	ID           string    `json:"id"`
+	ShopID       string    `json:"shop_id"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	CategoryID   string    `json:"category_id"`
+	Price        float64   `json:"price"`
+	Currency     string    `json:"currency"`
+	Quantity     int       `json:"quantity"`
+	ThumbnailURL string    `json:"thumbnail_url"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }

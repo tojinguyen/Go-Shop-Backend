@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/db/sqlc"
@@ -49,18 +52,33 @@ func (r *pgProductRepository) Save(ctx context.Context, p *product.Product) erro
 }
 
 func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*product.Product, error) {
-	productRes, err := r.queries.GetProductByID(ctx, converter.StringToPgUUID(id))
+	// 1. Chuyển đổi ID string sang kiểu của pgtype
+	productUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get product by ID: %w", err)
+		return nil, fmt.Errorf("invalid uuid format for repository: %w", err)
+	}
+	pgUUID := converter.UUIDToPgUUID(productUUID)
+
+	// 2. Gọi query từ SQLC
+	sqlcProduct, err := r.queries.GetProductByID(ctx, pgUUID)
+	if err != nil {
+		// Xử lý trường hợp không tìm thấy record
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Trả về (nil, nil) là một cách để báo hiệu "không tìm thấy"
+			// mà không gây ra lỗi. Application service sẽ diễn giải điều này.
+			return nil, nil
+		}
+		// Đối với các lỗi khác (lỗi kết nối, v.v.), trả về lỗi
+		return nil, fmt.Errorf("database error when getting product by id: %w", err)
 	}
 
-	productDomain, err := toDomain(&productRes)
-
+	// 3. Chuyển đổi từ DB model (sqlc) sang Domain model
+	domainProduct, err := toDomain(&sqlcProduct)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert product to domain: %w", err)
+		return nil, fmt.Errorf("failed to convert sqlc.Product to domain.Product: %w", err)
 	}
 
-	return productDomain, nil
+	return domainProduct, nil
 }
 
 func (r *pgProductRepository) GetProductsByShopID(ctx context.Context, shopID string) ([]*product.Product, error) {

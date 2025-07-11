@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/dto"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/service"
@@ -46,4 +49,44 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 }
 
 func (h *ProductHandler) GetProductByID(c *gin.Context) {
+	// 1. Lấy ID từ URL
+	productID := c.Param("id")
+
+	// 2. Gọi Application Service
+	product, err := h.productService.GetProductByID(c.Request.Context(), productID)
+	if err != nil {
+		// 3. Mapping lỗi từ service sang HTTP response
+		if strings.Contains(err.Error(), "not found") {
+			response.NotFound(c, "PRODUCT_NOT_FOUND", err.Error())
+			return
+		}
+		if strings.Contains(err.Error(), "invalid product ID format") {
+			response.BadRequest(c, "INVALID_ID", err.Error(), "")
+			return
+		}
+
+		response.InternalServerError(c, "GET_PRODUCT_FAILED", "Failed to retrieve product")
+		return
+	}
+
+	// 4. Chuyển đổi domain object sang DTO và trả về
+	respDTO := toProductResponse(product)
+	response.Success(c, "Product retrieved successfully", respDTO)
+}
+
+func toProductResponse(p *product.Product) dto.ProductResponse {
+	return dto.ProductResponse{
+		ID:           p.ID().String(),
+		ShopID:       p.ShopID().String(),
+		Name:         p.Name(),
+		Description:  *p.Description(),
+		CategoryID:   p.CategoryID().String(),
+		Price:        p.Price().GetAmount(),
+		Currency:     p.Price().GetCurrency(),
+		Quantity:     p.Quantity(),
+		ThumbnailURL: *p.ThumbnailURL(),
+		Status:       string(p.Status()),
+		CreatedAt:    p.CreatedAt(),
+		UpdatedAt:    p.UpdatedAt(),
+	}
 }
