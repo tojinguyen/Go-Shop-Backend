@@ -44,3 +44,11 @@ SET
   updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
 RETURNING *;
+
+-- name: SoftDeleteProduct :exec
+UPDATE products
+SET
+  deleted_at = NOW(),
+  product_status = 'DISCONTINUED', -- Hoặc một trạng thái xóa khác
+  updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL;

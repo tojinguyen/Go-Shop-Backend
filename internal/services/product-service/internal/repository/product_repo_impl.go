@@ -155,6 +155,22 @@ func (r *pgProductRepository) Update(ctx context.Context, p *product.Product) er
 	return nil
 }
 
+func (r *pgProductRepository) Delete(ctx context.Context, id string) error {
+	productUUID, err := uuid.Parse(id)
+	if err != nil {
+		return fmt.Errorf("invalid uuid format for repository: %w", err)
+	}
+	pgUUID := converter.UUIDToPgUUID(productUUID)
+
+	// Gọi hàm SoftDeleteProduct đã được sqlc generate
+	err = r.queries.SoftDeleteProduct(ctx, pgUUID)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete product in db: %w", err)
+	}
+
+	return nil
+}
+
 func toDomain(p *sqlc.Product) (*product.Product, error) {
 	price, err := product.NewPrice(
 		*converter.PgNumericToFloat64Ptr(p.Price),

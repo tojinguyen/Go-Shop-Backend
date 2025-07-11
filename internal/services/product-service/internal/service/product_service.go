@@ -12,6 +12,11 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/repository"
 )
 
+type PaginatedProducts struct {
+	Products   []*product.Product
+	TotalCount int64
+}
+
 type ProductService struct {
 	productRepo  repository.ProductRepository
 	redisService *redis_infra.RedisService
@@ -84,11 +89,6 @@ func (s *ProductService) GetProductByID(ctx context.Context, id string) (*produc
 	return product, nil
 }
 
-type PaginatedProducts struct {
-	Products   []*product.Product
-	TotalCount int64
-}
-
 func (s *ProductService) GetProductsByShop(ctx context.Context, query dto.GetProductsByShopQuery) (*PaginatedProducts, error) {
 	// 1. Validation logic cho phân trang (đặt ở đây hoặc handler đều được)
 	if query.Page <= 0 {
@@ -153,4 +153,30 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, req dto.U
 	}
 
 	return existingProduct, nil
+}
+
+func (s *ProductService) DeleteProduct(ctx context.Context, id string) error {
+	// 1. Lấy Aggregate từ Repository
+	existingProduct, err := s.productRepo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve product for deletion: %w", err)
+	}
+	if existingProduct == nil {
+		return fmt.Errorf("product with ID %s not found", id)
+	}
+
+	// (Tùy chọn) Kiểm tra quyền hạn ở đây
+	// Ví dụ: Lấy user_id từ context và kiểm tra xem có phải chủ shop không.
+	// if existingProduct.ShopID() != authorizedUserID { ... }
+
+	// 2. Gọi phương thức nghiệp vụ trên Domain Object
+	if err := existingProduct.Delete(); err != nil {
+		return err
+	}
+
+	if err := s.productRepo.Update(ctx, existingProduct); err != nil {
+		return fmt.Errorf("failed to save deleted product state: %w", err)
+	}
+
+	return nil
 }

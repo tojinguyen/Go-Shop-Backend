@@ -87,9 +87,6 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 	response.SuccessWithMeta(c, "Products retrieved successfully", productDTOs, &meta)
 }
 
-func (h *ProductHandler) DeleteProduct(c *gin.Context) {
-}
-
 func (h *ProductHandler) GetProductByID(c *gin.Context) {
 	// 1. Lấy ID từ URL
 	productID := c.Param("id")
@@ -151,6 +148,35 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	// 5. Trả về response thành công
 	respDTO := toProductResponse(updatedProduct)
 	response.Success(c, "Product updated successfully", respDTO)
+}
+
+func (h *ProductHandler) DeleteProduct(c *gin.Context) {
+	// 1. Lấy ID từ URL
+	productID := c.Param("id")
+
+	// 2. Gọi Application Service
+	err := h.productService.DeleteProduct(c.Request.Context(), productID)
+	if err != nil {
+		// 3. Mapping lỗi
+		if strings.Contains(err.Error(), "not found") {
+			response.NotFound(c, "PRODUCT_NOT_FOUND", err.Error())
+			return
+		}
+		if strings.Contains(err.Error(), "already deleted") {
+			response.Conflict(c, "PRODUCT_ALREADY_DELETED", err.Error())
+			return
+		}
+		if strings.Contains(err.Error(), "cannot delete a banned product") {
+			response.Forbidden(c, "DELETE_BANNED_PRODUCT_FORBIDDEN", err.Error())
+			return
+		}
+
+		response.InternalServerError(c, "DELETE_PRODUCT_FAILED", "Failed to delete product")
+		return
+	}
+
+	// 4. Trả về response thành công
+	response.Success(c, "Product deleted successfully", nil)
 }
 
 func toProductResponse(p *product.Product) dto.ProductResponse {

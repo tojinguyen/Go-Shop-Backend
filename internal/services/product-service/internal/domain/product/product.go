@@ -140,6 +140,27 @@ func (p *Product) Deactivate() {
 	p.updatedAt = time_utils.GetUtcTime()
 }
 
+func (p *Product) Delete() error {
+	if p.deletedAt != nil {
+		return errors.New("product is already deleted")
+	}
+
+	if p.status == ProductStatusBanned {
+		return errors.New("cannot delete a banned product")
+	}
+
+	now := time_utils.GetUtcTime()
+	p.deletedAt = &now
+	p.status = ProductStatusDiscontinued // Cập nhật trạng thái
+	p.setUpdatedAt()                     // Cập nhật thời gian
+
+	// Ở đây có thể phát sinh một Domain Event, ví dụ: ProductDeletedEvent
+	// event := NewProductDeletedEvent(p.id)
+	// p.addDomainEvent(event)
+
+	return nil
+}
+
 func (p *Product) ID() uuid.UUID         { return p.id }
 func (p *Product) ShopID() uuid.UUID     { return p.shopID }
 func (p *Product) Name() string          { return p.name }
@@ -150,6 +171,7 @@ func (p *Product) Price() Price          { return p.price }
 func (p *Product) Quantity() int         { return p.quantity }
 func (p *Product) Status() ProductStatus { return p.status }
 func (p *Product) CreatedAt() time.Time  { return p.createdAt }
+func (p *Product) DeletedAt() *time.Time { return p.deletedAt }
 func (p *Product) UpdatedAt() time.Time  { return p.updatedAt }
 
 func (p *Product) setUpdatedAt() {

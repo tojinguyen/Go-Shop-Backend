@@ -172,6 +172,20 @@ func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, 
 	return i, err
 }
 
+const softDeleteProduct = `-- name: SoftDeleteProduct :exec
+UPDATE products
+SET
+  deleted_at = NOW(),
+  product_status = 'DISCONTINUED', -- Hoặc một trạng thái xóa khác
+  updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeleteProduct(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteProduct, id)
+	return err
+}
+
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
 SET

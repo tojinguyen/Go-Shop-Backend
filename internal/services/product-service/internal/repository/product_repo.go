@@ -12,4 +12,5 @@ type ProductRepository interface {
 	GetByID(ctx context.Context, id string) (*product.Product, error)
 	GetByShopID(ctx context.Context, shopID uuid.UUID, limit, offset int) ([]*product.Product, int64, error)
 	Update(ctx context.Context, product *product.Product) error
+	Delete(ctx context.Context, id string) error // <<== THÊM DÒNG NÀY
 }
