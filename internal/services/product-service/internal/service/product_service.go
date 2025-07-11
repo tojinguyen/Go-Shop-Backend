@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
-	domain "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
+	product "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/dto"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/repository"
 )
 
@@ -21,12 +24,38 @@ func NewProductService(productRepo repository.ProductRepository, redisService *r
 	}
 }
 
-func (s *ProductService) CreateProduct(ctx context.Context, product *domain.Product) (*domain.Product, error) {
-	productRes, err := s.productRepo.Save(ctx, product)
-
+func (s *ProductService) CreateProduct(ctx context.Context, req *dto.CreateProductRequest) (*product.Product, error) {
+	shopID, err := uuid.Parse(req.ShopID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create product: %w", err)
+		return nil, fmt.Errorf("invalid shop id format")
 	}
 
-	return productRes, nil
+	categoryID, err := uuid.Parse(req.CategoryID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid category id format")
+	}
+
+	price, err := product.NewPrice(req.Price, req.Currency)
+	if err != nil {
+		return nil, err
+	}
+
+	newProduct, err := product.NewProduct(
+		shopID.String(),
+		categoryID.String(),
+		req.Name,
+		req.Description,
+		converter.StringToUUID(req.ThumbnailURL),
+		price,
+		req.Quantity,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.productRepo.Save(ctx, newProduct); err != nil {
+		return nil, fmt.Errorf("could not save product: %w", err)
+	}
+
+	return newProduct, nil
 }

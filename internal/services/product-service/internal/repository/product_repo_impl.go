@@ -7,7 +7,7 @@ import (
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/db/sqlc"
-	domain "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
+	product "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
 )
 
 type pgProductRepository struct {
@@ -27,56 +27,34 @@ func NewProductRepository(db *postgresql_infra.PostgreSQLService) ProductReposit
 	}
 }
 
-func (r *pgProductRepository) Save(ctx context.Context, product *domain.Product) (*domain.Product, error) {
+func (r *pgProductRepository) Save(ctx context.Context, p *product.Product) error {
 	params := sqlc.CreateProductParams{
-		ShopID:             converter.UUIDToPgUUID(product.ShopID()),
-		ProductName:        product.Name(),
-		ThumbnailUrl:       converter.StringToPgText(product.ThumbnailURL()),
-		ProductDescription: converter.StringToPgText(product.Description()),
-		CategoryID:         converter.UUIDToPgUUID(product.CategoryID()),
-		Price:              converter.Float64ToPgNumeric(product.Price().GetAmount()),
-		Quantity:           int32(product.Quantity()),
-		ReserveQuantity:    int32(product.Quantity()),
-		ProductStatus:      sqlc.ProductStatus(product.Status()),
+		ShopID:             converter.UUIDToPgUUID(p.ShopID()),
+		ProductName:        p.Name(),
+		ThumbnailUrl:       converter.StringToPgText(p.ThumbnailURL()),
+		ProductDescription: converter.StringToPgText(p.Description()),
+		CategoryID:         converter.UUIDToPgUUID(p.CategoryID()),
+		Price:              converter.Float64ToPgNumeric(p.Price().GetAmount()),
+		Currency:           p.Price().GetCurrency(),
+		Quantity:           int32(p.Quantity()),
+		ReserveQuantity:    0,
+		ProductStatus:      sqlc.ProductStatus(p.Status()),
 	}
 
-	sqlcProduct, err := r.queries.CreateProduct(ctx, params)
+	_, err := r.queries.CreateProduct(ctx, params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to save product: %w", err)
+		return fmt.Errorf("failed to save product to db: %w", err)
 	}
-
-	domainProduct, err := domain.ConvertFromSqlcProduct(&sqlcProduct)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert SQLC product to domain product: %w", err)
-	}
-
-	return domainProduct, nil
+	return nil
 }
 
-func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*domain.Product, error) {
-	product, err := r.queries.GetProductByID(ctx, converter.StringToPgUUID(id))
+func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*product.Product, error) {
+	productRes, err := r.queries.GetProductByID(ctx, converter.StringToPgUUID(id))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get product by ID: %w", err)
 	}
 
-	price, err := domain.NewPrice(
-		*converter.PgNumericToFloat64Ptr(product.Price),
-		"USD",
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create price from product data: %w", err)
-	}
-
-	productDomain, err := domain.NewProduct(
-		product.ShopID.String(),
-		product.ProductName,
-		product.ThumbnailUrl.String,
-		product.ProductDescription.String,
-		converter.PgUUIDToUUID(product.CategoryID),
-		price,
-		int(product.Quantity),
-	)
+	productDomain, err := toDomain(&productRes)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert product to domain: %w", err)
@@ -85,6 +63,30 @@ func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*domain.P
 	return productDomain, nil
 }
 
-func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID string) ([]*domain.Product, error) {
+func (r *pgProductRepository) GetProductsByShopID(ctx context.Context, shopID string) ([]*product.Product, error) {
 	return nil, nil
+}
+
+func toDomain(p *sqlc.Product) (*product.Product, error) {
+	price, err := product.NewPrice(
+		*converter.PgNumericToFloat64Ptr(p.Price),
+		p.Currency,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("invalid price data from db: %w", err)
+	}
+
+	return product.Reconstitute(
+		converter.PgUUIDToUUID(p.ID),
+		converter.PgUUIDToUUID(p.ShopID),
+		converter.PgUUIDToUUID(p.CategoryID),
+		p.ProductName,
+		p.ProductDescription.String,
+		p.ThumbnailUrl.String,
+		price,
+		int(p.Quantity),
+		product.ProductStatus(p.ProductStatus),
+		p.CreatedAt.Time,
+		p.UpdatedAt.Time,
+	)
 }

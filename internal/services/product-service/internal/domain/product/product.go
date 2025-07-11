@@ -1,12 +1,10 @@
-package domain
+package product
 
 import (
 	"errors"
 	"time"
 
-	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
-	"github.com/toji-dev/go-shop/internal/services/product-service/internal/db/sqlc"
 
 	uuid "github.com/google/uuid"
 )
@@ -64,32 +62,26 @@ func NewProduct(shopID, name, thumbnailURL, description string, categoryID uuid.
 	}, nil
 }
 
-func ConvertFromSqlcProduct(sqlcProduct *sqlc.Product) (*Product, error) {
-	price, err := NewPrice(
-		*converter.PgNumericToFloat64Ptr(sqlcProduct.Price),
-		"USD",
-	)
-	if err != nil {
-		return nil, err
-	}
-
+func Reconstitute(
+	id, shopID, categoryID uuid.UUID,
+	name, description, thumbnailURL string,
+	price Price,
+	quantity int,
+	status ProductStatus,
+	createdAt, updatedAt time.Time,
+) (*Product, error) {
 	return &Product{
-		id:              converter.PgUUIDToUUID(sqlcProduct.ID),
-		shopID:          converter.PgUUIDToUUID(sqlcProduct.ShopID),
-		name:            sqlcProduct.ProductName,
-		thumbnailURL:    sqlcProduct.ThumbnailUrl.String,
-		description:     sqlcProduct.ProductDescription.String,
-		categoryID:      converter.PgUUIDToUUID(sqlcProduct.CategoryID),
-		price:           price,
-		quantity:        int(sqlcProduct.Quantity),
-		reserveQuantity: int(sqlcProduct.ReserveQuantity),
-		status:          ProductStatus(sqlcProduct.ProductStatus),
-		soldCount:       int(sqlcProduct.SoldCount),
-		ratingAvg:       *converter.PgNumericToFloat64Ptr(sqlcProduct.RatingAvg),
-		totalReviews:    int(sqlcProduct.TotalReviews),
-		createdAt:       sqlcProduct.CreatedAt.Time,
-		updatedAt:       sqlcProduct.UpdatedAt.Time,
-		deletedAt:       nil,
+		id:           id,
+		shopID:       shopID,
+		name:         name,
+		description:  description,
+		categoryID:   categoryID,
+		price:        price,
+		quantity:     quantity,
+		thumbnailURL: thumbnailURL,
+		status:       status,
+		createdAt:    createdAt,
+		updatedAt:    updatedAt,
 	}, nil
 }
 

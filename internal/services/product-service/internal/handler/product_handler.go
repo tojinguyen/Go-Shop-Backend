@@ -2,10 +2,8 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
-	domain "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/dto"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/service"
@@ -29,31 +27,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	price, err := domain.NewPrice(req.Price, req.Currency)
-
-	if err != nil {
-		response.BadRequest(c, "VALIDATION_ERROR", "Invalid price or currency", err.Error())
-		return
-	}
-
-	categoryID := converter.StringToUUID(req.CategoryID)
-
-	product, err := domain.NewProduct(
-		req.ShopID,
-		req.Name,
-		req.ThumbnailURL,
-		req.Description,
-		categoryID,
-		price,
-		req.Quantity,
-	)
-
-	if err != nil {
-		response.BadRequest(c, "VALIDATION_ERROR", "Invalid product data", err.Error())
-		return
-	}
-
-	productResult, err := h.productService.CreateProduct(c.Request.Context(), product)
+	productResult, err := h.productService.CreateProduct(c.Request.Context(), &req)
 	if err != nil {
 		response.InternalServerError(c, "INTERNAL_ERROR", "Failed to create product")
 		return
