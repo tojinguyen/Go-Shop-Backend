@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"math"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
@@ -40,6 +43,48 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 }
 
 func (h *ProductHandler) GetProducts(c *gin.Context) {
+	// 1. Lấy shopID từ URL (giả sử route là /shops/:shopId/products)
+	shopIDStr := c.Param("shopId")
+	shopID, err := uuid.Parse(shopIDStr)
+	if err != nil {
+		response.BadRequest(c, "INVALID_SHOP_ID", "Invalid shop ID format", err.Error())
+		return
+	}
+
+	// 2. Lấy tham số phân trang từ query string
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+
+	// 3. Tạo query object và gọi service
+	query := dto.GetProductsByShopQuery{
+		ShopID: shopID,
+		Page:   page,
+		Limit:  limit,
+	}
+
+	paginatedResult, err := h.productService.GetProductsByShop(c.Request.Context(), query)
+	if err != nil {
+		response.InternalServerError(c, "GET_PRODUCTS_FAILED", err.Error())
+		return
+	}
+
+	// 4. Chuyển đổi danh sách domain products sang response DTOs
+	productDTOs := make([]*dto.ProductResponse, len(paginatedResult.Products))
+	for i, p := range paginatedResult.Products {
+		dto := toProductResponse(p)
+		productDTOs[i] = &dto
+	}
+
+	// 5. Tạo metadata cho phân trang
+	meta := response.MetaInfo{
+		Page:       page,
+		PerPage:    limit,
+		Total:      paginatedResult.TotalCount,
+		TotalPages: int(math.Ceil(float64(paginatedResult.TotalCount) / float64(limit))),
+	}
+
+	// 6. Trả về response hoàn chỉnh
+	response.SuccessWithMeta(c, "Products retrieved successfully", productDTOs, &meta)
 }
 
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {

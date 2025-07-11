@@ -1,6 +1,10 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type CreateProductRequest struct {
 	ShopID       string  `json:"shop_id" binding:"required,uuid"`
@@ -11,6 +15,12 @@ type CreateProductRequest struct {
 	Currency     string  `json:"currency" binding:"required"`
 	ThumbnailURL string  `json:"thumbnail_url" binding:"required,url"`
 	Quantity     int     `json:"quantity" binding:"required,gte=0"`
+}
+
+type GetProductsByShopQuery struct {
+	ShopID uuid.UUID
+	Page   int
+	Limit  int
 }
 
 type ProductResponse struct {
@@ -26,4 +36,9 @@ type ProductResponse struct {
 	Status       string    `json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+// DTO mới cho response phân trang
+type PaginatedProductsResponse struct {
+	Data []*ProductResponse `json:"data"`
 }

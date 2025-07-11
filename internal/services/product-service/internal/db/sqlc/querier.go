@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	CountProductsByShop(ctx context.Context, shopID pgtype.UUID) (int64, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	GetListProductsByShop(ctx context.Context, arg GetListProductsByShopParams) ([]Product, error)
 	GetProductByID(ctx context.Context, id pgtype.UUID) (Product, error)

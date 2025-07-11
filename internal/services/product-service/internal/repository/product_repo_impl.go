@@ -81,8 +81,57 @@ func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*product.
 	return domainProduct, nil
 }
 
-func (r *pgProductRepository) GetProductsByShopID(ctx context.Context, shopID string) ([]*product.Product, error) {
-	return nil, nil
+func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID, limit, offset int) ([]*product.Product, int64, error) {
+	pgShopUUID := converter.UUIDToPgUUID(shopID)
+
+	// Sử dụng transaction để đảm bảo 2 câu query là nhất quán
+	tx, err := r.db.BeginTransaction(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx) // Rollback nếu có lỗi xảy ra
+
+	qtx := r.queries.WithTx(tx)
+
+	// 1. Lấy tổng số sản phẩm
+	totalCount, err := qtx.CountProductsByShop(ctx, pgShopUUID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count products by shop: %w", err)
+	}
+
+	if totalCount == 0 {
+		return []*product.Product{}, 0, nil
+	}
+
+	// 2. Lấy danh sách sản phẩm theo phân trang
+	params := sqlc.GetListProductsByShopParams{
+		ShopID: pgShopUUID,
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	}
+	sqlcProducts, err := qtx.GetListProductsByShop(ctx, params)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get list of products by shop: %w", err)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(ctx); err != nil {
+		return nil, 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	// 3. Chuyển đổi kết quả sang domain models
+	domainProducts := make([]*product.Product, 0, len(sqlcProducts))
+	for _, p := range sqlcProducts {
+		domainProduct, err := toDomain(&p)
+		if err != nil {
+			// Có thể log lỗi và bỏ qua sản phẩm này hoặc trả về lỗi ngay lập tức
+			// Tạm thời trả về lỗi để đảm bảo tính toàn vẹn
+			return nil, 0, fmt.Errorf("failed to convert product %s: %w", p.ID, err)
+		}
+		domainProducts = append(domainProducts, domainProduct)
+	}
+
+	return domainProducts, totalCount, nil
 }
 
 func toDomain(p *sqlc.Product) (*product.Product, error) {
