@@ -3,6 +3,9 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
+	"github.com/toji-dev/go-shop/internal/pkg/response"
+	domain "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/dto"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/service"
 )
@@ -18,6 +21,22 @@ func NewProductHandler(repo repository.ProductRepository, redis *redis_infra.Red
 }
 
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
+	var req dto.CreateProductRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "VALIDATION_ERROR", "Invalid request body", err.Error())
+		return
+	}
+
+	product := &domain.Product{}
+
+	product, err := h.productService.CreateProduct(product)
+	if err != nil {
+		response.InternalServerError(c, "INTERNAL_ERROR", "Failed to create product")
+		return
+	}
+
+	response.Created(c, "Product created successfully", product)
 }
 
 func (h *ProductHandler) GetProducts(c *gin.Context) {
