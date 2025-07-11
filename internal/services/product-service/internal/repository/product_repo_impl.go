@@ -134,6 +134,27 @@ func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID,
 	return domainProducts, totalCount, nil
 }
 
+func (r *pgProductRepository) Update(ctx context.Context, p *product.Product) error {
+	params := sqlc.UpdateProductParams{
+		ID:                 converter.UUIDToPgUUID(p.ID()),
+		ProductName:        p.Name(),
+		ProductDescription: converter.StringToPgText(p.Description()),
+		CategoryID:         converter.UUIDToPgUUID(p.CategoryID()),
+		Price:              converter.Float64ToPgNumeric(p.Price().GetAmount()),
+		Currency:           p.Price().GetCurrency(),
+		Quantity:           int32(p.Quantity()),
+		ThumbnailUrl:       converter.StringToPgText(p.ThumbnailURL()),
+		ProductStatus:      sqlc.ProductStatus(p.Status()),
+	}
+
+	_, err := r.queries.UpdateProduct(ctx, params)
+	if err != nil {
+		return fmt.Errorf("failed to update product in db: %w", err)
+	}
+
+	return nil
+}
+
 func toDomain(p *sqlc.Product) (*product.Product, error) {
 	price, err := product.NewPrice(
 		*converter.PgNumericToFloat64Ptr(p.Price),

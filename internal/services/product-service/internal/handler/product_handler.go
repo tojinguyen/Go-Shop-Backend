@@ -87,9 +87,6 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 	response.SuccessWithMeta(c, "Products retrieved successfully", productDTOs, &meta)
 }
 
-func (h *ProductHandler) UpdateProduct(c *gin.Context) {
-}
-
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 }
 
@@ -117,6 +114,43 @@ func (h *ProductHandler) GetProductByID(c *gin.Context) {
 	// 4. Chuyển đổi domain object sang DTO và trả về
 	respDTO := toProductResponse(product)
 	response.Success(c, "Product retrieved successfully", respDTO)
+}
+
+func (h *ProductHandler) UpdateProduct(c *gin.Context) {
+	// 1. Lấy ID từ URL
+	productID := c.Param("id")
+	if productID == "" {
+		response.BadRequest(c, "INVALID_ID", "Product ID is required", "")
+		return
+	}
+
+	// 2. Bind và Validate DTO
+	var req dto.UpdateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "VALIDATION_ERROR", "Invalid request body", err.Error())
+		return
+	}
+
+	// 3. Gọi Application Service
+	updatedProduct, err := h.productService.UpdateProduct(c.Request.Context(), productID, req)
+	if err != nil {
+		// 4. Mapping lỗi
+		if strings.Contains(err.Error(), "not found") {
+			response.NotFound(c, "PRODUCT_NOT_FOUND", err.Error())
+			return
+		}
+		if strings.Contains(err.Error(), "invalid") {
+			response.BadRequest(c, "VALIDATION_ERROR", err.Error(), "")
+			return
+		}
+
+		response.InternalServerError(c, "UPDATE_PRODUCT_FAILED", "Failed to update product")
+		return
+	}
+
+	// 5. Trả về response thành công
+	respDTO := toProductResponse(updatedProduct)
+	response.Success(c, "Product updated successfully", respDTO)
 }
 
 func toProductResponse(p *product.Product) dto.ProductResponse {

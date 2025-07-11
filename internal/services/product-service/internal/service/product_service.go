@@ -89,7 +89,6 @@ type PaginatedProducts struct {
 	TotalCount int64
 }
 
-// GetProductsByShop là use case để lấy danh sách sản phẩm của một shop có phân trang.
 func (s *ProductService) GetProductsByShop(ctx context.Context, query dto.GetProductsByShopQuery) (*PaginatedProducts, error) {
 	// 1. Validation logic cho phân trang (đặt ở đây hoặc handler đều được)
 	if query.Page <= 0 {
@@ -110,4 +109,48 @@ func (s *ProductService) GetProductsByShop(ctx context.Context, query dto.GetPro
 		Products:   products,
 		TotalCount: total,
 	}, nil
+}
+
+func (s *ProductService) UpdateProduct(ctx context.Context, id string, req dto.UpdateProductRequest) (*product.Product, error) {
+	// 1. Lấy Aggregate từ Repository
+	existingProduct, err := s.productRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve product for update: %w", err)
+	}
+	if existingProduct == nil {
+		return nil, fmt.Errorf("product with ID %s not found", id)
+	}
+
+	// 2. Chuyển đổi dữ liệu từ DTO
+	categoryID, err := uuid.Parse(req.CategoryID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid category id format")
+	}
+	newPrice, err := product.NewPrice(req.Price, req.Currency)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Gọi các phương thức nghiệp vụ trên Domain Object để cập nhật
+	if err := existingProduct.ChangeName(req.Name); err != nil {
+		return nil, err
+	}
+	existingProduct.UpdateDescription(req.Description)
+	if err := existingProduct.UpdateThumbnail(req.ThumbnailURL); err != nil {
+		return nil, err
+	}
+	existingProduct.ChangeCategory(categoryID)
+	if err := existingProduct.ChangePrice(newPrice); err != nil {
+		return nil, err
+	}
+	if err := existingProduct.UpdateQuantity(req.Quantity); err != nil {
+		return nil, err
+	}
+
+	// 4. Lưu lại Aggregate đã thay đổi
+	if err := s.productRepo.Update(ctx, existingProduct); err != nil {
+		return nil, fmt.Errorf("failed to save updated product: %w", err)
+	}
+
+	return existingProduct, nil
 }

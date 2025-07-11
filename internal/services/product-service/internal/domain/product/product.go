@@ -85,13 +85,37 @@ func Reconstitute(
 	}, nil
 }
 
+func (p *Product) ChangeName(newName string) error {
+	if newName == "" {
+		return errors.New("product name cannot be empty")
+	}
+	p.name = newName
+	p.setUpdatedAt()
+	return nil
+}
+
+func (p *Product) UpdateDescription(newDescription string) {
+	p.description = newDescription
+	p.setUpdatedAt()
+}
+
+func (p *Product) UpdateThumbnail(newURL string) error {
+	p.thumbnailURL = newURL
+	p.setUpdatedAt()
+	return nil
+}
+
+func (p *Product) ChangeCategory(newCategoryID uuid.UUID) {
+	p.categoryID = newCategoryID
+	p.setUpdatedAt()
+}
+
 func (p *Product) ChangePrice(newPrice Price) error {
 	if newPrice.GetAmount() < 0 {
 		return errors.New("price cannot be negative")
 	}
-
 	p.price = newPrice
-	p.updatedAt = time_utils.GetUtcTime()
+	p.setUpdatedAt()
 	return nil
 }
 
@@ -99,9 +123,15 @@ func (p *Product) UpdateQuantity(newQuantity int) error {
 	if newQuantity < 0 {
 		return errors.New("quantity cannot be negative")
 	}
-
 	p.quantity = newQuantity
-	p.updatedAt = time_utils.GetUtcTime()
+	if newQuantity == 0 {
+		p.status = ProductStatusOutOfStock
+	} else {
+		if p.status == ProductStatusOutOfStock {
+			p.status = ProductStatusActive
+		}
+	}
+	p.setUpdatedAt()
 	return nil
 }
 
@@ -121,3 +151,7 @@ func (p *Product) Quantity() int         { return p.quantity }
 func (p *Product) Status() ProductStatus { return p.status }
 func (p *Product) CreatedAt() time.Time  { return p.createdAt }
 func (p *Product) UpdatedAt() time.Time  { return p.updatedAt }
+
+func (p *Product) setUpdatedAt() {
+	p.updatedAt = time_utils.GetUtcTime()
+}
