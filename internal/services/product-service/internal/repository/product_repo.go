@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/toji-dev/go-shop/internal/services/product-service/internal/domain"
+	domain "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
 )
 
 type ProductRepository interface {

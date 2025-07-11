@@ -21,11 +21,6 @@ const (
 	ProductStatusBanned       ProductStatus = "BANNED"
 )
 
-type Price struct {
-	Amount   float64
-	Currency string
-}
-
 type Product struct {
 	ID              uuid.UUID
 	ShopID          uuid.UUID

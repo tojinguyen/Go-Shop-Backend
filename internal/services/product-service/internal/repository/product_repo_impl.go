@@ -5,7 +5,7 @@ import (
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/db/sqlc"
-	"github.com/toji-dev/go-shop/internal/services/product-service/internal/domain"
+	domain "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
 )
 
 type pgProductRepository struct {
