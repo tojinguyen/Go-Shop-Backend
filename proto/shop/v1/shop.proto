@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package shop.v1;
+
+option go_package = "github.com/toji-dev/go-shop/proto/gen/go/shop/v1;shop_v1";
+
+service ShopService {
+    rpc CheckShopOwnership(CheckShopOwnershipRequest) returns (CheckShopOwnershipResponse);
+}
+
+message CheckShopOwnershipRequest {
+    string shop_id = 1;
+    string user_id = 2;
+}
+
+message CheckShopOwnershipResponse {
+    bool is_owner = 1;
+}
