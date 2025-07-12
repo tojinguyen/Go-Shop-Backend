@@ -9,6 +9,7 @@ import (
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/repository"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/service"
 )
 
 type DependencyContainer struct {
@@ -16,6 +17,7 @@ type DependencyContainer struct {
 	postgreSQL  *postgresql_infra.PostgreSQLService
 	redis       *redis_infra.RedisService
 	productRepo repository.ProductRepository
+	shopService service.ShopServiceAdapter
 }
 
 func (sc *DependencyContainer) GetConfig() *config.Config {
@@ -28,6 +30,10 @@ func (sc *DependencyContainer) GetRedisService() *redis_infra.RedisService {
 
 func (sc *DependencyContainer) GetProductRepository() repository.ProductRepository {
 	return sc.productRepo
+}
+
+func (sc *DependencyContainer) GetShopServiceAdapter() service.ShopServiceAdapter {
+	return sc.shopService
 }
 
 func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
@@ -47,6 +53,11 @@ func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
 
 	// Initialize repositories
 	container.initProductRepository()
+
+	// Initialize shop service adapter
+	if err := container.initShopServiceAdapter(); err != nil {
+		return nil, fmt.Errorf("failed to initialize shop service adapter: %w", err)
+	}
 
 	return container, nil
 }
@@ -92,6 +103,17 @@ func (sc *DependencyContainer) initRedis() error {
 func (sc *DependencyContainer) initProductRepository() {
 	sc.productRepo = repository.NewProductRepository(sc.postgreSQL)
 	log.Println("Product repository initialized")
+}
+
+func (sc *DependencyContainer) initShopServiceAdapter() error {
+	shopService, err := service.NewGrpcShopAdapter(sc.config.ShopService.Address)
+	if err != nil {
+		return fmt.Errorf("failed to create shop service adapter: %w", err)
+	}
+
+	sc.shopService = shopService
+	log.Println("Shop service adapter initialized")
+	return nil
 }
 
 func (sc *DependencyContainer) Close() {

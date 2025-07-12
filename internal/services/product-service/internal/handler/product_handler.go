@@ -19,9 +19,9 @@ type ProductHandler struct {
 	productService *service.ProductService
 }
 
-func NewProductHandler(repo repository.ProductRepository, redis *redis_infra.RedisService) *ProductHandler {
+func NewProductHandler(repo repository.ProductRepository, redis *redis_infra.RedisService, shopService service.ShopServiceAdapter) *ProductHandler {
 	return &ProductHandler{
-		productService: service.NewProductService(repo, redis),
+		productService: service.NewProductService(repo, redis, shopService),
 	}
 }
 

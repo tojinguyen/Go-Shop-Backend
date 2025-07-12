@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -20,19 +21,40 @@ type PaginatedProducts struct {
 type ProductService struct {
 	productRepo  repository.ProductRepository
 	redisService *redis_infra.RedisService
+	shopService  ShopServiceAdapter
 }
 
-func NewProductService(productRepo repository.ProductRepository, redisService *redis_infra.RedisService) *ProductService {
+func NewProductService(productRepo repository.ProductRepository, redisService *redis_infra.RedisService, shopAdapter ShopServiceAdapter) *ProductService {
 	return &ProductService{
 		productRepo:  productRepo,
 		redisService: redisService,
+		shopService:  shopAdapter,
 	}
 }
 
 func (s *ProductService) CreateProduct(ctx context.Context, req *dto.CreateProductRequest) (*product.Product, error) {
+	// Lấy user_id từ context (giả sử đã được auth middleware thêm vào)
+	userIDCtx := ctx.Value("user_id") // Nên định nghĩa một key cụ thể thay vì string
+	if userIDCtx == nil {
+		return nil, errors.New("unauthorized: user_id not found in context")
+	}
+	userID, err := uuid.Parse(userIDCtx.(string))
+	if err != nil {
+		return nil, errors.New("unauthorized: invalid user_id format")
+	}
+
 	shopID, err := uuid.Parse(req.ShopID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid shop id format")
+	}
+
+	isOwner, err := s.shopService.IsShopOwner(ctx, shopID, userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot verify shop ownership: %w", err)
+	}
+	if !isOwner {
+		return nil, errors.New("forbidden: you are not the owner of this shop")
 	}
 
 	categoryID, err := uuid.Parse(req.CategoryID)

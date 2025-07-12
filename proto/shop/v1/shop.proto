@@ -1,18 +1,25 @@
 syntax = "proto3";
 
-package shop.v1;
+package goshop.shop.v1;
 
-option go_package = "github.com/toji-dev/go-shop/proto/gen/go/shop/v1;shop_v1";
+option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1;shop_v1";
 
+// ShopService provides functionality for shop-related operations
 service ShopService {
-    rpc CheckShopOwnership(CheckShopOwnershipRequest) returns (CheckShopOwnershipResponse);
+  // CheckShopOwnership verifies if a user owns a specific shop
+  rpc CheckShopOwnership(CheckShopOwnershipRequest) returns (CheckShopOwnershipResponse);
 }
 
+// CheckShopOwnershipRequest represents the request to check shop ownership
 message CheckShopOwnershipRequest {
-    string shop_id = 1;
-    string user_id = 2;
+  // shop_id is the unique identifier of the shop
+  string shop_id = 1;
+  // user_id is the unique identifier of the user
+  string user_id = 2;
 }
 
+// CheckShopOwnershipResponse represents the response for shop ownership check
 message CheckShopOwnershipResponse {
-    bool is_owner = 1;
+  // is_owner indicates whether the user owns the shop
+  bool is_owner = 1;
 }

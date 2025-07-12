@@ -11,11 +11,12 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `json:"server"`
-	Database DatabaseConfig `json:"database"`
-	Redis    RedisConfig    `json:"redis"`
-	CORS     CORSConfig     `json:"cors"`
-	App      AppConfig      `json:"app"`
+	Server      ServerConfig      `json:"server"`
+	Database    DatabaseConfig    `json:"database"`
+	Redis       RedisConfig       `json:"redis"`
+	CORS        CORSConfig        `json:"cors"`
+	App         AppConfig         `json:"app"`
+	ShopService ShopServiceConfig `json:"shop_service"`
 }
 
 // ServerConfig holds server configuration
@@ -67,6 +68,10 @@ type AppConfig struct {
 	LogLevel    string `json:"log_level"`
 }
 
+type ShopServiceConfig struct {
+	Address string `json:"address"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -111,6 +116,9 @@ func LoadConfig() (*Config, error) {
 			Version:     getEnv("APP_VERSION", "1.0.0"),
 			Environment: getEnv("ENVIRONMENT", "development"),
 			LogLevel:    getEnv("LOG_LEVEL", "info"),
+		},
+		ShopService: ShopServiceConfig{
+			Address: getEnv("SHOP_SERVICE_ADDRESS", "localhost:50051"),
 		},
 	}
 
