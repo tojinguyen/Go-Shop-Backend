@@ -85,13 +85,37 @@ func Reconstitute(
 	}, nil
 }
 
+func (p *Product) ChangeName(newName string) error {
+	if newName == "" {
+		return errors.New("product name cannot be empty")
+	}
+	p.name = newName
+	p.setUpdatedAt()
+	return nil
+}
+
+func (p *Product) UpdateDescription(newDescription string) {
+	p.description = newDescription
+	p.setUpdatedAt()
+}
+
+func (p *Product) UpdateThumbnail(newURL string) error {
+	p.thumbnailURL = newURL
+	p.setUpdatedAt()
+	return nil
+}
+
+func (p *Product) ChangeCategory(newCategoryID uuid.UUID) {
+	p.categoryID = newCategoryID
+	p.setUpdatedAt()
+}
+
 func (p *Product) ChangePrice(newPrice Price) error {
 	if newPrice.GetAmount() < 0 {
 		return errors.New("price cannot be negative")
 	}
-
 	p.price = newPrice
-	p.updatedAt = time_utils.GetUtcTime()
+	p.setUpdatedAt()
 	return nil
 }
 
@@ -99,15 +123,42 @@ func (p *Product) UpdateQuantity(newQuantity int) error {
 	if newQuantity < 0 {
 		return errors.New("quantity cannot be negative")
 	}
-
 	p.quantity = newQuantity
-	p.updatedAt = time_utils.GetUtcTime()
+	if newQuantity == 0 {
+		p.status = ProductStatusOutOfStock
+	} else {
+		if p.status == ProductStatusOutOfStock {
+			p.status = ProductStatusActive
+		}
+	}
+	p.setUpdatedAt()
 	return nil
 }
 
 func (p *Product) Deactivate() {
 	p.status = ProductStatusInactive
 	p.updatedAt = time_utils.GetUtcTime()
+}
+
+func (p *Product) Delete() error {
+	if p.deletedAt != nil {
+		return errors.New("product is already deleted")
+	}
+
+	if p.status == ProductStatusBanned {
+		return errors.New("cannot delete a banned product")
+	}
+
+	now := time_utils.GetUtcTime()
+	p.deletedAt = &now
+	p.status = ProductStatusDiscontinued // Cập nhật trạng thái
+	p.setUpdatedAt()                     // Cập nhật thời gian
+
+	// Ở đây có thể phát sinh một Domain Event, ví dụ: ProductDeletedEvent
+	// event := NewProductDeletedEvent(p.id)
+	// p.addDomainEvent(event)
+
+	return nil
 }
 
 func (p *Product) ID() uuid.UUID         { return p.id }
@@ -120,4 +171,9 @@ func (p *Product) Price() Price          { return p.price }
 func (p *Product) Quantity() int         { return p.quantity }
 func (p *Product) Status() ProductStatus { return p.status }
 func (p *Product) CreatedAt() time.Time  { return p.createdAt }
+func (p *Product) DeletedAt() *time.Time { return p.deletedAt }
 func (p *Product) UpdatedAt() time.Time  { return p.updatedAt }
+
+func (p *Product) setUpdatedAt() {
+	p.updatedAt = time_utils.GetUtcTime()
+}

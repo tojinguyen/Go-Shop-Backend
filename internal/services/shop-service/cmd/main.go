@@ -23,8 +23,10 @@ import (
 	updateshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/update_shop"
 	getshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shop"
 	getshops "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shops"
+	shop_grpc "github.com/toji-dev/go-shop/internal/services/shop-service/internal/grpc"
 	promotion_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/promotion"
 	shop_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
+	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/shop/v1"
 )
 
 //	@title			Shop Service API
@@ -191,6 +193,8 @@ func main() {
 		deletePromotionAPIHandler,
 	)
 
+	go runGrpcServer()
+
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -204,4 +208,21 @@ func main() {
 
 	<-quit
 	log.Println("Shutting down shop service...")
+}
+
+func runGrpcServer() {
+	lis, err := net.Listen("tcp", ":9002")
+	if err != nil {
+		log.Fatalf("failed to listen for grpc: %v", err)
+	}
+
+	s := grpc.NewServer()
+
+	grpcServer := shop_grpc.NewShopGRPCServer(shopRepo)
+	shop_v1.RegisterShopServiceServer(s, grpcServer)
+
+	log.Printf("gRPC server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve gRPC: %v", err)
+	}
 }

@@ -11,6 +11,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countProductsByShop = `-- name: CountProductsByShop :one
+SELECT count(*) FROM products
+WHERE shop_id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) CountProductsByShop(ctx context.Context, shopID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countProductsByShop, shopID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createProduct = `-- name: CreateProduct :one
 INSERT INTO products (
     shop_id,
@@ -137,6 +149,83 @@ WHERE id = $1 AND deleted_at IS NULL
 
 func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, error) {
 	row := q.db.QueryRow(ctx, getProductByID, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ShopID,
+		&i.ProductName,
+		&i.ThumbnailUrl,
+		&i.ProductDescription,
+		&i.CategoryID,
+		&i.Price,
+		&i.Currency,
+		&i.Quantity,
+		&i.ReserveQuantity,
+		&i.ProductStatus,
+		&i.SoldCount,
+		&i.RatingAvg,
+		&i.TotalReviews,
+		&i.CreatedAt,
+		&i.DeleteAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const softDeleteProduct = `-- name: SoftDeleteProduct :exec
+UPDATE products
+SET
+  deleted_at = NOW(),
+  product_status = 'DISCONTINUED', -- Hoặc một trạng thái xóa khác
+  updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeleteProduct(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteProduct, id)
+	return err
+}
+
+const updateProduct = `-- name: UpdateProduct :one
+UPDATE products
+SET
+  product_name = $2,
+  product_description = $3,
+  category_id = $4,
+  price = $5,
+  currency = $6,
+  quantity = $7,
+  thumbnail_url = $8,
+  product_status = $9,
+  updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at
+`
+
+type UpdateProductParams struct {
+	ID                 pgtype.UUID    `json:"id"`
+	ProductName        string         `json:"product_name"`
+	ProductDescription pgtype.Text    `json:"product_description"`
+	CategoryID         pgtype.UUID    `json:"category_id"`
+	Price              pgtype.Numeric `json:"price"`
+	Currency           string         `json:"currency"`
+	Quantity           int32          `json:"quantity"`
+	ThumbnailUrl       pgtype.Text    `json:"thumbnail_url"`
+	ProductStatus      ProductStatus  `json:"product_status"`
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, updateProduct,
+		arg.ID,
+		arg.ProductName,
+		arg.ProductDescription,
+		arg.CategoryID,
+		arg.Price,
+		arg.Currency,
+		arg.Quantity,
+		arg.ThumbnailUrl,
+		arg.ProductStatus,
+	)
 	var i Product
 	err := row.Scan(
 		&i.ID,

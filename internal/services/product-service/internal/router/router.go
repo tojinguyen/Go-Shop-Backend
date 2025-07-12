@@ -10,7 +10,11 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	productHandler := handler.NewProductHandler(serviceContainer.GetProductRepository(), serviceContainer.GetRedisService())
+	productHandler := handler.NewProductHandler(
+		serviceContainer.GetProductRepository(),
+		serviceContainer.GetRedisService(),
+		serviceContainer.GetShopServiceAdapter(),
+	)
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "pong")
