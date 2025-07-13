@@ -18,6 +18,7 @@ type Config struct {
 	Redis    RedisConfig    `json:"redis"`
 	CORS     CORSConfig     `json:"cors"`
 	App      AppConfig      `json:"app"`
+	GRPC     GRPCConfig     `json:"grpc"`
 }
 
 // ServerConfig holds server configuration
@@ -72,6 +73,11 @@ type AppConfig struct {
 	LogLevel    string `json:"log_level"`
 }
 
+type GRPCConfig struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -121,6 +127,10 @@ func LoadConfig() (*Config, error) {
 			Version:     getEnv("APP_VERSION", "1.0.0"),
 			Environment: getEnv("ENVIRONMENT", "development"),
 			LogLevel:    getEnv("LOG_LEVEL", "info"),
+		},
+		GRPC: GRPCConfig{
+			Host: getEnv("SHOP_SERVICE_GRPC_HOST", "0.0.0.0"),
+			Port: getEnv("SHOP_SERVICE_GRPC_PORT", "50051"),
 		},
 	}
 

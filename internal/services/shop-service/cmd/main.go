@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -23,8 +24,11 @@ import (
 	updateshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/commands/update_shop"
 	getshop "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shop"
 	getshops "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/shop/queries/get_shops"
+	shop_grpc "github.com/toji-dev/go-shop/internal/services/shop-service/internal/grpc"
 	promotion_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/promotion"
 	shop_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
+	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1"
+	"google.golang.org/grpc"
 )
 
 //	@title			Shop Service API
@@ -191,7 +195,7 @@ func main() {
 		deletePromotionAPIHandler,
 	)
 
-	go runGrpcServer()
+	go runGrpcServer(cfg, shopRepo)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -208,19 +212,18 @@ func main() {
 	log.Println("Shutting down shop service...")
 }
 
-func runGrpcServer() {
-	// lis, err := net.Listen("tcp", ":9002")
-	// if err != nil {
-	// 	log.Fatalf("failed to listen for grpc: %v", err)
-	// }
-
-	// s := grpc.NewServer()
-
-	// grpcServer := shop_grpc.NewShopGRPCServer(shopRepo)
-	// shop_v1.RegisterShopServiceServer(s, grpcServer)
-
-	// log.Printf("gRPC server listening at %v", lis.Addr())
-	// if err := s.Serve(lis); err != nil {
-	// 	log.Fatalf("failed to serve gRPC: %v", err)
-	// }
+func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository) {
+	address := config.GRPC.Host + ":" + config.GRPC.Port
+	log.Printf("Starting gRPC server on %s", address)
+	lis, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Fatalf("failed to listen for grpc on port %s: %v", config.GRPC.Host, err)
+	}
+	s := grpc.NewServer()
+	grpcServer := shop_grpc.NewShopGRPCServer(shopRepo)
+	shop_v1.RegisterShopServiceServer(s, grpcServer)
+	log.Printf("gRPC server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve gRPC: %v", err)
+	}
 }
