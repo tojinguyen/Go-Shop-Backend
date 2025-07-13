@@ -34,10 +34,10 @@ func NewShipperRepository(db *postgresql_infra.PostgreSQLService) ShipperReposit
 func (r *shipperRepository) CreateShipper(ctx context.Context, shipper *domain.Shipper) (*domain.Shipper, error) {
 	params := sqlc.CreateShipperParams{
 		UserID:          converter.StringToPgUUID(shipper.UserID),
-		VehicleType:     converter.StringToPgText(shipper.VehicleType),
-		VehicleImageUrl: converter.StringToPgText(shipper.VehicleImageURL),
-		IdentifyCardUrl: converter.StringToPgText(shipper.IdentifyCardURL),
-		LicensePlate:    converter.StringToPgText(shipper.LicensePlate),
+		VehicleType:     converter.StringToPgText(&shipper.VehicleType),
+		VehicleImageUrl: converter.StringToPgText(&shipper.VehicleImageURL),
+		IdentifyCardUrl: converter.StringToPgText(&shipper.IdentifyCardURL),
+		LicensePlate:    converter.StringToPgText(&shipper.LicensePlate),
 	}
 
 	result, err := r.queries.CreateShipper(ctx, params)
@@ -47,10 +47,10 @@ func (r *shipperRepository) CreateShipper(ctx context.Context, shipper *domain.S
 
 	return &domain.Shipper{
 		UserID:          converter.PgUUIDToString(result.UserID),
-		VehicleType:     converter.PgTextToStringPtr(result.VehicleType),
-		VehicleImageURL: converter.PgTextToStringPtr(result.VehicleImageUrl),
-		IdentifyCardURL: converter.PgTextToStringPtr(result.IdentifyCardUrl),
-		LicensePlate:    converter.PgTextToStringPtr(result.LicensePlate),
+		VehicleType:     *converter.PgTextToStringPtr(result.VehicleType),
+		VehicleImageURL: *converter.PgTextToStringPtr(result.VehicleImageUrl),
+		IdentifyCardURL: *converter.PgTextToStringPtr(result.IdentifyCardUrl),
+		LicensePlate:    *converter.PgTextToStringPtr(result.LicensePlate),
 	}, nil
 }
 
@@ -63,10 +63,10 @@ func (r *shipperRepository) GetShipperByUserID(ctx context.Context, userID strin
 
 	return &domain.Shipper{
 		UserID:          converter.PgUUIDToString(result.UserID),
-		VehicleType:     converter.PgTextToStringPtr(result.VehicleType),
-		VehicleImageURL: converter.PgTextToStringPtr(result.VehicleImageUrl),
-		IdentifyCardURL: converter.PgTextToStringPtr(result.IdentifyCardUrl),
-		LicensePlate:    converter.PgTextToStringPtr(result.LicensePlate),
+		VehicleType:     *converter.PgTextToStringPtr(result.VehicleType),
+		VehicleImageURL: *converter.PgTextToStringPtr(result.VehicleImageUrl),
+		IdentifyCardURL: *converter.PgTextToStringPtr(result.IdentifyCardUrl),
+		LicensePlate:    *converter.PgTextToStringPtr(result.LicensePlate),
 	}, nil
 }
 
@@ -81,24 +81,24 @@ func (r *shipperRepository) UpdateShipper(ctx context.Context, userID string, up
 	// Prepare update parameters, using current values if new ones are not provided
 	params := sqlc.UpdateShipperByUserIDParams{
 		UserID:          converter.StringToPgUUID(userID),
-		VehicleType:     converter.StringToPgText(updateRequest.VehicleType),
-		VehicleImageUrl: converter.StringToPgText(updateRequest.VehicleImageURL),
-		IdentifyCardUrl: converter.StringToPgText(updateRequest.IdentifyCardURL),
-		LicensePlate:    converter.StringToPgText(updateRequest.LicensePlate),
+		VehicleType:     converter.StringToPgText(&updateRequest.VehicleType),
+		VehicleImageUrl: converter.StringToPgText(&updateRequest.VehicleImageURL),
+		IdentifyCardUrl: converter.StringToPgText(&updateRequest.IdentifyCardURL),
+		LicensePlate:    converter.StringToPgText(&updateRequest.LicensePlate),
 	}
 
 	// If fields are nil in update request, use current values
-	if updateRequest.VehicleType == nil {
-		params.VehicleType = converter.StringToPgText(currentShipper.VehicleType)
+	if updateRequest.VehicleType == "" {
+		params.VehicleType = converter.StringToPgText(&currentShipper.VehicleType)
 	}
-	if updateRequest.VehicleImageURL == nil {
-		params.VehicleImageUrl = converter.StringToPgText(currentShipper.VehicleImageURL)
+	if updateRequest.VehicleImageURL == "" {
+		params.VehicleImageUrl = converter.StringToPgText(&currentShipper.VehicleImageURL)
 	}
-	if updateRequest.IdentifyCardURL == nil {
-		params.IdentifyCardUrl = converter.StringToPgText(currentShipper.IdentifyCardURL)
+	if updateRequest.IdentifyCardURL == "" {
+		params.IdentifyCardUrl = converter.StringToPgText(&currentShipper.IdentifyCardURL)
 	}
-	if updateRequest.LicensePlate == nil {
-		params.LicensePlate = converter.StringToPgText(currentShipper.LicensePlate)
+	if updateRequest.LicensePlate == "" {
+		params.LicensePlate = converter.StringToPgText(&currentShipper.LicensePlate)
 	}
 
 	result, err := r.queries.UpdateShipperByUserID(ctx, params)
@@ -109,10 +109,10 @@ func (r *shipperRepository) UpdateShipper(ctx context.Context, userID string, up
 
 	return &domain.Shipper{
 		UserID:          converter.PgUUIDToString(result.UserID),
-		VehicleType:     converter.PgTextToStringPtr(result.VehicleType),
-		VehicleImageURL: converter.PgTextToStringPtr(result.VehicleImageUrl),
-		IdentifyCardURL: converter.PgTextToStringPtr(result.IdentifyCardUrl),
-		LicensePlate:    converter.PgTextToStringPtr(result.LicensePlate),
+		VehicleType:     *converter.PgTextToStringPtr(result.VehicleType),
+		VehicleImageURL: *converter.PgTextToStringPtr(result.VehicleImageUrl),
+		IdentifyCardURL: *converter.PgTextToStringPtr(result.IdentifyCardUrl),
+		LicensePlate:    *converter.PgTextToStringPtr(result.LicensePlate),
 	}, nil
 }
 
