@@ -27,12 +27,12 @@ func (s *AddressService) CreateAddress(ctx *gin.Context, userID string, req dto.
 		UserID:    converter.StringToPgUUID(userID),
 		IsDefault: converter.BoolToPgBool(req.IsDefault),
 		Street:    req.Street,
-		Ward:      converter.StringToPgText(req.Ward),
-		District:  converter.StringToPgText(req.District),
-		City:      converter.StringToPgText(req.City),
+		Ward:      converter.StringToPgText(&req.Ward),
+		District:  converter.StringToPgText(&req.District),
+		City:      converter.StringToPgText(&req.City),
 		Country:   converter.StringToPgText(&req.Country),
-		Lat:       converter.Float64ToPgFloat8(req.Lat),
-		Long:      converter.Float64ToPgFloat8(req.Long),
+		Lat:       converter.Float64ToPgFloat8(&req.Lat),
+		Long:      converter.Float64ToPgFloat8(&req.Long),
 	}
 
 	// Tạo address trong database
@@ -150,12 +150,12 @@ func (s *AddressService) UpdateAddress(ctx *gin.Context, userID string, addressI
 		ID:        converter.StringToPgUUID(addressID),
 		IsDefault: converter.BoolToPgBool(req.IsDefault),
 		Street:    req.Street,
-		Ward:      converter.StringToPgText(req.Ward),
-		District:  converter.StringToPgText(req.District),
-		City:      converter.StringToPgText(req.City),
+		Ward:      converter.StringToPgText(&req.Ward),
+		District:  converter.StringToPgText(&req.District),
+		City:      converter.StringToPgText(&req.City),
 		Country:   converter.StringToPgText(&req.Country),
-		Lat:       converter.Float64ToPgFloat8(req.Lat),
-		Long:      converter.Float64ToPgFloat8(req.Long),
+		Lat:       converter.Float64ToPgFloat8(&req.Lat),
+		Long:      converter.Float64ToPgFloat8(&req.Long),
 	}
 
 	// Cập nhật address trong database
