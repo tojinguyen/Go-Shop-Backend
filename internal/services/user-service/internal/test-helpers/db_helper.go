@@ -50,12 +50,14 @@ func SetupTestDatabase(t *testing.T) (*postgresql_infra.PostgreSQLService, func(
 
 	// 3. Connect to the new database
 	dbConfig := &postgresql_infra.DatabaseConfig{
-		Host:     host,
-		Port:     port.Port(),
-		User:     "postgres",
-		Password: "password",
-		Name:     "test-db",
-		SSLMode:  "disable",
+		Host:         host,
+		Port:         port.Port(),
+		User:         "postgres",
+		Password:     "password",
+		Name:         "test-db",
+		SSLMode:      "disable",
+		MaxOpenConns: 10,
+		MaxIdleConns: 5,
 	}
 
 	dbService, err := postgresql_infra.NewPostgreSQLService(dbConfig)
