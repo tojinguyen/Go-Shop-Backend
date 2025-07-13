@@ -13,6 +13,9 @@ WORKDIR /app
 # Copy shared pkg directory first
 COPY internal/pkg ../../pkg
 
+# Copy proto directory
+COPY proto ../../proto
+
 # Copy go mod and sum files from the service directory
 COPY internal/services/shop-service/go.mod internal/services/shop-service/go.sum ./
 
