@@ -55,8 +55,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/toji-dev/go-shop => ../../../
-
-replace github.com/toji-dev/go-shop/internal/pkg => ../../pkg
-
-replace github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1 => ../../../proto/gen/go/proto/shop/v1
+replace (
+	github.com/toji-dev/go-shop => ../../../
+	github.com/toji-dev/go-shop/internal/pkg => ../../pkg
+	github.com/toji-dev/go-shop/proto/gen/go => ../../../proto/gen/go
+)
