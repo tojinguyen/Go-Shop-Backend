@@ -24,6 +24,7 @@ type GetProductsByShopQuery struct {
 }
 
 type UpdateProductRequest struct {
+	ShopID       string  `json:"shop_id" binding:"required,uuid"`
 	Name         string  `json:"name" binding:"required,min=5"`
 	Description  string  `json:"description" binding:"required"`
 	CategoryID   string  `json:"category_id" binding:"required,uuid"`
@@ -31,6 +32,10 @@ type UpdateProductRequest struct {
 	Currency     string  `json:"currency" binding:"required"`
 	ThumbnailURL string  `json:"thumbnail_url" binding:"required,url"`
 	Quantity     int     `json:"quantity" binding:"required,gte=0"`
+}
+
+type DeleteProductRequest struct {
+	ShopID string `json:"shop_id" binding:"required,uuid"`
 }
 
 type ProductResponse struct {

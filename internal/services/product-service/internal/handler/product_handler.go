@@ -154,8 +154,20 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	// 1. Lấy ID từ URL
 	productID := c.Param("id")
 
+	if productID == "" {
+		response.BadRequest(c, "INVALID_ID", "Product ID is required", "")
+		return
+	}
+
+	// 2. Bind và Validate DTO
+	var req dto.DeleteProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "VALIDATION_ERROR", "Invalid request body", err.Error())
+		return
+	}
+
 	// 2. Gọi Application Service
-	err := h.productService.DeleteProduct(c.Request.Context(), productID)
+	err := h.productService.DeleteProduct(c.Request.Context(), productID, req)
 	if err != nil {
 		// 3. Mapping lỗi
 		if strings.Contains(err.Error(), "not found") {

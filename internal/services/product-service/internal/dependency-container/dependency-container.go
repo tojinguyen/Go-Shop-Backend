@@ -126,4 +126,9 @@ func (sc *DependencyContainer) Close() {
 		sc.redis.Close()
 		log.Println("Redis service closed")
 	}
+
+	if sc.shopService != nil {
+		sc.shopService.Close()
+		log.Println("Shop service adapter closed")
+	}
 }

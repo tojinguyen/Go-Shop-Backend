@@ -134,6 +134,29 @@ func (s *ProductService) GetProductsByShop(ctx context.Context, query dto.GetPro
 }
 
 func (s *ProductService) UpdateProduct(ctx context.Context, id string, req dto.UpdateProductRequest) (*product.Product, error) {
+	userIDCtx := ctx.Value("user_id") // Nên định nghĩa một key cụ thể thay vì string
+	if userIDCtx == nil {
+		return nil, errors.New("unauthorized: user_id not found in context")
+	}
+	userID, err := uuid.Parse(userIDCtx.(string))
+	if err != nil {
+		return nil, errors.New("unauthorized: invalid user_id format")
+	}
+
+	shopID, err := uuid.Parse(req.ShopID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid shop id format")
+	}
+
+	isOwner, err := s.shopService.IsShopOwner(ctx, shopID, userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot verify shop ownership: %w", err)
+	}
+	if !isOwner {
+		return nil, errors.New("forbidden: you are not the owner of this shop")
+	}
+
 	// 1. Lấy Aggregate từ Repository
 	existingProduct, err := s.productRepo.GetByID(ctx, id)
 	if err != nil {
@@ -177,7 +200,30 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, req dto.U
 	return existingProduct, nil
 }
 
-func (s *ProductService) DeleteProduct(ctx context.Context, id string) error {
+func (s *ProductService) DeleteProduct(ctx context.Context, id string, req dto.DeleteProductRequest) error {
+	userIDCtx := ctx.Value("user_id") // Nên định nghĩa một key cụ thể thay vì string
+	if userIDCtx == nil {
+		return errors.New("unauthorized: user_id not found in context")
+	}
+	userID, err := uuid.Parse(userIDCtx.(string))
+	if err != nil {
+		return errors.New("unauthorized: invalid user_id format")
+	}
+
+	shopID, err := uuid.Parse(req.ShopID)
+	if err != nil {
+		return fmt.Errorf("invalid shop id format")
+	}
+
+	isOwner, err := s.shopService.IsShopOwner(ctx, shopID, userID)
+
+	if err != nil {
+		return fmt.Errorf("cannot verify shop ownership: %w", err)
+	}
+	if !isOwner {
+		return errors.New("forbidden: you are not the owner of this shop")
+	}
+
 	// 1. Lấy Aggregate từ Repository
 	existingProduct, err := s.productRepo.GetByID(ctx, id)
 	if err != nil {
