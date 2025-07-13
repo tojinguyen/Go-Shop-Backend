@@ -44,24 +44,24 @@ func NewAuthService(
 	}
 }
 
-func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.RegisterResponse, error) {
+func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (*dto.RegisterResponse, error) {
 	// Check if user already exists
 	exists, err := s.userAccountRepo.CheckUserExistsByEmail(ctx, req.Email)
 	if err != nil {
 		log.Println("Error checking user existence:", err)
-		return dto.RegisterResponse{}, fmt.Errorf("failed to check user existence: %w", err)
+		return nil, fmt.Errorf("failed to check user existence: %w", err)
 	}
 
 	if exists {
 		log.Printf("User with email %s already exists", req.Email)
-		return dto.RegisterResponse{}, fmt.Errorf("user with email %s already exists", req.Email)
+		return nil, fmt.Errorf("user with email %s already exists", req.Email)
 	}
 
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password:", err)
-		return dto.RegisterResponse{}, fmt.Errorf("failed to hash password: %w", err)
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	// Create user account parameters
@@ -74,11 +74,11 @@ func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (dto.R
 	userAccount, err := s.userAccountRepo.CreateUserAccount(ctx, params)
 	if err != nil {
 		log.Println("Error creating user account:", err)
-		return dto.RegisterResponse{}, fmt.Errorf("failed to create user account: %w", err)
+		return nil, fmt.Errorf("failed to create user account: %w", err)
 	}
 
 	// Return success response
-	return dto.RegisterResponse{
+	return &dto.RegisterResponse{
 		UserID: userAccount.Id,
 	}, nil
 }

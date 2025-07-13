@@ -67,6 +67,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	// Use AuthService to handle registration
 	res, err := h.authService.Register(c, req)
 
 	if err != nil {
@@ -78,7 +79,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	response.Created(c, "User registered successfully", res)
+	// Construct the final response
+	finalResponse := map[string]interface{}{
+		"userID": res.UserID,
+	}
+
+	response.Created(c, "User registered successfully", finalResponse)
 }
 
 // Login handles user login
