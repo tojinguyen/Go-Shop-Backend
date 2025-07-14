@@ -131,7 +131,7 @@ func main() {
 		c.Next()
 	})
 
-	r.GET("/metrics", prometheusHandler())
+	// r.GET("/metrics", prometheusHandler())
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -237,12 +237,12 @@ func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository) {
 	}
 }
 
-func prometheusHandler() gin.HandlerFunc {
-	h := promhttp.Handler()
-	return func(c *gin.Context) {
-		h.ServeHTTP(c.Writer, c.Request)
-	}
-}
+// func prometheusHandler() gin.HandlerFunc {
+// 	h := promhttp.Handler()
+// 	return func(c *gin.Context) {
+// 		h.ServeHTTP(c.Writer, c.Request)
+// 	}
+// }
 
 func startMetricsServer() {
 	metricsRouter := gin.New()

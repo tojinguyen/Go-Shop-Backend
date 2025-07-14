@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/handlers"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/middleware"
@@ -12,12 +11,12 @@ import (
 )
 
 // Hàm helper để tạo endpoint /metrics
-func prometheusHandler() gin.HandlerFunc {
-	h := promhttp.Handler()
-	return func(c *gin.Context) {
-		h.ServeHTTP(c.Writer, c.Request)
-	}
-}
+// func prometheusHandler() gin.HandlerFunc {
+// 	h := promhttp.Handler()
+// 	return func(c *gin.Context) {
+// 		h.ServeHTTP(c.Writer, c.Request)
+// 	}
+// }
 
 // SetupRoutes sets up all the routes for the user service
 func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
@@ -94,7 +93,7 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 		c.JSON(200, "pong")
 	})
 
-	router.GET("/metrics", prometheusHandler())
+	// router.GET("/metrics", prometheusHandler())
 
 	// API versioning
 	v1 := router.Group("/api/v1")
