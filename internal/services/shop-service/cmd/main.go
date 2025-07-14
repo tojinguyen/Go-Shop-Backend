@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	_ "github.com/toji-dev/go-shop/internal/services/shop-service/docs"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
@@ -28,6 +29,7 @@ import (
 	promotion_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/promotion"
 	shop_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
 	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"google.golang.org/grpc"
 )
 
@@ -108,6 +110,9 @@ func main() {
 	// Create Gin router
 	r := gin.Default()
 
+	p := ginprometheus.NewPrometheus("gin")
+	p.Use(r)
+
 	// Add middleware
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
@@ -125,6 +130,8 @@ func main() {
 
 		c.Next()
 	})
+
+	r.GET("/metrics", prometheusHandler())
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -195,6 +202,8 @@ func main() {
 		deletePromotionAPIHandler,
 	)
 
+	go startMetricsServer()
+
 	go runGrpcServer(cfg, shopRepo)
 
 	// Graceful shutdown
@@ -225,5 +234,21 @@ func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository) {
 	log.Printf("gRPC server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve gRPC: %v", err)
+	}
+}
+
+func prometheusHandler() gin.HandlerFunc {
+	h := promhttp.Handler()
+	return func(c *gin.Context) {
+		h.ServeHTTP(c.Writer, c.Request)
+	}
+}
+
+func startMetricsServer() {
+	metricsRouter := gin.New()
+	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	log.Println("Starting metrics server on :9100")
+	if err := metricsRouter.Run(":9100"); err != nil {
+		log.Fatalf("Failed to start metrics server: %v", err)
 	}
 }

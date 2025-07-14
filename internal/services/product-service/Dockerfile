@@ -1,7 +1,7 @@
 # ===================================================================
 # STAGE 1: Build a Go binary (Giai đoạn "builder")
 # ===================================================================
-FROM golang:1.24.2-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Cài đặt các gói cần thiết
 RUN apk add --no-cache git ca-certificates

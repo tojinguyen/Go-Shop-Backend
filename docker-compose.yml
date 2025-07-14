@@ -83,7 +83,7 @@ services:
       retries: 5
       start_period: 20s
 
-############### Shop Service Section ##############
+############## Shop Service Section ##############
   # Shop Service
   shop-service:
     build:
@@ -125,7 +125,7 @@ services:
       retries: 5
       start_period: 20s
 
-############### Product Service Section ##############
+############## Product Service Section ##############
   # Product Service
   product-service:
     build:
@@ -167,12 +167,82 @@ services:
       retries: 5
       start_period: 20s
 
+############## Monitoring Service Section ##############
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    container_name: ${PROJECT_NAME:-go-shop}-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    networks:
+      - go-shop-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:10.2.2
+    container_name: ${PROJECT_NAME:-go-shop}-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin # Thay đổi trong môi trường production
+    networks:
+      - go-shop-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # =======================================================
+  # EXPORTERS (để giám sát các service không có sẵn metrics)
+  # =======================================================
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    container_name: ${PROJECT_NAME:-go-shop}-nginx-exporter
+    command: -nginx.scrape-uri http://nginx/stub_status # Lấy metrics từ Nginx
+    networks:
+      - go-shop-network
+    depends_on:
+      - nginx
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: ${PROJECT_NAME:-go-shop}-redis-exporter
+    environment:
+      - REDIS_ADDR=redis://redis-cache:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD} # Lấy từ file .env
+    networks:
+      - go-shop-network
+    depends_on:
+      - redis-cache
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: ${PROJECT_NAME:-go-shop}-postgres-exporter
+    environment:
+      # Cung cấp chuỗi kết nối cho TẤT CẢ các database
+      - DATA_SOURCE_NAME=postgresql://postgres:${USER_SERVICE_POSTGRES_PASSWORD}@postgres-user-service:5432/${USER_SERVICE_POSTGRES_DB}?sslmode=disable,postgresql://postgres:${SHOP_SERVICE_POSTGRES_PASSWORD}@postgres-shop-service:5432/${SHOP_SERVICE_POSTGRES_DB}?sslmode=disable,postgresql://postgres:${PRODUCT_SERVICE_POSTGRES_PASSWORD}@postgres-product-service:5432/${PRODUCT_SERVICE_POSTGRES_DB}?sslmode=disable
+    networks:
+      - go-shop-network
+    depends_on:
+      - postgres-user-service
+      - postgres-shop-service
+      - postgres-product-service
+    restart: unless-stopped
+
 volumes:
   product_postgres_data:
   shop_postgres_data:
   user_postgres_data:
   redis_data:
   db_data:
+  grafana_data:
 
 networks:
   go-shop-network:

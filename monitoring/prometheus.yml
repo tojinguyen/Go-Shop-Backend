@@ -1,0 +1,33 @@
+# monitoring/prometheus.yml
+
+global:
+  scrape_interval: 15s # Tần suất cạo metrics mặc định
+
+scrape_configs:
+  # Job 1: Giám sát chính Prometheus
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Job 2: Giám sát các Go microservices (user, shop, product)
+  - job_name: 'go-services'
+    static_configs:
+      - targets:
+          - 'user-service:9100'    # Sẽ expose metrics trên port 9100
+          - 'shop-service:9100'    # Sẽ expose metrics trên port 9100
+          - 'product-service:9100' # Sẽ expose metrics trên port 9100
+
+  # Job 3: Giám sát Nginx API Gateway thông qua exporter
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113'] # Port mặc định của nginx-exporter
+
+  # Job 4: Giám sát Redis thông qua exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121'] # Port mặc định của redis-exporter
+      
+  # Job 5: Giám sát các database PostgreSQL thông qua exporter
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187'] # Port mặc định của postgres-exporter

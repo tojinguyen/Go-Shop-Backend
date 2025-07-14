@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/config"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/product-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/router"
@@ -47,6 +48,8 @@ func main() {
 		IdleTimeout:  dependencyContainer.GetConfig().Server.IdleTimeout,
 	}
 
+	go startMetricsServer()
+
 	go func() {
 		log.Printf("%s starting on %s", dependencyContainer.GetConfig().App.Name, dependencyContainer.GetConfig().Server.GetServerAddress())
 		log.Printf("Environment: %s", dependencyContainer.GetConfig().App.Environment)
@@ -70,4 +73,13 @@ func main() {
 	}
 
 	log.Println("Server exited")
+}
+
+func startMetricsServer() {
+	metricsRouter := gin.New()
+	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	log.Println("Starting metrics server on :9100")
+	if err := metricsRouter.Run(":9100"); err != nil {
+		log.Fatalf("Failed to start metrics server: %v", err)
+	}
 }
