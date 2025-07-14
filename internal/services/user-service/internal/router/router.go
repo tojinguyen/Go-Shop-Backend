@@ -10,14 +10,6 @@ import (
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
-// Hàm helper để tạo endpoint /metrics
-// func prometheusHandler() gin.HandlerFunc {
-// 	h := promhttp.Handler()
-// 	return func(c *gin.Context) {
-// 		h.ServeHTTP(c.Writer, c.Request)
-// 	}
-// }
-
 // SetupRoutes sets up all the routes for the user service
 func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	cfg := serviceContainer.GetConfig()
@@ -92,8 +84,6 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "pong")
 	})
-
-	// router.GET("/metrics", prometheusHandler())
 
 	// API versioning
 	v1 := router.Group("/api/v1")
