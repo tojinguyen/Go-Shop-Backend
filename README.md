@@ -397,28 +397,8 @@ GET    /api/v1/reviews/rating-distribution
 
 ### Notification APIs
 ```
-# Real-time Notifications
-GET    /api/v1/notifications
-PUT    /api/v1/notifications/{id}/read
-DELETE /api/v1/notifications/{id}
-POST   /api/v1/notifications/mark-all-read
-
-# Push Notifications
-POST   /api/v1/notifications/push/register
-DELETE /api/v1/notifications/push/unregister
-GET    /api/v1/notifications/preferences
-PUT    /api/v1/notifications/preferences
-
 # Email & SMS
 POST   /api/v1/notifications/email/send
-POST   /api/v1/notifications/sms/send
-GET    /api/v1/notifications/templates
-POST   /api/v1/notifications/templates
-
-# WebSocket Events
-WS     /api/v1/notifications/live
-WS     /api/v1/orders/{id}/live-updates
-WS     /api/v1/shipping/{order_id}/live-tracking
 ```
 
 
