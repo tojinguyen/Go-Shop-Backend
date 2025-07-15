@@ -29,12 +29,19 @@ func SetupRoutes(r *gin.Engine, dependencyContainer *dependency_container.Depend
 	})
 
 	cartHandler := handler.NewCartHandler(dependencyContainer)
+	cartItemHandler := handler.NewCartItemHandler(dependencyContainer)
 
 	v1 := r.Group("/api/v1")
 	{
 		cart := v1.Group("/cart")
 		{
-			cart.GET("/", cartHandler.GetCart)
+			cart.GET("", cartHandler.GetCart)
+			cart.DELETE("", cartHandler.DeleteCart)
+			cart.POST("/items", cartItemHandler.AddItemToCart)
+			cart.PUT("/items/:id", cartItemHandler.UpdateCartItem)
+			cart.DELETE("/items/:id", cartItemHandler.RemoveCartItem)
+			cart.POST("/apply-promotion", cartHandler.ApplyPromotion)
+			cart.DELETE("/remove-promotion", cartHandler.RemovePromotion)
 		}
 	}
 }

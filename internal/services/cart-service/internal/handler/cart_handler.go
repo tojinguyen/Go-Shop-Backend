@@ -12,9 +12,19 @@ type CartHandler struct {
 
 func NewCartHandler(dependencyContainer *dependency_container.DependencyContainer) *CartHandler {
 	return &CartHandler{
-		cartUseCase: usecase.NewCartUseCase(),
+		cartUseCase: dependencyContainer.GetCartUseCase(),
 	}
 }
 
 func (h *CartHandler) GetCart(c *gin.Context) {
 }
+
+func (h *CartHandler) DeleteCart(c *gin.Context) {
+}
+
+func (h *CartHandler) ApplyPromotion(c *gin.Context) {
+}
+
+func (h *CartHandler) RemovePromotion(c *gin.Context) {
+}
+

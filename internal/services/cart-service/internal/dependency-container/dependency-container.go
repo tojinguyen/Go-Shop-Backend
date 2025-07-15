@@ -8,12 +8,15 @@ import (
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/usecase"
 )
 
 type DependencyContainer struct {
-	config     *config.Config
-	postgreSQL *postgresql_infra.PostgreSQLService
-	redis      *redis_infra.RedisService
+	config          *config.Config
+	postgreSQL      *postgresql_infra.PostgreSQLService
+	redis           *redis_infra.RedisService
+	cartUseCase     usecase.CartUseCase
+	cartItemUseCase usecase.CartItemUseCase
 }
 
 func (sc *DependencyContainer) GetConfig() *config.Config {
@@ -22,6 +25,14 @@ func (sc *DependencyContainer) GetConfig() *config.Config {
 
 func (sc *DependencyContainer) GetRedisService() *redis_infra.RedisService {
 	return sc.redis
+}
+
+func (sc *DependencyContainer) GetCartUseCase() usecase.CartUseCase {
+	return sc.cartUseCase
+}
+
+func (sc *DependencyContainer) GetCartItemUseCase() usecase.CartItemUseCase {
+	return sc.cartItemUseCase
 }
 
 func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
@@ -39,6 +50,9 @@ func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
 		return nil, err
 	}
 
+	// Initialize use cases
+	container.initUseCases()
+
 	return container, nil
 }
 
@@ -52,6 +66,7 @@ func (sc *DependencyContainer) initPostgreSQL() error {
 		Name:         sc.config.Database.DBName,
 		SSLMode:      sc.config.Database.SSLMode,
 		MaxOpenConns: sc.config.Database.MaxOpenConns,
+
 		MaxIdleConns: sc.config.Database.MaxIdleConns,
 		MaxLifetime:  sc.config.Database.MaxLifetime,
 	}
@@ -78,6 +93,12 @@ func (sc *DependencyContainer) initRedis() error {
 	sc.redis = redisService
 	log.Println("Redis service initialized")
 	return nil
+}
+
+func (sc *DependencyContainer) initUseCases() {
+	sc.cartUseCase = usecase.NewCartUseCase()
+	sc.cartItemUseCase = usecase.NewCartItemUseCase()
+	log.Println("Use cases initialized")
 }
 
 func (sc *DependencyContainer) Close() {
