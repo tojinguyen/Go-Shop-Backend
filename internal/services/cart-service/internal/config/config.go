@@ -48,6 +48,10 @@ type AppConfig struct {
 	Environment string `mapstructure:"environment"`
 }
 
+func (a *AppConfig) IsProduction() bool {
+	return a.Environment == "production"
+}
+
 // *** HÀM LOAD ĐƯỢC VIẾT LẠI HOÀN TOÀN ***
 func Load() (*Config, error) {
 	// Giờ đây chúng ta đọc trực tiếp từ biến môi trường
