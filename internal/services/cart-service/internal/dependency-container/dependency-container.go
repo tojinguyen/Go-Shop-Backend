@@ -4,19 +4,25 @@ import (
 	"fmt"
 	"log"
 
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/usecase"
 )
 
 type DependencyContainer struct {
-	config          *config.Config
-	postgreSQL      *postgresql_infra.PostgreSQLService
-	redis           *redis_infra.RedisService
-	cartUseCase     usecase.CartUseCase
-	cartItemUseCase usecase.CartItemUseCase
+	config             *config.Config
+	postgreSQL         *postgresql_infra.PostgreSQLService
+	redis              *redis_infra.RedisService
+	gormDB             *gorm.DB
+	cartRepository     repository.CartRepository
+	cartItemRepository repository.CartItemRepository
+	cartUseCase        usecase.CartUseCase
+	cartItemUseCase    usecase.CartItemUseCase
 }
 
 func (sc *DependencyContainer) GetConfig() *config.Config {
@@ -45,10 +51,18 @@ func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
 		return nil, err
 	}
 
+	// Initialize GORM
+	if err := container.initGORM(); err != nil {
+		return nil, err
+	}
+
 	// Initialize Redis service
 	if err := container.initRedis(); err != nil {
 		return nil, err
 	}
+
+	// Initialize repositories
+	container.initRepositories()
 
 	// Initialize use cases
 	container.initUseCases()
@@ -81,6 +95,18 @@ func (sc *DependencyContainer) initPostgreSQL() error {
 	return nil
 }
 
+func (sc *DependencyContainer) initGORM() error {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		sc.config.Database.Host, sc.config.Database.User, sc.config.Database.Password, sc.config.Database.DBName, sc.config.Database.Port, sc.config.Database.SSLMode)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
+	sc.gormDB = db
+	log.Println("GORM initialized")
+	return nil
+}
+
 // initRedis initializes Redis service
 func (sc *DependencyContainer) initRedis() error {
 	redisService := redis_infra.NewRedisService(sc.config.Redis.Host, sc.config.Redis.Port, sc.config.Redis.Password, sc.config.Redis.DB)
@@ -95,9 +121,15 @@ func (sc *DependencyContainer) initRedis() error {
 	return nil
 }
 
+func (sc *DependencyContainer) initRepositories() {
+	sc.cartRepository = repository.NewCartRepository(sc.gormDB)
+	sc.cartItemRepository = repository.NewCartItemRepository(sc.gormDB)
+	log.Println("Repositories initialized")
+}
+
 func (sc *DependencyContainer) initUseCases() {
-	sc.cartUseCase = usecase.NewCartUseCase()
-	sc.cartItemUseCase = usecase.NewCartItemUseCase()
+	sc.cartUseCase = usecase.NewCartUseCase(sc.cartRepository)
+	sc.cartItemUseCase = usecase.NewCartItemUseCase(sc.cartItemRepository)
 	log.Println("Use cases initialized")
 }
 

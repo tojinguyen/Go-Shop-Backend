@@ -1,6 +1,9 @@
 package usecase
 
+import "github.com/toji-dev/go-shop/internal/services/cart-service/internal/repository"
+
 type cartUseCase struct {
+	repo repository.CartRepository
 }
 
 type CartUseCase interface {
@@ -10,8 +13,8 @@ type CartUseCase interface {
 	RemovePromotion()
 }
 
-func NewCartUseCase() CartUseCase {
-	return &cartUseCase{}
+func NewCartUseCase(repo repository.CartRepository) CartUseCase {
+	return &cartUseCase{repo: repo}
 }
 
 func (uc *cartUseCase) GetCart() {
