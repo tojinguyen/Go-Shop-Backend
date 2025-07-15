@@ -22,6 +22,7 @@ func NewAPIHandler(handler *Handler) *APIHandler {
 
 // CreateShop handles POST /shops
 func (h *APIHandler) CreateShop(c *gin.Context) {
+	log.Println("CreateShop API called")
 	var req CreateShopRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, constant.ErrorCodeValidation, "Invalid request data", err.Error())

@@ -1,11 +1,14 @@
-FROM nginx:alpine
+FROM nginx:1.25-alpine
 
+# Cài module njs
+RUN apk add --no-cache nginx-mod-http-js
+
+# Dọn file default
 RUN rm -f /etc/nginx/conf.d/*
 
-# Copy cấu hình
+# Load module trong nginx.conf (bắt buộc)
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY conf.d/ /etc/nginx/conf.d/
 COPY auth.js /etc/nginx/auth.js
 
-# Expose port
 EXPOSE 80
