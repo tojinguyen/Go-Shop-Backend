@@ -23,7 +23,7 @@ CREATE TABLE products (
     currency VARCHAR(3) NOT NULL DEFAULT 'USD',
     quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
     reserve_quantity INTEGER NOT NULL DEFAULT 0 CHECK (reserve_quantity >= 0),
-    product_status product_status NOT NULL DEFAULT 'DRAFT',
+    product_status product_status NOT NULL DEFAULT 'ACTIVE',
     sold_count INTEGER NOT NULL DEFAULT 0 CHECK (sold_count >= 0),
     rating_avg NUMERIC(3, 2) NOT NULL DEFAULT 0 CHECK (rating_avg >= 0 AND rating_avg <= 5),
     total_reviews INTEGER NOT NULL DEFAULT 0 CHECK (total_reviews >= 0),
