@@ -198,17 +198,12 @@ POST   /api/v1/products/{id}/variants
 ### Shopping Cart APIs
 ```
 GET    /api/v1/cart
+DELETE /api/v1/cart
 POST   /api/v1/cart/items
 PUT    /api/v1/cart/items/{id}
 DELETE /api/v1/cart/items/{id}
-DELETE /api/v1/cart/clear
-GET    /api/v1/cart/summary
-POST   /api/v1/cart/save
-GET    /api/v1/cart/saved
-POST   /api/v1/cart/restore/{saved_cart_id}
-GET    /api/v1/cart/calculate-total
-POST   /api/v1/cart/apply-coupon
-DELETE /api/v1/cart/remove-coupon
+POST   /api/v1/cart/apply-promotion
+DELETE /api/v1/cart/remove-promotion
 ```
 
 ### Order Management APIs
