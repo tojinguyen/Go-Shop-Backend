@@ -7,7 +7,7 @@ CREATE TABLE cart_items (
     product_id UUID NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 )
 -- +goose StatementEnd
 
