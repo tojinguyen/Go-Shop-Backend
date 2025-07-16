@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	common_middleware "github.com/toji-dev/go-shop/internal/pkg/middleware"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/handlers"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/middleware"
@@ -30,6 +31,8 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	// Global middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+	router.Use(common_middleware.ErrorHandler())
+
 	// CORS middleware with configuration
 	router.Use(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
