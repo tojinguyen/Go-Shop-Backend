@@ -84,7 +84,7 @@ func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID,
 	// Sử dụng transaction để đảm bảo 2 câu query là nhất quán
 	tx, err := r.db.BeginTransaction(ctx)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, 0, apperror.New(apperror.CodeDatabaseError, "failed to begin transaction", apperror.TypeInternal).Wrap(err)
 	}
 	defer tx.Rollback(ctx) // Rollback nếu có lỗi xảy ra
 
@@ -93,7 +93,7 @@ func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID,
 	// 1. Lấy tổng số sản phẩm
 	totalCount, err := qtx.CountProductsByShop(ctx, pgShopUUID)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count products by shop: %w", err)
+		return nil, 0, apperror.New(apperror.CodeDatabaseError, "failed to count products by shop", apperror.TypeInternal).Wrap(err)
 	}
 
 	if totalCount == 0 {
@@ -108,7 +108,7 @@ func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID,
 	}
 	sqlcProducts, err := qtx.GetListProductsByShop(ctx, params)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get list of products by shop: %w", err)
+		return nil, 0, apperror.New(apperror.CodeDatabaseError, "failed to get products by shop", apperror.TypeInternal).Wrap(err)
 	}
 
 	// Commit transaction
@@ -121,9 +121,7 @@ func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID,
 	for _, p := range sqlcProducts {
 		domainProduct, err := toDomain(&p)
 		if err != nil {
-			// Có thể log lỗi và bỏ qua sản phẩm này hoặc trả về lỗi ngay lập tức
-			// Tạm thời trả về lỗi để đảm bảo tính toàn vẹn
-			return nil, 0, fmt.Errorf("failed to convert product %s: %w", p.ID, err)
+			return nil, 0, apperror.New(apperror.CodeConversionError, "failed to convert db model to domain", apperror.TypeInternal).Wrap(err)
 		}
 		domainProducts = append(domainProducts, domainProduct)
 	}
@@ -146,7 +144,7 @@ func (r *pgProductRepository) Update(ctx context.Context, p *product.Product) er
 
 	_, err := r.queries.UpdateProduct(ctx, params)
 	if err != nil {
-		return fmt.Errorf("failed to update product in db: %w", err)
+		return apperror.New(apperror.CodeDatabaseError, "failed to update product in db", apperror.TypeInternal).Wrap(err)
 	}
 
 	return nil
@@ -155,14 +153,14 @@ func (r *pgProductRepository) Update(ctx context.Context, p *product.Product) er
 func (r *pgProductRepository) Delete(ctx context.Context, id string) error {
 	productUUID, err := uuid.Parse(id)
 	if err != nil {
-		return fmt.Errorf("invalid uuid format for repository: %w", err)
+		return apperror.New(apperror.CodeConversionError, "invalid uuid format for repository", apperror.TypeInternal).Wrap(err)
 	}
 	pgUUID := converter.UUIDToPgUUID(productUUID)
 
 	// Gọi hàm SoftDeleteProduct đã được sqlc generate
 	err = r.queries.SoftDeleteProduct(ctx, pgUUID)
 	if err != nil {
-		return fmt.Errorf("failed to soft delete product in db: %w", err)
+		return apperror.New(apperror.CodeDatabaseError, "failed to delete product from db", apperror.TypeInternal).Wrap(err)
 	}
 
 	return nil
@@ -174,7 +172,7 @@ func toDomain(p *sqlc.Product) (*product.Product, error) {
 		p.Currency,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("invalid price data from db: %w", err)
+		return nil, apperror.New(apperror.CodeConversionError, "failed to convert price", apperror.TypeInternal).Wrap(err)
 	}
 
 	return product.Reconstitute(
