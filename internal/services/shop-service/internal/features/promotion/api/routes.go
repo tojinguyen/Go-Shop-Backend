@@ -18,7 +18,7 @@ func RegisterPromotionRoutes(
 	deletePromoAPIHandler *deletepromotion.APIHandler,
 ) {
 	// Shop management routes
-	promotions := r.Group("/api/v1/shops/{id}/promotions")
+	promotions := r.Group("/api/v1/shops/:id/promotions")
 	{
 		promotions.POST("", createPromoAPIHandler.CreatePromotion)
 		promotions.GET("", getPromosAPIHandler.GetPromotions)

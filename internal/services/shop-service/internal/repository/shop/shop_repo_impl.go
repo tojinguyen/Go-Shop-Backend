@@ -70,6 +70,12 @@ func (r *PostgresShopRepository) GetShopByID(ctx context.Context, shopID string)
 		return nil, fmt.Errorf("failed to get shop by ID: %w", err)
 	}
 
+	var rating float64
+	ratingPtr := converter.PgNumericToFloat64Ptr(shop.Rating)
+	if ratingPtr != nil {
+		rating = *ratingPtr
+	}
+
 	return &domain.Shop{
 		ID:              converter.PgUUIDToUUID(shop.ID),
 		OwnerID:         converter.PgUUIDToUUID(shop.OwnerID),
@@ -80,7 +86,7 @@ func (r *PostgresShopRepository) GetShopByID(ctx context.Context, shopID string)
 		AddressID:       converter.PgUUIDToUUID(shop.AddressID),
 		Phone:           shop.Phone,
 		Email:           shop.Email,
-		Rating:          *converter.PgNumericToFloat64Ptr(shop.Rating),
+		Rating:          rating,
 		ActiveAt:        converter.PgTimeToTimePtr(shop.ActiveAt),
 		BannedAt:        converter.PgTimeToTimePtr(shop.BannedAt),
 		CreatedAt:       shop.CreatedAt.Time,
@@ -100,6 +106,12 @@ func (r *PostgresShopRepository) GetShopsByOwnerID(ctx context.Context, ownerID 
 
 	result := make([]*domain.Shop, len(shops))
 	for i, shop := range shops {
+		var rating float64
+		ratingPtr := converter.PgNumericToFloat64Ptr(shop.Rating)
+		if ratingPtr != nil {
+			rating = *ratingPtr
+		}
+
 		result[i] = &domain.Shop{
 			ID:              converter.PgUUIDToUUID(shop.ID),
 			OwnerID:         converter.PgUUIDToUUID(shop.OwnerID),
@@ -110,7 +122,7 @@ func (r *PostgresShopRepository) GetShopsByOwnerID(ctx context.Context, ownerID 
 			AddressID:       converter.PgUUIDToUUID(shop.AddressID),
 			Phone:           shop.Phone,
 			Email:           shop.Email,
-			Rating:          *converter.PgNumericToFloat64Ptr(shop.Rating),
+			Rating:          rating,
 			ActiveAt:        converter.PgTimeToTimePtr(shop.ActiveAt),
 			BannedAt:        converter.PgTimeToTimePtr(shop.BannedAt),
 			CreatedAt:       shop.CreatedAt.Time,

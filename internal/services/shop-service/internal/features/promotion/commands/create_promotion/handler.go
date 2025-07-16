@@ -3,6 +3,7 @@ package createpromotion
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/domain"
@@ -18,6 +19,7 @@ func NewHandler(promoRepo repository.PromotionRepository) *Handler {
 }
 
 func (h *Handler) Handle(ctx context.Context, shopID uuid.UUID, req CreatePromotionRequest) (*domain.Promotion, error) {
+	log.Printf("Creating promotion for shop ID: %f", req.DiscountValue)
 	promo := &domain.Promotion{
 		ID:                uuid.New(),
 		ShopID:            shopID,

@@ -1,6 +1,8 @@
 package converter
 
 import (
+	"log"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -123,25 +125,48 @@ func Float64ToPgFloat8(f *float64) pgtype.Float8 {
 	return pgtype.Float8{}
 }
 
-// Convert float64 to pgtype.Numeric
 func Float64ToPgNumeric(f float64) pgtype.Numeric {
-	var numeric pgtype.Numeric
-	_ = numeric.Scan(f)
-	return numeric
+	var n pgtype.Numeric
+	// Convert float64 to string to match pgtype.Numeric's Scan expectations
+	str := strconv.FormatFloat(f, 'f', -1, 64)
+	err := n.Scan(str)
+	if err != nil {
+		log.Printf("Error converting float64 (%v) to pgtype.Numeric: %v", f, err)
+		return pgtype.Numeric{Valid: false} // Return an explicit invalid/null numeric
+	}
+	return n
 }
 
-// Add this to your converter package
+// Float64PtrToPgNumeric converts a *float64 to a pgtype.Numeric.
+// A nil pointer becomes an invalid (NULL) numeric.
+func Float64PtrToPgNumeric(f *float64) pgtype.Numeric {
+	if f == nil {
+		return pgtype.Numeric{Valid: false}
+	}
+	return Float64ToPgNumeric(*f)
+}
+
 func PgNumericToFloat64Ptr(numeric pgtype.Numeric) *float64 {
 	if !numeric.Valid {
 		return nil
 	}
 
-	float64Val, err := numeric.Float64Value()
+	f, err := numeric.Float64Value()
 	if err != nil {
+		log.Printf("Error converting pgtype.Numeric to float64: %v", err)
 		return nil
 	}
+	return &f.Float64
+}
 
-	return PgFloat8ToFloat64Ptr(float64Val)
+// PgNumericToFloat64 converts a pgtype.Numeric to a float64.
+// It returns 0 if the numeric is NULL or conversion fails.
+func PgNumericToFloat64(numeric pgtype.Numeric) float64 {
+	ptr := PgNumericToFloat64Ptr(numeric)
+	if ptr == nil {
+		return 0
+	}
+	return *ptr
 }
 
 // Time pointer conversions

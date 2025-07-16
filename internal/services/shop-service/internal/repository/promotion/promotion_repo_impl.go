@@ -25,13 +25,15 @@ func NewPostgresPromotionRepository(db *postgresql_infra.PostgreSQLService) Prom
 }
 
 func (r *PostgresPromotionRepository) Create(ctx context.Context, p *domain.Promotion) error {
+	log.Printf("Creating promotion: %f ", p.DiscountValue)
+
 	params := sqlc.CreatePromotionParams{
 		ID:                converter.UUIDToPgUUID(p.ID),
 		ShopID:            converter.UUIDToPgUUID(p.ShopID),
 		PromotionName:     p.PromotionName,
 		PromotionType:     sqlc.PromotionType(p.PromotionType),
 		DiscountValue:     converter.Float64ToPgNumeric(p.DiscountValue),
-		MaxDiscountAmount: converter.Float64ToPgNumeric(*p.MaxDiscountAmount),
+		MaxDiscountAmount: converter.Float64PtrToPgNumeric(p.MaxDiscountAmount),
 		MinPurchaseAmount: converter.Float64ToPgNumeric(p.MinPurchaseAmount),
 		UsageLimitPerUser: converter.Int32ToPgInt4(p.UsageLimitPerUser),
 		StartTime:         converter.TimeToPgTime(p.StartTime),
@@ -76,7 +78,7 @@ func (r *PostgresPromotionRepository) Update(ctx context.Context, p *domain.Prom
 		PromotionName:     p.PromotionName,
 		PromotionType:     sqlc.PromotionType(p.PromotionType),
 		DiscountValue:     converter.Float64ToPgNumeric(p.DiscountValue),
-		MaxDiscountAmount: converter.Float64ToPgNumeric(*p.MaxDiscountAmount),
+		MaxDiscountAmount: converter.Float64PtrToPgNumeric(p.MaxDiscountAmount),
 		MinPurchaseAmount: converter.Float64ToPgNumeric(p.MinPurchaseAmount),
 		UsageLimitPerUser: converter.Int32ToPgInt4(p.UsageLimitPerUser),
 		StartTime:         converter.TimeToPgTime(p.StartTime),
@@ -98,9 +100,9 @@ func (r *PostgresPromotionRepository) toDomain(p *sqlc.ShopPromotion) *domain.Pr
 		ShopID:            converter.PgUUIDToUUID(p.ShopID),
 		PromotionName:     p.PromotionName,
 		PromotionType:     domain.PromotionType(p.PromotionType),
-		DiscountValue:     *converter.PgNumericToFloat64Ptr(p.DiscountValue),
+		DiscountValue:     converter.PgNumericToFloat64(p.DiscountValue),
 		MaxDiscountAmount: converter.PgNumericToFloat64Ptr(p.MaxDiscountAmount),
-		MinPurchaseAmount: *converter.PgNumericToFloat64Ptr(p.MinPurchaseAmount),
+		MinPurchaseAmount: converter.PgNumericToFloat64(p.MinPurchaseAmount),
 		UsageLimitPerUser: *converter.PgInt4ToInt32Ptr(p.UsageLimitPerUser),
 		StartTime:         p.StartTime.Time,
 		EndTime:           p.EndTime.Time,
