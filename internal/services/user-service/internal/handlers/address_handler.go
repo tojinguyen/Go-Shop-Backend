@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
@@ -35,7 +36,7 @@ func NewAddressHandler(sc container.ServiceContainer) *AddressHandler {
 // @Router /addresses [get]
 func (h *AddressHandler) GetAddresses(c *gin.Context) {
 	var userID string
-	if userIDParam, exists := c.Get("user_id"); exists {
+	if userIDParam, exists := c.Get(constant.ContextKeyUserID); exists {
 		userID = userIDParam.(string)
 	} else {
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
@@ -111,7 +112,7 @@ func (h *AddressHandler) AddAddress(c *gin.Context) {
 	}
 
 	var userID string
-	if userIDParam, exists := c.Get("user_id"); exists {
+	if userIDParam, exists := c.Get(constant.ContextKeyUserID); exists {
 		userID = userIDParam.(string)
 	} else {
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
@@ -161,7 +162,7 @@ func (h *AddressHandler) UpdateAddress(c *gin.Context) {
 	}
 
 	var userID string
-	if userIDParam, exists := c.Get("user_id"); exists {
+	if userIDParam, exists := c.Get(constant.ContextKeyUserID); exists {
 		userID = userIDParam.(string)
 	} else {
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
@@ -203,7 +204,7 @@ func (h *AddressHandler) DeleteAddress(c *gin.Context) {
 	}
 
 	var userID string
-	if userIDParam, exists := c.Get("user_id"); exists {
+	if userIDParam, exists := c.Get(constant.ContextKeyUserID); exists {
 		userID = userIDParam.(string)
 	} else {
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
@@ -245,7 +246,7 @@ func (h *AddressHandler) SetDefaultAddress(c *gin.Context) {
 	}
 
 	var userID string
-	if userIDParam, exists := c.Get("user_id"); exists {
+	if userIDParam, exists := c.Get(constant.ContextKeyUserID); exists {
 		userID = userIDParam.(string)
 	} else {
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")

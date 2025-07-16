@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	product "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
@@ -34,7 +35,7 @@ func NewProductService(productRepo repository.ProductRepository, redisService *r
 
 func (s *ProductService) CreateProduct(ctx context.Context, req *dto.CreateProductRequest) (*product.Product, error) {
 	// Lấy user_id từ context (giả sử đã được auth middleware thêm vào)
-	userIDCtx := ctx.Value("user_id") // Nên định nghĩa một key cụ thể thay vì string
+	userIDCtx := ctx.Value(constant.ContextKeyUserID) // Nên định nghĩa một key cụ thể thay vì string
 	if userIDCtx == nil {
 		return nil, errors.New("unauthorized: user_id not found in context")
 	}
@@ -134,7 +135,7 @@ func (s *ProductService) GetProductsByShop(ctx context.Context, query dto.GetPro
 }
 
 func (s *ProductService) UpdateProduct(ctx context.Context, id string, req dto.UpdateProductRequest) (*product.Product, error) {
-	userIDCtx := ctx.Value("user_id") // Nên định nghĩa một key cụ thể thay vì string
+	userIDCtx := ctx.Value(constant.ContextKeyUserID) // Nên định nghĩa một key cụ thể thay vì string
 	if userIDCtx == nil {
 		return nil, errors.New("unauthorized: user_id not found in context")
 	}
@@ -201,7 +202,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, req dto.U
 }
 
 func (s *ProductService) DeleteProduct(ctx context.Context, id string, req dto.DeleteProductRequest) error {
-	userIDCtx := ctx.Value("user_id") // Nên định nghĩa một key cụ thể thay vì string
+	userIDCtx := ctx.Value(constant.ContextKeyUserID) // Nên định nghĩa một key cụ thể thay vì string
 	if userIDCtx == nil {
 		return errors.New("unauthorized: user_id not found in context")
 	}

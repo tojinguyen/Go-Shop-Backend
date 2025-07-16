@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
@@ -42,7 +43,7 @@ func (h *ShipperHandler) RegisterShipper(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("user_id")
+	userID, exists := c.Get(constant.ContextKeyUserID)
 	if !exists {
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
 		return
@@ -71,7 +72,7 @@ func (h *ShipperHandler) RegisterShipper(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal Server Error"
 // @Router /shipper/profile [get]
 func (h *ShipperHandler) GetShipperProfile(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	userID, exists := c.Get(constant.ContextKeyUserID)
 	if !exists {
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
 		return
@@ -145,7 +146,7 @@ func (h *ShipperHandler) UpdateShipperProfile(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("user_id")
+	userID, exists := c.Get(constant.ContextKeyUserID)
 	if !exists {
 		log.Println("User ID not found in context")
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
@@ -174,7 +175,7 @@ func (h *ShipperHandler) UpdateShipperProfile(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal Server Error"
 // @Router /shipper/profile [delete]
 func (h *ShipperHandler) DeleteShipperProfile(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	userID, exists := c.Get(constant.ContextKeyUserID)
 	if !exists {
 		response.Unauthorized(c, "UNAUTHORIZED", "User ID not found in context")
 		return

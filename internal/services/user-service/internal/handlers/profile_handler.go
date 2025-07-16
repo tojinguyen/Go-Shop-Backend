@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
@@ -80,7 +81,7 @@ func (h *ProfileHandler) CreateProfile(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal Server Error"
 // @Router /profile [get]
 func (h *ProfileHandler) GetProfile(c *gin.Context) {
-	userIDRaw, exists := c.Get("user_id")
+	userIDRaw, exists := c.Get(constant.ContextKeyUserID)
 	if !exists {
 		response.Unauthorized(c, "USER_NOT_AUTHENTICATED", "User not authenticated")
 		return
@@ -172,7 +173,7 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 	}
 
 	// Check if the requesting user is viewing their own profile
-	currentUserID, exists := c.Get("user_id")
+	currentUserID, exists := c.Get(constant.ContextKeyUserID)
 	isOwnProfile := exists && currentUserID == userID
 
 	if isOwnProfile {
@@ -217,7 +218,7 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal Server Error"
 // @Router /profile [delete]
 func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
-	userIDRaw, exists := c.Get("user_id")
+	userIDRaw, exists := c.Get(constant.ContextKeyUserID)
 	if !exists {
 		response.Unauthorized(c, "USER_NOT_AUTHENTICATED", "User not authenticated")
 		return
@@ -240,7 +241,7 @@ func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
 	}
 
 	response.Success(c, "Profile deleted successfully", map[string]string{
-		"user_id": userIDStr,
+		constant.ContextKeyUserID: userIDStr,
 		"status":  "deleted",
 	})
 }

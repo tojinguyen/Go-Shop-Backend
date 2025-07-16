@@ -2,6 +2,7 @@ package getshops
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 )
 
@@ -23,7 +24,7 @@ func (h *APIHandler) GetShops(c *gin.Context) {
 	ownerID := c.Query("owner_id")
 	if ownerID == "" {
 		// If not provided in query, try to get from authenticated user context
-		if userID, exists := c.Get("user_id"); exists {
+		if userID, exists := c.Get(constant.ContextKeyUserID); exists {
 			ownerID = userID.(string)
 		} else {
 			response.BadRequest(c, "OWNER_ID_REQUIRED", "Owner ID is required", "")

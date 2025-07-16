@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	errorConstants "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/errors"
 	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 )
@@ -71,9 +72,9 @@ func AuthMiddleware(jwtSvc jwtService.JwtService) gin.HandlerFunc {
 		}
 
 		// Set user information in context
-		c.Set("user_id", claims.UserId)
-		c.Set("user_email", claims.Email)
-		c.Set("user_role", claims.Role)
+		c.Set(constant.ContextKeyUserID, claims.UserId)
+		c.Set(constant.ContextKeyUserEmail, claims.Email)
+		c.Set(constant.ContextKeyUserRole, claims.Role)
 		c.Set("user_claims", claims)
 
 		c.Next()
@@ -155,9 +156,9 @@ func AuthMiddlewareWithBlacklist(jwtSvc jwtService.JwtService, authService inter
 		}
 
 		// Set user information in context
-		c.Set("user_id", claims.UserId)
-		c.Set("user_email", claims.Email)
-		c.Set("user_role", claims.Role)
+		c.Set(constant.ContextKeyUserID, claims.UserId)
+		c.Set(constant.ContextKeyUserEmail, claims.Email)
+		c.Set(constant.ContextKeyUserRole, claims.Role)
 		c.Set("user_claims", claims)
 		c.Set("token", token) // Store token for potential use in handlers
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
@@ -24,7 +25,7 @@ func NewUserService(userProfileRepo repository.UserProfileRepository) *UserServi
 }
 
 func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileRequest) (domain.UserProfile, error) {
-	userIDRaw, exists := ctx.Get("user_id")
+	userIDRaw, exists := ctx.Get(constant.ContextKeyUserID)
 	if !exists {
 		log.Printf("user ID not found in context")
 		return domain.UserProfile{}, fmt.Errorf("user ID not found in context")
@@ -40,7 +41,7 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileR
 		return domain.UserProfile{}, fmt.Errorf("invalid user ID format: %w", err)
 	}
 
-	roleRaw, exists := ctx.Get("user_role")
+	roleRaw, exists := ctx.Get(constant.ContextKeyUserRole)
 	if !exists {
 		log.Printf("user role not found in context")
 		return domain.UserProfile{}, fmt.Errorf("user role not found in context")
@@ -51,7 +52,7 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileR
 		return domain.UserProfile{}, fmt.Errorf("user role is not a string")
 	}
 
-	email, exists := ctx.Get("user_email")
+	email, exists := ctx.Get(constant.ContextKeyUserEmail)
 	if !exists {
 		log.Printf("email not found in context")
 		return domain.UserProfile{}, fmt.Errorf("email not found in context: %w", err)
@@ -92,7 +93,7 @@ func (s *UserService) GetProfile(ctx *gin.Context, userID string) (domain.UserPr
 }
 
 func (s *UserService) UpdateProfile(ctx *gin.Context, req dto.UpdateUserProfileRequest) (domain.UserProfile, error) {
-	userIDRaw, exists := ctx.Get("user_id")
+	userIDRaw, exists := ctx.Get(constant.ContextKeyUserID)
 	if !exists {
 		return domain.UserProfile{}, fmt.Errorf("user ID not found in context")
 	}
