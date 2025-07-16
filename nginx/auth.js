@@ -3,11 +3,15 @@ function verifyToken(r) {
         r.error("[auth.js] " + msg);
     }
 
-    var secret = r.variables.jwt_secret_key;
+    log("Auth subrequest started.");
+    var secret = process.env.JWT_SECRET_KEY;
+
     if (!secret) {
-        log("JWT_SECRET_KEY is not set.");
-        return r.return(500, "Server error");
+        log("FATAL: Environment variable JWT_SECRET_KEY is not accessible inside NJS.");
+        return r.return(500, "Server Configuration Error: JWT Secret not found");
     }
+
+    log("Secret key loaded via process.env.");
 
     var authHeader = r.headersIn['Authorization'];
     if (!authHeader || authHeader.indexOf("Bearer ") !== 0) {
@@ -50,12 +54,25 @@ function verifyToken(r) {
 
     // Nếu muốn verify signature, nên chuyển về gateway Go hoặc node middleware.
 
-    r.headersOut['X-User-ID'] = payload.UserId;
-    r.headersOut['X-User-Role'] = payload.Role;
-    r.headersOut['X-User-Email'] = payload.Email;
+    r.variables.auth_user_id = payload.UserId;
+    r.variables.auth_user_role = payload.Role;
+    r.variables.auth_user_email = payload.Email;
 
-    log("Token verified");
+    log("SUCCESS: Token verified. UserID: " + payload.UserId);
+
     return r.return(204);
 }
 
-export default { verifyToken };
+function getUserId(r) {
+    return r.variables.auth_user_id || ""; 
+}
+
+function getRole(r) {
+    return r.variables.auth_user_role || "";
+}
+
+function getEmail(r) {
+    return r.variables.auth_user_email || "";
+}
+
+export default { verifyToken, getUserId, getRole, getEmail };
