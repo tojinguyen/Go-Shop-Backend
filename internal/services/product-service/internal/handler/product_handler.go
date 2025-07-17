@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -28,13 +29,17 @@ func NewProductHandler(repo repository.ProductRepository, redis *redis_infra.Red
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	var req dto.CreateProductRequest
 
+	log.Printf("Creating product with request: %+v", req)
+
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Error binding request: %v", err)
 		response.BadRequest(c, "VALIDATION_ERROR", "Invalid request body", err.Error())
 		return
 	}
 
 	productResult, err := h.productService.CreateProduct(c.Request.Context(), &req)
 	if err != nil {
+		log.Printf("Error creating product: %v", err)
 		response.InternalServerError(c, "INTERNAL_ERROR", "Failed to create product")
 		return
 	}

@@ -83,18 +83,18 @@ func LoadConfig() (*Config, error) {
 
 	config := &Config{
 		Server: ServerConfig{
-			Host:         getEnv("SHOP_SERVICE_SERVICE_HOST", "0.0.0.0"),
-			Port:         getEnv("SHOP_SERVICE_SERVICE_PORT", "8081"),
+			Host:         getEnv("PRODUCT_SERVICE_SERVICE_HOST", "0.0.0.0"), // SỬA Ở ĐÂY
+			Port:         getEnv("PRODUCT_SERVICE_SERVICE_PORT", "8082"),    // SỬA Ở ĐÂY
 			ReadTimeout:  getDurationEnv("SERVER_READ_TIMEOUT", 10*time.Second),
 			WriteTimeout: getDurationEnv("SERVER_WRITE_TIMEOUT", 10*time.Second),
 			IdleTimeout:  getDurationEnv("SERVER_IDLE_TIMEOUT", 60*time.Second),
 		},
 		Database: DatabaseConfig{
-			Host:         getEnv("SHOP_SERVICE_POSTGRES_HOST", "localhost"),
-			Port:         getEnv("SHOP_SERVICE_POSTGRES_PORT_INTERNAL", "6001"),
-			User:         getEnv("SHOP_SERVICE_POSTGRES_USER", "postgres"),
-			Password:     getEnv("SHOP_SERVICE_POSTGRES_PASSWORD", ""),
-			DBName:       getEnv("SHOP_SERVICE_POSTGRES_DB", "shop_service_go_shop_db"),
+			Host:         getEnv("PRODUCT_SERVICE_POSTGRES_HOST", "localhost"),                // SỬA Ở ĐÂY
+			Port:         getEnv("PRODUCT_SERVICE_POSTGRES_PORT_INTERNAL", "6002"),            // SỬA Ở ĐÂY
+			User:         getEnv("PRODUCT_SERVICE_POSTGRES_USER", "postgres"),                 // SỬA Ở ĐÂY
+			Password:     getEnv("PRODUCT_SERVICE_POSTGRES_PASSWORD", ""),                     // SỬA Ở ĐÂY
+			DBName:       getEnv("PRODUCT_SERVICE_POSTGRES_DB", "product_service_go_shop_db"), // SỬA Ở ĐÂY
 			SSLMode:      getEnv("DB_SSL_MODE", "disable"),
 			MaxOpenConns: getIntEnv("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns: getIntEnv("DB_MAX_IDLE_CONNS", 25),
@@ -107,18 +107,18 @@ func LoadConfig() (*Config, error) {
 			DB:       getIntEnv("REDIS_DB", 0),
 		},
 		CORS: CORSConfig{
-			AllowOrigins: getStringSliceEnv("SHOP_SERVICE_CORS_ALLOWED_ORIGINS", []string{"*"}),
+			AllowOrigins: getStringSliceEnv("PRODUCT_SERVICE_CORS_ALLOWED_ORIGINS", []string{"*"}), // SỬA Ở ĐÂY
 			AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders: []string{"*"},
 		},
 		App: AppConfig{
-			Name:        getEnv("SHOP_SERVICE_SERVICE_NAME", "shop-service"),
+			Name:        getEnv("PRODUCT_SERVICE_SERVICE_NAME", "product-service"), // SỬA Ở ĐÂY
 			Version:     getEnv("APP_VERSION", "1.0.0"),
 			Environment: getEnv("ENVIRONMENT", "development"),
 			LogLevel:    getEnv("LOG_LEVEL", "info"),
 		},
 		ShopService: ShopServiceConfig{
-			Address: getEnv("SHOP_SERVICE_ADDRESS", "localhost:50051"),
+			Address: getEnv("SHOP_SERVICE_GRPC_ADDRESS", "shop-service:50051"), // SỬA Ở ĐÂY: Dùng biến môi trường mới và đúng service name
 		},
 	}
 

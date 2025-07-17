@@ -7,13 +7,6 @@ import (
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
-// func prometheusHandler() gin.HandlerFunc {
-// 	h := promhttp.Handler()
-// 	return func(c *gin.Context) {
-// 		h.ServeHTTP(c.Writer, c.Request)
-// 	}
-// }
-
 func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.DependencyContainer) *gin.Engine {
 	p := ginprometheus.NewPrometheus("gin")
 	p.Use(r)
@@ -26,8 +19,6 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 		serviceContainer.GetRedisService(),
 		serviceContainer.GetShopServiceAdapter(),
 	)
-
-	// r.GET("/metrics", prometheusHandler())
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "pong")
