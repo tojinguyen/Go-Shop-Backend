@@ -1,9 +1,12 @@
 package repository
 
 import (
-	"gorm.io/gorm"
+	"log"
+
 	"github.com/google/uuid"
+	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/domain"
+	"gorm.io/gorm"
 )
 
 type CartRepository interface {
@@ -23,7 +26,8 @@ func NewCartRepository(db *gorm.DB) CartRepository {
 func (r *cartRepository) GetCartByUserID(userID uuid.UUID) (*domain.Cart, error) {
 	var cart domain.Cart
 	if err := r.db.Preload("Items").First(&cart, "user_id = ?", userID).Error; err != nil {
-		return nil, err
+		log.Printf("Error fetching cart for user %s: %v", userID, err)
+		return nil, apperror.NewNotFound("cart", userID.String())
 	}
 	return &cart, nil
 }
