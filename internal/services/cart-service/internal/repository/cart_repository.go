@@ -27,7 +27,10 @@ func (r *cartRepository) GetCartByUserID(userID uuid.UUID) (*domain.Cart, error)
 	var cart domain.Cart
 	if err := r.db.Preload("Items").First(&cart, "user_id = ?", userID).Error; err != nil {
 		log.Printf("Error fetching cart for user %s: %v", userID, err)
-		return nil, apperror.NewNotFound("cart", userID.String())
+		if err == gorm.ErrRecordNotFound {
+			return nil, apperror.NewNotFound("cart", userID.String())
+		}
+		return nil, apperror.NewInternal(string(apperror.CodeDatabaseError))
 	}
 	return &cart, nil
 }

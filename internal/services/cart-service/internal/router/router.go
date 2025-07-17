@@ -40,8 +40,6 @@ func SetupRoutes(r *gin.Engine, dependencyContainer *dependency_container.Depend
 			cart.POST("/items", cartItemHandler.AddItemToCart)
 			cart.PUT("/items/:id", cartItemHandler.UpdateCartItem)
 			cart.DELETE("/items/:id", cartItemHandler.RemoveCartItem)
-			cart.POST("/apply-promotion", cartHandler.ApplyPromotion)
-			cart.DELETE("/remove-promotion", cartHandler.RemovePromotion)
 		}
 	}
 }
