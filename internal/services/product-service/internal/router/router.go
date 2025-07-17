@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/product-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/handler"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/middleware"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
@@ -27,6 +28,7 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 	v1 := r.Group("/api/v1")
 	{
 		products := v1.Group(("/products"))
+		products.Use(middleware.AuthHeaderMiddleware())
 		{
 			products.POST("", productHandler.CreateProduct)
 			products.GET("", productHandler.GetProducts)

@@ -37,7 +37,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	productResult, err := h.productService.CreateProduct(c.Request.Context(), &req)
+	productResult, err := h.productService.CreateProduct(c, &req)
 	if err != nil {
 		log.Printf("Error creating product: %v", err)
 		response.InternalServerError(c, "INTERNAL_ERROR", "Failed to create product")

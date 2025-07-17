@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
@@ -33,7 +34,7 @@ func NewProductService(productRepo repository.ProductRepository, redisService *r
 	}
 }
 
-func (s *ProductService) CreateProduct(ctx context.Context, req *dto.CreateProductRequest) (*product.Product, error) {
+func (s *ProductService) CreateProduct(ctx *gin.Context, req *dto.CreateProductRequest) (*product.Product, error) {
 	log.Printf("Creating product for shop %s", req.ShopID)
 	userIDCtx := ctx.Value(constant.ContextKeyUserID)
 	if userIDCtx == nil {
