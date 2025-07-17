@@ -144,7 +144,7 @@ func (q *Queries) GetListProductsByShop(ctx context.Context, arg GetListProducts
 
 const getProductByID = `-- name: GetProductByID :one
 SELECT id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at FROM products
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND delete_at IS NULL
 `
 
 func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, error) {

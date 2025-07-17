@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -56,6 +57,7 @@ func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*product.
 	// 1. Chuyển đổi ID string sang kiểu của pgtype
 	productUUID, err := uuid.Parse(id)
 	if err != nil {
+		log.Printf("Error parsing product ID: %v", err)
 		return nil, fmt.Errorf("invalid uuid format for repository: %w", err)
 	}
 	pgUUID := converter.UUIDToPgUUID(productUUID)
@@ -63,15 +65,19 @@ func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*product.
 	// 2. Gọi query từ SQLC
 	sqlcProduct, err := r.queries.GetProductByID(ctx, pgUUID)
 	if err != nil {
+		log.Printf("Error getting product by ID from db: %v", err)
 		if errors.Is(err, pgx.ErrNoRows) {
+			log.Printf("Product with ID %s not found", id)
 			return nil, apperror.NewNotFound("product", id)
 		}
+		log.Printf("Database error when getting product by ID: %v", err)
 		return nil, apperror.New(apperror.CodeDatabaseError, "database error when getting product by id", apperror.TypeInternal).Wrap(err)
 	}
 
 	// 3. Chuyển đổi từ DB model (sqlc) sang Domain model
 	domainProduct, err := toDomain(&sqlcProduct)
 	if err != nil {
+		log.Printf("Error converting SQLC product to domain product: %v", err)
 		return nil, apperror.New(apperror.CodeConversionError, "failed to convert db model to domain", apperror.TypeInternal).Wrap(err)
 	}
 

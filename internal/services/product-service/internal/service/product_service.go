@@ -106,8 +106,7 @@ func (s *ProductService) GetProductByID(ctx context.Context, id string) (*produc
 
 	product, err := s.productRepo.GetByID(ctx, id)
 	if err != nil {
-		// Service không cần biết lỗi cụ thể là "not found" hay không,
-		// nó chỉ cần trả lỗi lên cho handler xử lý.
+		log.Printf("Error retrieving product from repository: %v", err)
 		return nil, fmt.Errorf("failed to get product from repository: %w", err)
 	}
 

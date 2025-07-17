@@ -93,28 +93,33 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 }
 
 func (h *ProductHandler) GetProductByID(c *gin.Context) {
+	log.Printf("Getting product by ID")
 	// 1. Lấy ID từ URL
 	productID := c.Param("id")
 
 	// 2. Gọi Application Service
 	product, err := h.productService.GetProductByID(c.Request.Context(), productID)
 	if err != nil {
-		// 3. Mapping lỗi từ service sang HTTP response
+		log.Printf("Error retrieving product: %v", err)
 		if strings.Contains(err.Error(), "not found") {
 			response.NotFound(c, "PRODUCT_NOT_FOUND", err.Error())
 			return
 		}
+		log.Printf("Error parsing product ID: %v", err)
 		if strings.Contains(err.Error(), "invalid product ID format") {
 			response.BadRequest(c, "INVALID_ID", err.Error(), "")
 			return
 		}
 
+		log.Printf("Error retrieving product from repository: %v", err)
 		response.InternalServerError(c, "GET_PRODUCT_FAILED", "Failed to retrieve product")
 		return
 	}
 
+	log.Printf("Product retrieved successfully: %+v", product)
 	// 4. Chuyển đổi domain object sang DTO và trả về
 	respDTO := toProductResponse(product)
+	log.Printf("Response DTO: %+v", respDTO)
 	response.Success(c, "Product retrieved successfully", respDTO)
 }
 
@@ -197,6 +202,12 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 }
 
 func toProductResponse(p *product.Product) dto.ProductResponse {
+	if p == nil {
+		log.Printf("Product is nil, returning empty response")
+		return dto.ProductResponse{}
+	}
+
+	log.Printf("Converting product to response DTO: %+v", p)
 	return dto.ProductResponse{
 		ID:           p.ID().String(),
 		ShopID:       p.ShopID().String(),
