@@ -4,15 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/product-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/handler"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/middleware"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
-
-// func prometheusHandler() gin.HandlerFunc {
-// 	h := promhttp.Handler()
-// 	return func(c *gin.Context) {
-// 		h.ServeHTTP(c.Writer, c.Request)
-// 	}
-// }
 
 func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.DependencyContainer) *gin.Engine {
 	p := ginprometheus.NewPrometheus("gin")
@@ -27,8 +21,6 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 		serviceContainer.GetShopServiceAdapter(),
 	)
 
-	// r.GET("/metrics", prometheusHandler())
-
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "pong")
 	})
@@ -36,6 +28,7 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 	v1 := r.Group("/api/v1")
 	{
 		products := v1.Group(("/products"))
+		products.Use(middleware.AuthHeaderMiddleware())
 		{
 			products.POST("", productHandler.CreateProduct)
 			products.GET("", productHandler.GetProducts)

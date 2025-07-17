@@ -30,10 +30,10 @@ CREATE TABLE products (
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     delete_at TIMESTAMPTZ DEFAULT NULL,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
     -- Foreign key
-    CONSTRAINT fk_products_category_id FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+    -- CONSTRAINT fk_products_category_id FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
 -- 3. Tạo function cập nhật updated_at
@@ -55,10 +55,11 @@ EXECUTE FUNCTION update_updated_at_column();
 -- +goose Down
 -- +goose StatementBegin
 DROP TRIGGER IF EXISTS set_updated_at ON products;
+DROP TRIGGER IF EXISTS set_updated_at ON categories;
+DROP TRIGGER IF EXISTS set_updated_at ON shops;
 
-DROP FUNCTION IF EXISTS update_updated_at_column;
-
+-- 🟢 Quan trọng: DROP TABLE trước khi DROP TYPE
 DROP TABLE IF EXISTS products;
-
+DROP FUNCTION IF EXISTS update_updated_at_column;
 DROP TYPE IF EXISTS product_status;
 -- +goose StatementEnd

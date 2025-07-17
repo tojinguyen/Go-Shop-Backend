@@ -21,7 +21,7 @@ func NewShopGRPCServer(repo shopRepo.ShopRepository) *Server {
 	}
 }
 
-func (s *Server) CheckShopOwnerShip(ctx context.Context, req *shop_v1.CheckShopOwnershipRequest) (*shop_v1.CheckShopOwnershipResponse, error) {
+func (s *Server) CheckShopOwnership(ctx context.Context, req *shop_v1.CheckShopOwnershipRequest) (*shop_v1.CheckShopOwnershipResponse, error) {
 	log.Printf("Received CheckShopOwnership request for ShopID: %s, UserID: %s", req.GetShopId(), req.GetUserId())
 
 	userID, err := uuid.Parse(req.UserId)

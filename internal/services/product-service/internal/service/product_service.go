@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/constant"
-	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	product "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/dto"
@@ -33,28 +34,33 @@ func NewProductService(productRepo repository.ProductRepository, redisService *r
 	}
 }
 
-func (s *ProductService) CreateProduct(ctx context.Context, req *dto.CreateProductRequest) (*product.Product, error) {
-	// Lấy user_id từ context (giả sử đã được auth middleware thêm vào)
-	userIDCtx := ctx.Value(constant.ContextKeyUserID) // Nên định nghĩa một key cụ thể thay vì string
+func (s *ProductService) CreateProduct(ctx *gin.Context, req *dto.CreateProductRequest) (*product.Product, error) {
+	log.Printf("Creating product for shop %s", req.ShopID)
+	userIDCtx := ctx.Value(constant.ContextKeyUserID)
 	if userIDCtx == nil {
+		log.Fatalf("user_id not found in context")
 		return nil, errors.New("unauthorized: user_id not found in context")
 	}
 	userID, err := uuid.Parse(userIDCtx.(string))
 	if err != nil {
+		log.Fatalf("invalid user_id format")
 		return nil, errors.New("unauthorized: invalid user_id format")
 	}
 
 	shopID, err := uuid.Parse(req.ShopID)
 	if err != nil {
+		log.Fatalf("invalid shop id format")
 		return nil, fmt.Errorf("invalid shop id format")
 	}
 
 	isOwner, err := s.shopService.IsShopOwner(ctx, shopID, userID)
 
 	if err != nil {
+		log.Fatalf("cannot verify shop ownership : %v", err)
 		return nil, fmt.Errorf("cannot verify shop ownership: %w", err)
 	}
 	if !isOwner {
+		log.Fatalf("forbidden: you are not the owner of this shop")
 		return nil, errors.New("forbidden: you are not the owner of this shop")
 	}
 
@@ -70,18 +76,21 @@ func (s *ProductService) CreateProduct(ctx context.Context, req *dto.CreateProdu
 
 	newProduct, err := product.NewProduct(
 		shopID.String(),
-		categoryID.String(),
 		req.Name,
+		req.ThumbnailURL,
 		req.Description,
-		converter.StringToUUID(req.ThumbnailURL),
+		categoryID,
 		price,
 		req.Quantity,
 	)
+
 	if err != nil {
+		log.Fatalf("could not create new product: %v", err)
 		return nil, err
 	}
 
 	if err := s.productRepo.Save(ctx, newProduct); err != nil {
+		log.Printf("could not save product: %v", err)
 		return nil, fmt.Errorf("could not save product: %w", err)
 	}
 
@@ -97,8 +106,7 @@ func (s *ProductService) GetProductByID(ctx context.Context, id string) (*produc
 
 	product, err := s.productRepo.GetByID(ctx, id)
 	if err != nil {
-		// Service không cần biết lỗi cụ thể là "not found" hay không,
-		// nó chỉ cần trả lỗi lên cho handler xử lý.
+		log.Printf("Error retrieving product from repository: %v", err)
 		return nil, fmt.Errorf("failed to get product from repository: %w", err)
 	}
 

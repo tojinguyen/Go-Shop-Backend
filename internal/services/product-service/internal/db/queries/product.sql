@@ -18,7 +18,7 @@ RETURNING *;
 
 -- name: GetProductByID :one
 SELECT * FROM products
-WHERE id = $1 AND deleted_at IS NULL;
+WHERE id = $1 AND delete_at IS NULL;
 
 -- name: GetListProductsByShop :many
 SELECT * FROM products
