@@ -16,5 +16,4 @@ message GetProductInfoResponse {
     bool exists = 1;
     string shop_id = 2;
     string product_id = 3;
-    int32 product_price = 4;
 }

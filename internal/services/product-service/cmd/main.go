@@ -3,16 +3,22 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	product_grpc "github.com/toji-dev/go-shop/internal/services/product-service/internal/grpc"
+	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
+	"google.golang.org/grpc"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/config"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/product-service/internal/dependency-container"
+	"github.com/toji-dev/go-shop/internal/services/product-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/router"
 )
 
@@ -50,6 +56,8 @@ func main() {
 
 	go startMetricsServer()
 
+	go runGrpcServer(cfg, dependencyContainer.GetProductRepository())
+
 	go func() {
 		log.Printf("%s starting on %s", dependencyContainer.GetConfig().App.Name, dependencyContainer.GetConfig().Server.GetServerAddress())
 		log.Printf("Environment: %s", dependencyContainer.GetConfig().App.Environment)
@@ -81,5 +89,21 @@ func startMetricsServer() {
 	log.Println("Starting metrics server on :9100")
 	if err := metricsRouter.Run(":9100"); err != nil {
 		log.Fatalf("Failed to start metrics server: %v", err)
+	}
+}
+
+func runGrpcServer(cfg *config.Config, productRepo repository.ProductRepository) {
+	address := cfg.GRPC.Host + ":" + cfg.GRPC.Port
+	log.Printf("Starting gRPC server on %s", address)
+	lis, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Fatalf("failed to listen for grpc on port %s: %v", cfg.GRPC.Host, err)
+	}
+	s := grpc.NewServer()
+	grpcServer := product_grpc.NewProductGRPCServer(productRepo)
+	product_v1.RegisterProductServiceServer(s, grpcServer)
+	log.Printf("gRPC server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve gRPC: %v", err)
 	}
 }

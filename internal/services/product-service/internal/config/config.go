@@ -17,6 +17,7 @@ type Config struct {
 	CORS        CORSConfig        `json:"cors"`
 	App         AppConfig         `json:"app"`
 	ShopService ShopServiceConfig `json:"shop_service"`
+	GRPC        GRPCConfig        `json:"grpc"`
 }
 
 // ServerConfig holds server configuration
@@ -70,6 +71,11 @@ type AppConfig struct {
 
 type ShopServiceConfig struct {
 	Address string `json:"address"`
+}
+
+type GRPCConfig struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
 }
 
 func (a *AppConfig) IsProduction() bool {
