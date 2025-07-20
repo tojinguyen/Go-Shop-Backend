@@ -4,16 +4,13 @@ go 1.24.3
 
 toolchain go1.24.5
 
-replace (
-	github.com/toji-dev/go-shop => ../../../
-	github.com/toji-dev/go-shop/internal/pkg => ../../pkg
-)
-
 require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/google/uuid v1.6.0
 	github.com/toji-dev/go-shop/internal/pkg v0.0.0-00010101000000-000000000000
+	github.com/toji-dev/go-shop/proto/gen/go v0.0.0-00010101000000-000000000000
 	github.com/zsais/go-gin-prometheus v1.0.0
+	google.golang.org/grpc v1.73.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.0
 )
@@ -59,6 +56,13 @@ require (
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+replace (
+	github.com/toji-dev/go-shop => ../../../
+	github.com/toji-dev/go-shop/internal/pkg => ../../pkg
+	github.com/toji-dev/go-shop/proto/gen/go => ../../../proto/gen/go
 )
