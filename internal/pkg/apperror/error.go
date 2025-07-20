@@ -112,6 +112,15 @@ func NewDependencyFailure(message string) *AppError {
 	}
 }
 
+func NewBadRequest(message string, details error) *AppError {
+	return &AppError{
+		Type:    TypeValidation,
+		Code:    CodeBadRequest,
+		Message: message,
+		err:     details,
+	}
+}
+
 // GetType là hàm helper để lấy ErrorType từ một lỗi bất kỳ.
 func GetType(err error) ErrorType {
 	var appErr *AppError

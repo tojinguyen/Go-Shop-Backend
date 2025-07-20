@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"log"
 
 	"github.com/google/uuid"
@@ -10,9 +11,9 @@ import (
 )
 
 type CartRepository interface {
-	GetCartByUserID(userID uuid.UUID) (*domain.Cart, error)
-	CreateCart(cart *domain.Cart) error
-	DeleteCart(cartID uuid.UUID) error
+	GetCartByUserID(ctx context.Context, userID uuid.UUID) (*domain.Cart, error)
+	CreateCart(ctx context.Context, cart *domain.Cart) error
+	DeleteCart(ctx context.Context, cartID uuid.UUID) error
 }
 
 type cartRepository struct {
@@ -23,7 +24,7 @@ func NewCartRepository(db *gorm.DB) CartRepository {
 	return &cartRepository{db: db}
 }
 
-func (r *cartRepository) GetCartByUserID(userID uuid.UUID) (*domain.Cart, error) {
+func (r *cartRepository) GetCartByUserID(ctx context.Context, userID uuid.UUID) (*domain.Cart, error) {
 	var cart domain.Cart
 	if err := r.db.Preload("Items").First(&cart, "user_id = ?", userID).Error; err != nil {
 		log.Printf("Error fetching cart for user %s: %v", userID, err)
@@ -35,10 +36,10 @@ func (r *cartRepository) GetCartByUserID(userID uuid.UUID) (*domain.Cart, error)
 	return &cart, nil
 }
 
-func (r *cartRepository) CreateCart(cart *domain.Cart) error {
+func (r *cartRepository) CreateCart(ctx context.Context, cart *domain.Cart) error {
 	return r.db.Create(cart).Error
 }
 
-func (r *cartRepository) DeleteCart(cartID uuid.UUID) error {
+func (r *cartRepository) DeleteCart(ctx context.Context, cartID uuid.UUID) error {
 	return r.db.Delete(&domain.Cart{}, cartID).Error
 }

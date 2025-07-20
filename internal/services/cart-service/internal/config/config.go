@@ -13,6 +13,7 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
 	App      AppConfig      `mapstructure:"app"`
+	Grpc     GrpcConfig     `mapstructure:"shop"`
 }
 
 type ServerConfig struct {
@@ -48,13 +49,16 @@ type AppConfig struct {
 	Environment string `mapstructure:"environment"`
 }
 
+type GrpcConfig struct {
+	ShopServiceHost string `mapstructure:"shop_service_host"`
+	ShopServicePort int    `mapstructure:"shop_service_port"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
 
-// *** HÀM LOAD ĐƯỢC VIẾT LẠI HOÀN TOÀN ***
 func Load() (*Config, error) {
-	// Giờ đây chúng ta đọc trực tiếp từ biến môi trường
 	cfg := &Config{
 		App: AppConfig{
 			Name:        getEnv("APP_NAME", "cart-service"),
@@ -80,6 +84,10 @@ func Load() (*Config, error) {
 			Port:     getEnv("REDIS_PORT", "6379"),
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       getIntEnv("REDIS_DB", 1),
+		},
+		Grpc: GrpcConfig{
+			ShopServiceHost: getEnv("SHOP_SERVICE_HOST", "localhost"),
+			ShopServicePort: getIntEnv("SHOP_SERVICE_PORT", 8082),
 		},
 	}
 	return cfg, nil

@@ -23,10 +23,14 @@ func (s *Server) GetProductInfo(ctx context.Context, req *product_v1.GetProductI
 	product, err := s.productRepo.GetByID(ctx, req.ProductId)
 	if err != nil {
 		log.Printf("Error retrieving product with ID %s: %v", req.ProductId, err)
-		return nil, err
+		return &product_v1.GetProductInfoResponse{
+			Exists:    false,
+			ProductId: req.ProductId,
+			ShopId:    "",
+		}, err
 	}
 
-	if product == nil {
+	if product == nil || product.DeletedAt() != nil {
 		log.Printf("Product with ID %s not found", req.ProductId)
 		return &product_v1.GetProductInfoResponse{
 			Exists:    false,

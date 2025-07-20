@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
+	constant "github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/cart-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/usecase"
@@ -19,8 +20,8 @@ func NewCartHandler(dependencyContainer *dependency_container.DependencyContaine
 }
 
 func (h *CartHandler) GetCart(c *gin.Context) {
-	userID := c.GetString("userID") // Assuming userID is set in middleware
-	cart, err := h.cartUseCase.GetCart(userID)
+	userID := c.GetString(constant.ContextKeyUserID)
+	cart, err := h.cartUseCase.GetCart(c, userID)
 	if err != nil {
 		if apperror.GetType(err) == apperror.TypeNotFound {
 			response.NotFound(c, "cart", userID)
@@ -34,7 +35,7 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 
 func (h *CartHandler) DeleteCart(c *gin.Context) {
 	cartID := c.Param("id")
-	if err := h.cartUseCase.DeleteCart(cartID); err != nil {
+	if err := h.cartUseCase.DeleteCart(c, cartID); err != nil {
 		if apperror.GetType(err) == apperror.TypeNotFound {
 			response.NotFound(c, "cart", cartID)
 			return
