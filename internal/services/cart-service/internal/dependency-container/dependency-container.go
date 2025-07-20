@@ -16,15 +16,14 @@ import (
 )
 
 type DependencyContainer struct {
-	config             *config.Config
-	postgreSQL         *postgresql_infra.PostgreSQLService
-	redis              *redis_infra.RedisService
-	gormDB             *gorm.DB
-	cartRepository     repository.CartRepository
-	cartItemRepository repository.CartItemRepository
-	cartUseCase        usecase.CartUseCase
-	cartItemUseCase    usecase.CartItemUseCase
-	product_adapter    grpc.ProductServiceAdapter
+	config          *config.Config
+	postgreSQL      *postgresql_infra.PostgreSQLService
+	redis           *redis_infra.RedisService
+	gormDB          *gorm.DB
+	cartRepository  repository.CartRepository
+	cartUseCase     usecase.CartUseCase
+	cartItemUseCase usecase.CartItemUseCase
+	product_adapter grpc.ProductServiceAdapter
 }
 
 func (sc *DependencyContainer) GetConfig() *config.Config {
@@ -125,13 +124,11 @@ func (sc *DependencyContainer) initRedis() error {
 
 func (sc *DependencyContainer) initRepositories() {
 	sc.cartRepository = repository.NewCartRepository(sc.gormDB)
-	sc.cartItemRepository = repository.NewCartItemRepository(sc.gormDB)
 	log.Println("Repositories initialized")
 }
 
 func (sc *DependencyContainer) initUseCases() {
 	sc.cartUseCase = usecase.NewCartUseCase(sc.cartRepository)
-	sc.cartItemUseCase = usecase.NewCartItemUseCase(sc.cartItemRepository, sc.cartRepository, sc.product_adapter)
 	log.Println("Use cases initialized")
 }
 

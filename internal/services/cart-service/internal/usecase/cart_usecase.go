@@ -24,7 +24,7 @@ func NewCartUseCase(repo repository.CartRepository) CartUseCase {
 }
 
 func (uc *cartUseCase) GetCart(ctx *gin.Context, userID string) (*domain.Cart, *apperror.AppError) {
-	cart, err := uc.repo.GetCartByUserID(ctx, converter.StringToUUID(userID))
+	cart, err := uc.repo.GetCartByOwnerID(ctx, converter.StringToUUID(userID))
 	if err != nil {
 		if apperror.GetType(err) == apperror.TypeNotFound {
 			return nil, apperror.NewNotFound("cart", userID)
