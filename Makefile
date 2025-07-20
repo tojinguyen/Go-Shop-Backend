@@ -35,8 +35,8 @@ proto-gen:
 	@echo "🔥 Generating Go code from Protobuf definitions..."
 	@echo "Processing files: $(PROTO_FILES)"
 	@protoc --proto_path=$(PROTO_DIR) \
-	       --go_out=$(GEN_DIR_GO) \
-	       --go-grpc_out=$(GEN_DIR_GO) \
+	       --go_out=paths=source_relative:$(GEN_DIR_GO) \
+	       --go-grpc_out=paths=source_relative:$(GEN_DIR_GO) \
 	       $(PROTO_FILES)
 	@echo "✅ Protobuf/gRPC code generated successfully."
 
