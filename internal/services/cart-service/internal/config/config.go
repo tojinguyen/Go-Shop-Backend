@@ -50,8 +50,8 @@ type AppConfig struct {
 }
 
 type GrpcConfig struct {
-	ShopServiceHost string `mapstructure:"shop_service_host"`
-	ShopServicePort int    `mapstructure:"shop_service_port"`
+	ProductServiceHost string `mapstructure:"product_service_host"`
+	ProductServicePort int    `mapstructure:"product_service_port"`
 }
 
 func (a *AppConfig) IsProduction() bool {
@@ -86,8 +86,8 @@ func Load() (*Config, error) {
 			DB:       getIntEnv("REDIS_DB", 1),
 		},
 		Grpc: GrpcConfig{
-			ShopServiceHost: getEnv("SHOP_SERVICE_HOST", "localhost"),
-			ShopServicePort: getIntEnv("SHOP_SERVICE_PORT", 8082),
+			ProductServiceHost: getEnv("PRODUCT_SERVICE_SERVICE_HOST", "localhost"),
+			ProductServicePort: getIntEnv("PRODUCT_SERVICE_SERVICE_PORT", 8082),
 		},
 	}
 	return cfg, nil

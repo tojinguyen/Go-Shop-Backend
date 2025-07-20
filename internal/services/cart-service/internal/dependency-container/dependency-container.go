@@ -65,6 +65,9 @@ func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
 	// Initialize repositories
 	container.initRepositories()
 
+	// Initialize gRPC service adapter
+	container.initGrpcServiceAdapter()
+
 	// Initialize use cases
 	container.initUseCases()
 
@@ -133,15 +136,26 @@ func (sc *DependencyContainer) initUseCases() {
 	log.Println("Use cases initialized")
 }
 
+func (sc *DependencyContainer) initGrpcServiceAdapter() error {
+	if sc.product_adapter != nil {
+		return nil
+	}
+
+	productServiceAddr := fmt.Sprintf("%s:%d", sc.config.Grpc.ProductServiceHost, sc.config.Grpc.ProductServicePort)
+	adapter, err := grpc.NewGrpcProductAdapter(productServiceAddr)
+	if err != nil {
+		return fmt.Errorf("failed to create product service adapter: %w", err)
+	}
+	sc.product_adapter = adapter
+	log.Println("Product service adapter initialized")
+	return nil
+}
+
 func (sc *DependencyContainer) GetProductServiceAdapter() (grpc.ProductServiceAdapter, error) {
 	if sc.product_adapter == nil {
-		productServiceAddr := fmt.Sprintf("%s:%d", sc.config.Grpc.ShopServiceHost, sc.config.Grpc.ShopServicePort)
-		adapter, err := grpc.NewGrpcProductAdapter(productServiceAddr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create product service adapter: %w", err)
+		if err := sc.initGrpcServiceAdapter(); err != nil {
+			return nil, err
 		}
-		sc.product_adapter = adapter
-		log.Println("Product service adapter initialized")
 	}
 	return sc.product_adapter, nil
 }
