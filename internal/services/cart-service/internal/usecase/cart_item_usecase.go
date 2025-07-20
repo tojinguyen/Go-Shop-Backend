@@ -35,6 +35,7 @@ func NewCartItemUseCase(cartRepo repository.CartRepository, productAdapter grpc.
 func (uc *cartItemUseCase) AddItemToCart(ctx *gin.Context, req dto.AddCartItemRequest) error {
 	productID, err := uuid.Parse(req.ProductID)
 	if err != nil {
+		log.Printf("Invalid product ID format: %v", err)
 		return apperror.NewBadRequest("Invalid product ID format", err)
 	}
 
