@@ -33,7 +33,7 @@ func SetupRoutes(r *gin.Engine, dependencyContainer *dependency_container.Depend
 
 	v1 := r.Group("/api/v1")
 	{
-		cart := v1.Group("/cart")
+		cart := v1.Group("/carts")
 		{
 			cart.GET("", cartHandler.GetCart)
 			cart.DELETE("", cartHandler.DeleteCart)
