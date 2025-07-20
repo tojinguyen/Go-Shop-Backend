@@ -41,10 +41,12 @@ func (uc *cartItemUseCase) AddItemToCart(ctx *gin.Context, req dto.AddCartItemRe
 
 	info, err := uc.productAdapter.GetProductInfo(ctx, req.ProductID)
 	if err != nil {
+		log.Printf("Failed to get product info: %v", err)
 		return apperror.NewInternal(fmt.Sprintf("failed to get product info: %v", err))
 	}
 
 	if info.Exists == false {
+		log.Printf("Product not found: %s", req.ProductID)
 		return apperror.NewNotFound("Product", req.ProductID)
 	}
 
@@ -68,6 +70,7 @@ func (uc *cartItemUseCase) AddItemToCart(ctx *gin.Context, req dto.AddCartItemRe
 			log.Printf("Cart not found for user %s. Creating a new one.", userID)
 			cart = domain.NewCart(userIDUUID)
 		} else {
+			log.Printf("Failed to get cart: %v", err)
 			return apperror.NewInternal(fmt.Sprintf("Failed to get cart: %v", err))
 		}
 	}

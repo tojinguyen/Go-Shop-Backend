@@ -129,6 +129,7 @@ func (sc *DependencyContainer) initRepositories() {
 
 func (sc *DependencyContainer) initUseCases() {
 	sc.cartUseCase = usecase.NewCartUseCase(sc.cartRepository)
+	sc.cartItemUseCase = usecase.NewCartItemUseCase(sc.cartRepository, sc.product_adapter)
 	log.Println("Use cases initialized")
 }
 
