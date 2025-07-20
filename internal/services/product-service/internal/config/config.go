@@ -126,6 +126,10 @@ func LoadConfig() (*Config, error) {
 		ShopService: ShopServiceConfig{
 			Address: getEnv("SHOP_SERVICE_GRPC_ADDRESS", "shop-service:50051"), // SỬA Ở ĐÂY: Dùng biến môi trường mới và đúng service name
 		},
+		GRPC: GRPCConfig{
+			Host: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
+			Port: getEnv("PRODUCT_SERVICE_GRPC_PORT", "50051"),
+		},
 	}
 
 	return config, nil

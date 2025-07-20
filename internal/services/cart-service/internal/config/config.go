@@ -86,8 +86,8 @@ func Load() (*Config, error) {
 			DB:       getIntEnv("REDIS_DB", 1),
 		},
 		Grpc: GrpcConfig{
-			ProductServiceHost: getEnv("PRODUCT_SERVICE_SERVICE_HOST", "localhost"),
-			ProductServicePort: getIntEnv("PRODUCT_SERVICE_SERVICE_PORT", 8082),
+			ProductServiceHost: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
+			ProductServicePort: getIntEnv("PRODUCT_SERVICE_GRPC_PORT", 50052),
 		},
 	}
 	return cfg, nil
