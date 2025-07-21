@@ -37,10 +37,10 @@ func (uc *cartItemUseCase) AddItemToCart(ctx *gin.Context, req dto.AddCartItemRe
 		return apperror.NewBadRequest("Invalid product ID format", err)
 	}
 
-	info, err := uc.productAdapter.GetProductInfo(ctx, req.ProductID)
-	if err != nil {
-		log.Printf("Failed to get product info: %v", err)
-		return apperror.NewInternal(fmt.Sprintf("failed to get product info: %v", err))
+	info, productInfoErr := uc.productAdapter.GetProductInfo(ctx, req.ProductID)
+	if productInfoErr != nil {
+		log.Printf("Failed to get product info: %v", productInfoErr)
+		return apperror.NewInternal(fmt.Sprintf("failed to get product info: %v", productInfoErr))
 	}
 
 	if info.Exists == false {
@@ -56,31 +56,31 @@ func (uc *cartItemUseCase) AddItemToCart(ctx *gin.Context, req dto.AddCartItemRe
 
 	// Kiem tra xem gio hang da ton tai chua
 	// Neu chua ton tai, tao moi gio hang
-	userIDUUID, err := uuid.Parse(userID)
-	if err != nil {
-		log.Printf("Invalid user ID format: %v", err)
+	userIDUUID, uuidErr := uuid.Parse(userID)
+	if uuidErr != nil {
+		log.Printf("Invalid user ID format: %v", uuidErr)
 		return apperror.NewUnauthorized("Invalid user ID format")
 	}
 
-	cart, err := uc.cartRepo.GetCartByOwnerID(ctx, userIDUUID)
-	if err != nil {
-		if appErr, ok := err.(*apperror.AppError); ok && appErr.Type == apperror.TypeNotFound {
-			log.Printf("Cart not found for user %s. Creating a new one.", userID)
+	cart, cartErr := uc.cartRepo.GetCartByOwnerID(ctx, userIDUUID)
+	if cartErr != nil {
+		if cartErr.Type == apperror.TypeNotFound {
+			log.Printf("No cart found for user %s. Creating a new one.", userID)
 			cart = domain.NewCart(userIDUUID)
 		} else {
-			log.Printf("Failed to get cart: %v", err)
-			return apperror.NewInternal(fmt.Sprintf("Failed to get cart: %v", err))
+			log.Printf("Failed to get cart by owner ID %s: %v", userID, cartErr)
+			return apperror.NewInternal(fmt.Sprintf("Failed to get cart by owner ID %s: %v", userID, cartErr))
 		}
 	}
 
-	if err := cart.AddItem(productID, req.Quantity); err != nil {
-		log.Printf("Failed to add item to cart: %v", err)
-		return apperror.NewBadRequest("Failed to add item to cart", err)
+	if addItemErr := cart.AddItem(productID, req.Quantity); addItemErr != nil {
+		log.Printf("Failed to add item to cart: %v", addItemErr)
+		return apperror.NewBadRequest("Failed to add item to cart", addItemErr)
 	}
 
-	if err := uc.cartRepo.Save(ctx, cart); err != nil {
-		log.Printf("Failed to save cart: %v", err)
-		return apperror.NewInternal(fmt.Sprintf("Failed to save cart: %v", err))
+	if saveErr := uc.cartRepo.Save(ctx, cart); saveErr != nil {
+		log.Printf("Failed to save cart: %v", saveErr)
+		return apperror.NewInternal(fmt.Sprintf("Failed to save cart: %v", saveErr))
 	}
 
 	return nil
