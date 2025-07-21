@@ -19,7 +19,7 @@ func NewCartItemHandler(dependencyContainer *dependency_container.DependencyCont
 	}
 }
 
-func (h *CartItemHandler) AddItemToCart(c *gin.Context) {
+func (h *CartItemHandler) UpdateItemsInCart(c *gin.Context) {
 	var request dto.AddCartItemRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response.BadRequest(c, string(apperror.CodeBadRequest), "Invalid request data", err.Error())
