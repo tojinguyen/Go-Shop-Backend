@@ -19,20 +19,20 @@ type DependencyContainer struct {
 	orderHandler handler.OrderHandler
 }
 
-func (sc *DependencyContainer) NewDependencyContainer(cfg *config.Config) *DependencyContainer {
+func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 	container := &DependencyContainer{
 		config: cfg,
 	}
 
-	if err := sc.initPostgreSQL(); err != nil {
+	if err := container.initPostgreSQL(); err != nil {
 		log.Fatalf("failed to initialize PostgreSQL: %v", err)
 	}
 
-	sc.initRepositories()
+	container.initRepositories()
 
-	sc.initUseCases()
+	container.initUseCases()
 
-	sc.initOrderHandler()
+	container.initOrderHandler()
 
 	return container
 }
@@ -74,4 +74,8 @@ func (sc *DependencyContainer) initUseCases() {
 func (sc *DependencyContainer) initOrderHandler() {
 	sc.orderHandler = handler.NewOrderHandler(sc.orderUsecase)
 	log.Println("Order handler initialized")
+}
+
+func (sc *DependencyContainer) GetConfig() *config.Config {
+	return sc.config
 }
