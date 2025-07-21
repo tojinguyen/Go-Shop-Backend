@@ -14,6 +14,7 @@ const (
 	CodeForbidden         ErrorCode = "FORBIDDEN"
 	CodeDependencyFailure ErrorCode = "DEPENDENCY_FAILURE" // Lỗi từ service bên ngoài
 	CodeNotImplemented    ErrorCode = "NOT_IMPLEMENTED"
+	CodeBadRequest        ErrorCode = "BAD_REQUEST"
 
 	// Lỗi liên quan đến Database
 	CodeDatabaseError ErrorCode = "DATABASE_ERROR"

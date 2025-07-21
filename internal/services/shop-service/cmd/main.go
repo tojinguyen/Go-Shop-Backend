@@ -28,7 +28,7 @@ import (
 	shop_grpc "github.com/toji-dev/go-shop/internal/services/shop-service/internal/grpc"
 	promotion_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/promotion"
 	shop_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
-	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1"
+	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/shop/v1"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"google.golang.org/grpc"
 )

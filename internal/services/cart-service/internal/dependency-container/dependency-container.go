@@ -4,25 +4,26 @@ import (
 	"fmt"
 	"log"
 
+	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/config"
+	grpc "github.com/toji-dev/go-shop/internal/services/cart-service/internal/grpc/adapter"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/usecase"
 )
 
 type DependencyContainer struct {
-	config             *config.Config
-	postgreSQL         *postgresql_infra.PostgreSQLService
-	redis              *redis_infra.RedisService
-	gormDB             *gorm.DB
-	cartRepository     repository.CartRepository
-	cartItemRepository repository.CartItemRepository
-	cartUseCase        usecase.CartUseCase
-	cartItemUseCase    usecase.CartItemUseCase
+	config          *config.Config
+	postgreSQL      *postgresql_infra.PostgreSQLService
+	redis           *redis_infra.RedisService
+	gormDB          *gorm.DB
+	cartRepository  repository.CartRepository
+	cartUseCase     usecase.CartUseCase
+	cartItemUseCase usecase.CartItemUseCase
+	product_adapter grpc.ProductServiceAdapter
 }
 
 func (sc *DependencyContainer) GetConfig() *config.Config {
@@ -63,6 +64,9 @@ func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
 
 	// Initialize repositories
 	container.initRepositories()
+
+	// Initialize gRPC service adapter
+	container.initGrpcServiceAdapter()
 
 	// Initialize use cases
 	container.initUseCases()
@@ -122,15 +126,38 @@ func (sc *DependencyContainer) initRedis() error {
 }
 
 func (sc *DependencyContainer) initRepositories() {
-	sc.cartRepository = repository.NewCartRepository(sc.gormDB)
-	sc.cartItemRepository = repository.NewCartItemRepository(sc.gormDB)
+	sc.cartRepository = repository.NewCartRepository(sc.postgreSQL)
 	log.Println("Repositories initialized")
 }
 
 func (sc *DependencyContainer) initUseCases() {
 	sc.cartUseCase = usecase.NewCartUseCase(sc.cartRepository)
-	sc.cartItemUseCase = usecase.NewCartItemUseCase(sc.cartItemRepository)
+	sc.cartItemUseCase = usecase.NewCartItemUseCase(sc.cartRepository, sc.product_adapter)
 	log.Println("Use cases initialized")
+}
+
+func (sc *DependencyContainer) initGrpcServiceAdapter() error {
+	if sc.product_adapter != nil {
+		return nil
+	}
+
+	productServiceAddr := fmt.Sprintf("%s:%d", sc.config.Grpc.ProductServiceHost, sc.config.Grpc.ProductServicePort)
+	adapter, err := grpc.NewGrpcProductAdapter(productServiceAddr)
+	if err != nil {
+		return fmt.Errorf("failed to create product service adapter: %w", err)
+	}
+	sc.product_adapter = adapter
+	log.Println("Product service adapter initialized")
+	return nil
+}
+
+func (sc *DependencyContainer) GetProductServiceAdapter() (grpc.ProductServiceAdapter, error) {
+	if sc.product_adapter == nil {
+		if err := sc.initGrpcServiceAdapter(); err != nil {
+			return nil, err
+		}
+	}
+	return sc.product_adapter, nil
 }
 
 func (sc *DependencyContainer) Close() {

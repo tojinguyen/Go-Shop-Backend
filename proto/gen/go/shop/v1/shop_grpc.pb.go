@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v6.31.1
-// source: proto/shop/v1/shop.proto
+// source: shop/v1/shop.proto
 
 package shop_v1
 
@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ShopServiceClient interface {
+	// CheckShopOwnership verifies if a user owns a specific shop
 	CheckShopOwnership(ctx context.Context, in *CheckShopOwnershipRequest, opts ...grpc.CallOption) (*CheckShopOwnershipResponse, error)
 }
 
@@ -35,7 +36,7 @@ func NewShopServiceClient(cc grpc.ClientConnInterface) ShopServiceClient {
 
 func (c *shopServiceClient) CheckShopOwnership(ctx context.Context, in *CheckShopOwnershipRequest, opts ...grpc.CallOption) (*CheckShopOwnershipResponse, error) {
 	out := new(CheckShopOwnershipResponse)
-	err := c.cc.Invoke(ctx, "/shop.v1.ShopService/CheckShopOwnership", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/goshop.shop.v1.ShopService/CheckShopOwnership", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +47,7 @@ func (c *shopServiceClient) CheckShopOwnership(ctx context.Context, in *CheckSho
 // All implementations must embed UnimplementedShopServiceServer
 // for forward compatibility
 type ShopServiceServer interface {
+	// CheckShopOwnership verifies if a user owns a specific shop
 	CheckShopOwnership(context.Context, *CheckShopOwnershipRequest) (*CheckShopOwnershipResponse, error)
 	mustEmbedUnimplementedShopServiceServer()
 }
@@ -80,7 +82,7 @@ func _ShopService_CheckShopOwnership_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/shop.v1.ShopService/CheckShopOwnership",
+		FullMethod: "/goshop.shop.v1.ShopService/CheckShopOwnership",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ShopServiceServer).CheckShopOwnership(ctx, req.(*CheckShopOwnershipRequest))
@@ -92,7 +94,7 @@ func _ShopService_CheckShopOwnership_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ShopService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "shop.v1.ShopService",
+	ServiceName: "goshop.shop.v1.ShopService",
 	HandlerType: (*ShopServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -101,5 +103,5 @@ var ShopService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/shop/v1/shop.proto",
+	Metadata: "shop/v1/shop.proto",
 }

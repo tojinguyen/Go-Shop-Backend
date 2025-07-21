@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package goshop.product.v1;
+
+option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/product/v1;product_v1";
+
+service ProductService {
+    rpc GetProductInfo(GetProductInfoRequest) returns (GetProductInfoResponse) {}
+}
+
+message GetProductInfoRequest {
+    string product_id = 1;
+}
+
+message GetProductInfoResponse {
+    bool exists = 1;
+    string shop_id = 2;
+    string product_id = 3;
+}

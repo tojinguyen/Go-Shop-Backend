@@ -17,6 +17,7 @@ type Config struct {
 	CORS        CORSConfig        `json:"cors"`
 	App         AppConfig         `json:"app"`
 	ShopService ShopServiceConfig `json:"shop_service"`
+	GRPC        GRPCConfig        `json:"grpc"`
 }
 
 // ServerConfig holds server configuration
@@ -72,6 +73,11 @@ type ShopServiceConfig struct {
 	Address string `json:"address"`
 }
 
+type GRPCConfig struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -119,6 +125,10 @@ func LoadConfig() (*Config, error) {
 		},
 		ShopService: ShopServiceConfig{
 			Address: getEnv("SHOP_SERVICE_GRPC_ADDRESS", "shop-service:50051"), // SỬA Ở ĐÂY: Dùng biến môi trường mới và đúng service name
+		},
+		GRPC: GRPCConfig{
+			Host: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
+			Port: getEnv("PRODUCT_SERVICE_GRPC_PORT", "50051"),
 		},
 	}
 

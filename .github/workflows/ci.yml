@@ -37,7 +37,7 @@ jobs:
         id: set-matrix
         run: |
           # QUAN TRỌNG: Cập nhật danh sách này mỗi khi bạn thêm một service mới.
-          ALL_SERVICES='["user-service", "shop-service"]'
+          ALL_SERVICES='["user-service", "shop-service", "product-service", "cart-service"]'
 
           # Kiểm tra xem các file trong thư mục package chung (`internal/pkg`) có thay đổi không
           HAS_PKG_CHANGES=false

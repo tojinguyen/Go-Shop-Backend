@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1"
+	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/shop/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
