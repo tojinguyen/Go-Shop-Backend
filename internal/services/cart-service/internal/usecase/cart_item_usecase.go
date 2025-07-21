@@ -21,8 +21,6 @@ type cartItemUseCase struct {
 
 type CartItemUseCase interface {
 	AddItemToCart(ctx *gin.Context, req dto.AddCartItemRequest) error
-	UpdateCartItem()
-	RemoveCartItem()
 }
 
 func NewCartItemUseCase(cartRepo repository.CartRepository, productAdapter grpc.ProductServiceAdapter) CartItemUseCase {
@@ -86,10 +84,4 @@ func (uc *cartItemUseCase) AddItemToCart(ctx *gin.Context, req dto.AddCartItemRe
 	}
 
 	return nil
-}
-
-func (uc *cartItemUseCase) UpdateCartItem() {
-}
-
-func (uc *cartItemUseCase) RemoveCartItem() {
 }
