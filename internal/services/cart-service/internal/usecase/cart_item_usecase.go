@@ -39,11 +39,6 @@ func (uc *cartItemUseCase) AddItemToCart(ctx *gin.Context, req dto.AddCartItemRe
 		return apperror.NewBadRequest("Invalid product ID format", err)
 	}
 
-	if uc.productAdapter == nil {
-		log.Println("Product service adapter is not initialized")
-		return apperror.NewInternal("Product service adapter is not initialized")
-	}
-
 	info, err := uc.productAdapter.GetProductInfo(ctx, req.ProductID)
 	if err != nil {
 		log.Printf("Failed to get product info: %v", err)
