@@ -18,7 +18,7 @@ type Querier interface {
 	GetCartByOwnerID(ctx context.Context, ownerID pgtype.UUID) (Cart, error)
 	GetItemsByCartID(ctx context.Context, cartID pgtype.UUID) ([]CartItem, error)
 	UpdateItemQuantity(ctx context.Context, arg UpdateItemQuantityParams) (CartItem, error)
-	UpsertCart(ctx context.Context, ownerID pgtype.UUID) (Cart, error)
+	UpsertCart(ctx context.Context, arg UpsertCartParams) (Cart, error)
 	UpsertItemInCart(ctx context.Context, arg UpsertItemInCartParams) (CartItem, error)
 }
 

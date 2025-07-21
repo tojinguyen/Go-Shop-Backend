@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -63,6 +64,72 @@ func (r *cartRepository) GetCartByOwnerID(ctx *gin.Context, ownerID uuid.UUID) (
 }
 
 func (r *cartRepository) Save(ctx *gin.Context, cart *domain.Cart) error {
+	pgCartID := converter.UUIDToPgUUID(cart.ID)
+	pgOwnerID := converter.UUIDToPgUUID(cart.UserID)
+
+	tx, err := r.db.BeginTransaction(ctx)
+	if err != nil {
+		return apperror.NewInternal(fmt.Sprintf("failed to begin transaction: %v", err))
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := r.queries.WithTx(tx)
+
+	upsertCartParams := sqlc.UpsertCartParams{
+		ID:      pgCartID,
+		OwnerID: pgOwnerID,
+	}
+
+	_, upsertCartErr := qtx.UpsertCart(ctx, upsertCartParams)
+	if upsertCartErr != nil {
+		return apperror.NewInternal(fmt.Sprintf("failed to upsert cart: %v", upsertCartErr))
+	}
+
+	dbItems, err := qtx.GetItemsByCartID(ctx, pgCartID)
+	if err != nil {
+		return apperror.NewInternal(fmt.Sprintf("failed to get cart items by cart ID %s: %v", cart.ID, err))
+	}
+
+	dbItemsMap := make(map[uuid.UUID]sqlc.CartItem)
+	for _, item := range dbItems {
+		dbItemsMap[converter.PgUUIDToUUID(item.ProductID)] = item
+	}
+
+	domainItemsMap := make(map[uuid.UUID]domain.CartItem)
+	for _, item := range cart.Items {
+		domainItemsMap[item.ProductID] = item
+	}
+
+	// 3. Xóa những item không còn trong giỏ hàng
+	for productID, dbItem := range dbItemsMap {
+		if _, exists := domainItemsMap[productID]; !exists {
+			if err := qtx.DeleteItemFromCart(ctx, dbItem.ID); err != nil {
+				return fmt.Errorf("failed to delete cart item %s: %w", dbItem.ID, err)
+			}
+		}
+	}
+
+	// 4. Upsert (Thêm mới hoặc cập nhật) các item trong giỏ hàng
+	for _, domainItem := range cart.Items {
+		params := sqlc.UpsertItemInCartParams{
+			CartID:    converter.UUIDToPgUUID(cart.ID),
+			ProductID: converter.UUIDToPgUUID(domainItem.ProductID),
+			ShopID:    converter.UUIDToPgUUID(domainItem.ShopID),
+			Quantity:  int32(domainItem.Quantity),
+		}
+
+		_, err := qtx.UpsertItemInCart(ctx, params)
+		if err != nil {
+			return fmt.Errorf("failed to upsert cart item for product %s: %w", domainItem.ProductID, err)
+		}
+	}
+
+	// Commit transaction
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	log.Printf("Cart %s saved successfully", cart.ID)
+
 	return nil
 }
 

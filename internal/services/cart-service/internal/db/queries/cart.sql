@@ -8,9 +8,9 @@ VALUES ($1)
 RETURNING *;
 
 -- name: UpsertCart :one
-INSERT INTO carts (owner_id, updated_at)
-VALUES ($1, NOW())
-ON CONFLICT (owner_id) DO UPDATE 
+INSERT INTO carts (id, owner_id, updated_at)
+VALUES ($1, $2, NOW())
+ON CONFLICT (id) DO UPDATE 
 SET updated_at = NOW()
 RETURNING *;
 

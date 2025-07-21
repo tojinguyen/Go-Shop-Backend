@@ -118,7 +118,7 @@ const upsertItemInCart = `-- name: UpsertItemInCart :one
 INSERT INTO cart_items (cart_id, shop_id, product_id, quantity)
 VALUES ($1, $2, $3, $4)
 ON CONFLICT (cart_id, product_id) DO UPDATE 
-SET quantity = cart_items.quantity + EXCLUDED.quantity, updated_at = NOW()
+SET quantity = EXCLUDED.quantity, updated_at = NOW()
 RETURNING id, cart_id, shop_id, product_id, quantity, created_at, updated_at
 `
 

@@ -57,15 +57,20 @@ func (q *Queries) GetCartByOwnerID(ctx context.Context, ownerID pgtype.UUID) (Ca
 }
 
 const upsertCart = `-- name: UpsertCart :one
-INSERT INTO carts (owner_id, updated_at)
-VALUES ($1, NOW())
-ON CONFLICT (owner_id) DO UPDATE 
+INSERT INTO carts (id, owner_id, updated_at)
+VALUES ($1, $2, NOW())
+ON CONFLICT (id) DO UPDATE 
 SET updated_at = NOW()
 RETURNING id, owner_id, created_at, updated_at
 `
 
-func (q *Queries) UpsertCart(ctx context.Context, ownerID pgtype.UUID) (Cart, error) {
-	row := q.db.QueryRow(ctx, upsertCart, ownerID)
+type UpsertCartParams struct {
+	ID      pgtype.UUID `json:"id"`
+	OwnerID pgtype.UUID `json:"owner_id"`
+}
+
+func (q *Queries) UpsertCart(ctx context.Context, arg UpsertCartParams) (Cart, error) {
+	row := q.db.QueryRow(ctx, upsertCart, arg.ID, arg.OwnerID)
 	var i Cart
 	err := row.Scan(
 		&i.ID,
