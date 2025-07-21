@@ -29,6 +29,16 @@ func (q *Queries) CreateCart(ctx context.Context, ownerID pgtype.UUID) (Cart, er
 	return i, err
 }
 
+const deleteCart = `-- name: DeleteCart :exec
+DELETE FROM carts
+WHERE owner_id = $1
+`
+
+func (q *Queries) DeleteCart(ctx context.Context, ownerID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteCart, ownerID)
+	return err
+}
+
 const getCartByOwnerID = `-- name: GetCartByOwnerID :one
 SELECT id, owner_id, created_at, updated_at FROM carts
 WHERE owner_id = $1
@@ -36,6 +46,26 @@ WHERE owner_id = $1
 
 func (q *Queries) GetCartByOwnerID(ctx context.Context, ownerID pgtype.UUID) (Cart, error) {
 	row := q.db.QueryRow(ctx, getCartByOwnerID, ownerID)
+	var i Cart
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertCart = `-- name: UpsertCart :one
+INSERT INTO carts (owner_id, updated_at)
+VALUES ($1, NOW())
+ON CONFLICT (owner_id) DO UPDATE 
+SET updated_at = NOW()
+RETURNING id, owner_id, created_at, updated_at
+`
+
+func (q *Queries) UpsertCart(ctx context.Context, ownerID pgtype.UUID) (Cart, error) {
+	row := q.db.QueryRow(ctx, upsertCart, ownerID)
 	var i Cart
 	err := row.Scan(
 		&i.ID,
