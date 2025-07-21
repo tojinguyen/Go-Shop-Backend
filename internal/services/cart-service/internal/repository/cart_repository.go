@@ -134,6 +134,30 @@ func (r *cartRepository) Save(ctx *gin.Context, cart *domain.Cart) error {
 }
 
 func (r *cartRepository) DeleteCart(ctx *gin.Context, cartID uuid.UUID) error {
+	pgCartID := converter.UUIDToPgUUID(cartID)
+	// Begin transaction
+	tx, err := r.db.BeginTransaction(ctx)
+	if err != nil {
+		return apperror.NewInternal(fmt.Sprintf("failed to begin transaction: %v", err))
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := r.queries.WithTx(tx)
+	// Delete cart items
+	if err := qtx.DeleteAllItemsFromCart(ctx, pgCartID); err != nil {
+		return apperror.NewInternal(fmt.Sprintf("failed to delete cart items for cart ID %s: %v", cartID, err))
+	}
+
+	// Delete cart
+	if err := qtx.DeleteCart(ctx, pgCartID); err != nil {
+		return apperror.NewInternal(fmt.Sprintf("failed to delete cart with ID %s: %v", cartID, err))
+	}
+	// Commit transaction
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	log.Printf("Cart %s deleted successfully", cartID)
 	return nil
 }
 

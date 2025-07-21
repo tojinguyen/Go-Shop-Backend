@@ -11,6 +11,10 @@ RETURNING *;
 DELETE FROM cart_items
 WHERE id = $1;
 
+-- name: DeleteAllItemsFromCart :exec
+DELETE FROM cart_items
+WHERE cart_id = $1;
+
 -- name: UpdateItemQuantity :one
 UPDATE cart_items
 SET quantity = $2, updated_at = NOW()

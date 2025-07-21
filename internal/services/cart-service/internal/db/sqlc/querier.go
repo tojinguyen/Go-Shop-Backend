@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	AddItemToCart(ctx context.Context, arg AddItemToCartParams) (CartItem, error)
 	CreateCart(ctx context.Context, ownerID pgtype.UUID) (Cart, error)
+	DeleteAllItemsFromCart(ctx context.Context, cartID pgtype.UUID) error
 	DeleteCart(ctx context.Context, ownerID pgtype.UUID) error
 	DeleteItemFromCart(ctx context.Context, id pgtype.UUID) error
 	GetCartByOwnerID(ctx context.Context, ownerID pgtype.UUID) (Cart, error)
