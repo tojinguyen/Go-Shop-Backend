@@ -25,6 +25,6 @@ RETURNING *;
 -- name: UpsertItemInCart :one
 INSERT INTO cart_items (cart_id, shop_id, product_id, quantity)
 VALUES ($1, $2, $3, $4)
-ON CONFLICT (cart_id, product_id) DO UPDATE 
+ON CONFLICT (cart_id, shop_id, product_id) DO UPDATE 
 SET quantity = EXCLUDED.quantity, updated_at = NOW()
 RETURNING *;

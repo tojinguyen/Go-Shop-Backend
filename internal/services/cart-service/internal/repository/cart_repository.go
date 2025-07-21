@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
@@ -14,9 +15,9 @@ import (
 )
 
 type CartRepository interface {
-	GetCartByOwnerID(ctx *gin.Context, ownerID uuid.UUID) (*domain.Cart, error)
-	Save(ctx *gin.Context, cart *domain.Cart) error
-	DeleteCart(ctx *gin.Context, ownerID uuid.UUID) error
+	GetCartByOwnerID(ctx *gin.Context, ownerID uuid.UUID) (*domain.Cart, *apperror.AppError)
+	Save(ctx *gin.Context, cart *domain.Cart) *apperror.AppError
+	DeleteCart(ctx *gin.Context, ownerID uuid.UUID) *apperror.AppError
 }
 
 type cartRepository struct {
@@ -36,11 +37,15 @@ func NewCartRepository(db *postgresql_infra.PostgreSQLService) CartRepository {
 	}
 }
 
-func (r *cartRepository) GetCartByOwnerID(ctx *gin.Context, ownerID uuid.UUID) (*domain.Cart, error) {
+func (r *cartRepository) GetCartByOwnerID(ctx *gin.Context, ownerID uuid.UUID) (*domain.Cart, *apperror.AppError) {
 	ownerIDpg := converter.UUIDToPgUUID(ownerID)
 
 	cart, err := r.queries.GetCartByOwnerID(ctx, ownerIDpg)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			log.Printf("Cart not found for owner ID %s", ownerID)
+			return nil, apperror.NewNotFound("Cart", ownerID.String())
+		}
 		return nil, apperror.NewInternal(fmt.Sprintf("failed to get cart by owner ID %s: %v", ownerID, err))
 	}
 
@@ -63,7 +68,7 @@ func (r *cartRepository) GetCartByOwnerID(ctx *gin.Context, ownerID uuid.UUID) (
 	return domainCart, nil
 }
 
-func (r *cartRepository) Save(ctx *gin.Context, cart *domain.Cart) error {
+func (r *cartRepository) Save(ctx *gin.Context, cart *domain.Cart) *apperror.AppError {
 	pgCartID := converter.UUIDToPgUUID(cart.ID)
 	pgOwnerID := converter.UUIDToPgUUID(cart.UserID)
 
@@ -104,7 +109,7 @@ func (r *cartRepository) Save(ctx *gin.Context, cart *domain.Cart) error {
 	for productID, dbItem := range dbItemsMap {
 		if _, exists := domainItemsMap[productID]; !exists {
 			if err := qtx.DeleteItemFromCart(ctx, dbItem.ID); err != nil {
-				return fmt.Errorf("failed to delete cart item %s: %w", dbItem.ID, err)
+				return apperror.NewInternal(fmt.Sprintf("failed to delete item %s from cart: %v", productID, err))
 			}
 		}
 	}
@@ -120,20 +125,20 @@ func (r *cartRepository) Save(ctx *gin.Context, cart *domain.Cart) error {
 
 		_, err := qtx.UpsertItemInCart(ctx, params)
 		if err != nil {
-			return fmt.Errorf("failed to upsert cart item for product %s: %w", domainItem.ProductID, err)
+			return apperror.NewInternal(fmt.Sprintf("failed to upsert item %s in cart: %v", domainItem.ProductID, err))
 		}
 	}
 
 	// Commit transaction
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return apperror.NewInternal(fmt.Sprintf("failed to commit transaction: %v", err))
 	}
 	log.Printf("Cart %s saved successfully", cart.ID)
 
 	return nil
 }
 
-func (r *cartRepository) DeleteCart(ctx *gin.Context, cartID uuid.UUID) error {
+func (r *cartRepository) DeleteCart(ctx *gin.Context, cartID uuid.UUID) *apperror.AppError {
 	pgCartID := converter.UUIDToPgUUID(cartID)
 	// Begin transaction
 	tx, err := r.db.BeginTransaction(ctx)
@@ -154,7 +159,7 @@ func (r *cartRepository) DeleteCart(ctx *gin.Context, cartID uuid.UUID) error {
 	}
 	// Commit transaction
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return apperror.NewInternal(fmt.Sprintf("failed to commit transaction: %v", err))
 	}
 
 	log.Printf("Cart %s deleted successfully", cartID)

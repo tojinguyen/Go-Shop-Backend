@@ -53,6 +53,7 @@ func (q *Queries) GetCartByOwnerID(ctx context.Context, ownerID pgtype.UUID) (Ca
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
+
 	return i, err
 }
 
