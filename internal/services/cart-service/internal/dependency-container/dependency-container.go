@@ -126,7 +126,7 @@ func (sc *DependencyContainer) initRedis() error {
 }
 
 func (sc *DependencyContainer) initRepositories() {
-	sc.cartRepository = repository.NewCartRepository(sc.gormDB)
+	sc.cartRepository = repository.NewCartRepository(sc.postgreSQL)
 	log.Println("Repositories initialized")
 }
 
