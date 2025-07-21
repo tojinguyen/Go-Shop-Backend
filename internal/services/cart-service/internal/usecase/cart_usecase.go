@@ -16,7 +16,7 @@ type cartUseCase struct {
 
 type CartUseCase interface {
 	GetCart(ctx *gin.Context, userID string) (*domain.Cart, *apperror.AppError)
-	DeleteCart(ctx *gin.Context, cartID string) *apperror.AppError
+	DeleteCartByOwnerID(ctx *gin.Context, ownerID string) *apperror.AppError
 }
 
 func NewCartUseCase(repo repository.CartRepository) CartUseCase {
@@ -34,7 +34,7 @@ func (uc *cartUseCase) GetCart(ctx *gin.Context, userID string) (*domain.Cart, *
 	return cart, nil
 }
 
-func (uc *cartUseCase) DeleteCart(ctx *gin.Context, cartID string) *apperror.AppError {
+func (uc *cartUseCase) DeleteCartByOwnerID(ctx *gin.Context, cartID string) *apperror.AppError {
 	if err := uc.repo.DeleteCart(ctx, converter.StringToUUID(cartID)); err != nil {
 		if apperror.GetType(err) == apperror.TypeNotFound {
 			return apperror.NewNotFound("cart", cartID)

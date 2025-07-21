@@ -38,9 +38,8 @@ func SetupRoutes(r *gin.Engine, dependencyContainer *dependency_container.Depend
 		cart.Use(middleware.AuthHeaderMiddleware())
 		{
 			cart.GET("", cartHandler.GetCart)
-			cart.DELETE("", cartHandler.DeleteCart)
+			cart.DELETE("", cartHandler.DeleteCartByOwnerID)
 			cart.POST("/items", cartItemHandler.UpdateItemsInCart)
-			cart.PUT("/items/:id", cartItemHandler.UpdateCartItem)
 			cart.DELETE("/items/:id", cartItemHandler.RemoveCartItem)
 		}
 	}

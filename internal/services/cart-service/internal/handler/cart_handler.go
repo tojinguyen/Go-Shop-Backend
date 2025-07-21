@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	constant "github.com/toji-dev/go-shop/internal/pkg/constant"
@@ -33,11 +35,11 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 	response.Success(c, "success get cart", cart)
 }
 
-func (h *CartHandler) DeleteCart(c *gin.Context) {
-	cartID := c.Param("id")
-	if err := h.cartUseCase.DeleteCart(c, cartID); err != nil {
+func (h *CartHandler) DeleteCartByOwnerID(c *gin.Context) {
+	ownerID := c.GetString(constant.ContextKeyUserID)
+	if err := h.cartUseCase.DeleteCartByOwnerID(c, ownerID); err != nil {
 		if apperror.GetType(err) == apperror.TypeNotFound {
-			response.NotFound(c, "cart", cartID)
+			response.NotFound(c, "cart", fmt.Sprintf("cart not found for owner ID: %s", ownerID))
 			return
 		}
 		response.InternalServerError(c, "Failed to delete cart", err.Error())

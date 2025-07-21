@@ -16,7 +16,7 @@ import (
 type CartRepository interface {
 	GetCartByOwnerID(ctx *gin.Context, ownerID uuid.UUID) (*domain.Cart, error)
 	Save(ctx *gin.Context, cart *domain.Cart) error
-	DeleteCart(ctx *gin.Context, cartID uuid.UUID) error
+	DeleteCart(ctx *gin.Context, ownerID uuid.UUID) error
 }
 
 type cartRepository struct {

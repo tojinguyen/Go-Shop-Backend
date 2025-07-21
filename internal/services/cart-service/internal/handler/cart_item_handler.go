@@ -50,8 +50,5 @@ func (h *CartItemHandler) UpdateItemsInCart(c *gin.Context) {
 	response.Success(c, "success add item to cart", nil)
 }
 
-func (h *CartItemHandler) UpdateCartItem(c *gin.Context) {
-}
-
 func (h *CartItemHandler) RemoveCartItem(c *gin.Context) {
 }
