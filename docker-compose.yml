@@ -209,6 +209,48 @@ services:
       retries: 5
       start_period: 20s
 
+############## Order Service Section ##############
+  # Order Service
+  order-service:
+    build:
+      context: .
+      dockerfile: ./internal/services/order-service/Dockerfile
+    container_name: ${PROJECT_NAME:-go-shop}-order-service
+    ports:
+      - "${ORDER_SERVICE_PORT:-8084}:8084"
+    env_file:
+      - .env
+    depends_on:
+      postgres-order-service:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+    networks:
+      - go-shop-network
+    restart: unless-stopped
+
+  # PostgreSQL Database for Order Service
+  postgres-order-service:
+    image: postgres:15
+    container_name: postgres-order-service
+    ports:
+      - "${ORDER_SERVICE_DB_PORT:-6004}:5432"
+    environment:
+      POSTGRES_USER: ${ORDER_SERVICE_DB_USER}
+      POSTGRES_PASSWORD: ${ORDER_SERVICE_DB_PASSWORD}
+      POSTGRES_DB: ${ORDER_SERVICE_DB_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - go-shop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
 ############## Monitoring Service Section ##############
   prometheus:
     image: prom/prometheus:v2.47.2
