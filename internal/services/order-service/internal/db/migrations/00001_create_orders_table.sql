@@ -8,7 +8,7 @@ CREATE TYPE order_status AS ENUM
     'SHIPPED',
     'DELIVERING',
     'DELIVERED',
-    'CANCELED',
+    'CANCELED'
 );
 
 CREATE TABLE orders (
@@ -22,8 +22,8 @@ CREATE TABLE orders (
     order_status order_status NOT NULL DEFAULT 'PENDING_PAYMENT',
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 -- +goose StatementEnd
 
 -- +goose Down
