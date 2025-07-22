@@ -2,6 +2,9 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/apperror"
+	"github.com/toji-dev/go-shop/internal/pkg/response"
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/dto"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/usecase"
 )
 
@@ -24,7 +27,11 @@ func (h *orderHandler) GetOrdersByOwnerID(c *gin.Context) {
 }
 
 func (h *orderHandler) CreateOrder(c *gin.Context) {
-
+	var request dto.CreateOrderRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		response.BadRequest(c, string(apperror.CodeBadRequest), "Invalid request body", err.Error())
+		return
+	}
 }
 
 func (h *orderHandler) GetOrderByID(c *gin.Context) {

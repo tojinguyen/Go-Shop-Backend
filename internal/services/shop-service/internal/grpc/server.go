@@ -54,3 +54,25 @@ func (s *Server) CheckShopOwnership(ctx context.Context, req *shop_v1.CheckShopO
 		IsOwner: isOwner,
 	}, nil
 }
+
+func (s *Server) CheckShopExists(ctx context.Context, req *shop_v1.CheckShopExistsRequest) (*shop_v1.CheckShopExistsResponse, error) {
+	log.Printf("Received CheckShopExists request for ShopID: %s", req.GetShopId())
+
+	shopID, err := uuid.Parse(req.ShopId)
+	if err != nil {
+		log.Printf("Invalid ShopID format: %s", req.ShopId)
+		return nil, fmt.Errorf("invalid shop ID format: %w", err)
+	}
+
+	shopInfo, err := s.shopRepo.GetShopByID(ctx, shopID.String())
+	if err != nil {
+		log.Printf("Error checking existence of shop with ID %s: %v", shopID, err)
+		return nil, fmt.Errorf("error checking shop existence: %w", err)
+	}
+
+	exists := shopInfo != nil
+
+	return &shop_v1.CheckShopExistsResponse{
+		Exists: exists,
+	}, nil
+}
