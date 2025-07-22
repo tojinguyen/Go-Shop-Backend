@@ -50,3 +50,7 @@ func (s *Server) GetProductInfo(ctx context.Context, req *product_v1.GetProductI
 		Product: productInfo,
 	}, nil
 }
+
+func (s *Server) GetProductsInfo(ctx context.Context, req *product_v1.GetProductsInfoRequest) (*product_v1.GetProductsInfoResponse, error) {
+	return nil, nil
+}

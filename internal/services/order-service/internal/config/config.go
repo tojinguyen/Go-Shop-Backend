@@ -13,7 +13,8 @@ type Config struct {
 	Redis    RedisConfig    `mapstructure:"redis"`
 	App      AppConfig      `mapstructure:"app"`
 
-	ShopServiceAdapter ShopServiceConfig `mapstructure:"shop_service_adapter"`
+	ShopServiceAdapter    ExternalServiceConfig `mapstructure:"shop_service_adapter"`
+	ProductServiceAdapter ExternalServiceConfig `mapstructure:"product_service_adapter"`
 }
 
 type ServerConfig struct {
@@ -54,7 +55,7 @@ type GrpcConfig struct {
 	ProductServicePort int    `mapstructure:"product_service_port"`
 }
 
-type ShopServiceConfig struct {
+type ExternalServiceConfig struct {
 	Host string `mapstructure:"host"`
 	Port string `mapstructure:"port"`
 }
@@ -90,9 +91,13 @@ func Load() (*Config, error) {
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       getIntEnv("REDIS_DB", 1),
 		},
-		ShopServiceAdapter: ShopServiceConfig{
+		ShopServiceAdapter: ExternalServiceConfig{
 			Host: getEnv("SHOP_SERVICE_GRPC_HOST", "localhost"),
 			Port: getEnv("SHOP_SERVICE_GRPC_PORT", "8081"),
+		},
+		ProductServiceAdapter: ExternalServiceConfig{
+			Host: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
+			Port: getEnv("PRODUCT_SERVICE_GRPC_PORT", "8082"),
 		},
 	}
 	return cfg, nil

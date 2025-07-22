@@ -15,12 +15,13 @@ type OrderUsecase interface {
 }
 
 type orderUsecase struct {
-	orderRepo          repository.OrderRepository
-	shopServiceAdapter adapter.ShopServiceAdapter
+	orderRepo             repository.OrderRepository
+	shopServiceAdapter    adapter.ShopServiceAdapter
+	productServiceAdapter adapter.ProductServiceAdapter
 }
 
-func NewOrderUsecase(orderRepo repository.OrderRepository, shopServiceAdapter adapter.ShopServiceAdapter) OrderUsecase {
-	return &orderUsecase{orderRepo: orderRepo, shopServiceAdapter: shopServiceAdapter}
+func NewOrderUsecase(orderRepo repository.OrderRepository, shopServiceAdapter adapter.ShopServiceAdapter, productServiceAdapter adapter.ProductServiceAdapter) OrderUsecase {
+	return &orderUsecase{orderRepo: orderRepo, shopServiceAdapter: shopServiceAdapter, productServiceAdapter: productServiceAdapter}
 }
 
 func (u *orderUsecase) CreateOrder(ctx *gin.Context, req dto.CreateOrderRequest) (*dto.OrderResponse, error) {

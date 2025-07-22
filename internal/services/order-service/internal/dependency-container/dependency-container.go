@@ -19,7 +19,8 @@ type DependencyContainer struct {
 	orderUsecase usecase.OrderUsecase
 	orderHandler handler.OrderHandler
 
-	shopServiceAdapter adapter.ShopServiceAdapter
+	shopServiceAdapter    adapter.ShopServiceAdapter
+	productServiceAdapter adapter.ProductServiceAdapter
 }
 
 func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
@@ -34,6 +35,8 @@ func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 	container.initRepositories()
 
 	container.initShopServiceAdapter()
+
+	container.initProductServiceAdapter()
 
 	container.initUseCases()
 
@@ -72,7 +75,11 @@ func (sc *DependencyContainer) initRepositories() {
 }
 
 func (sc *DependencyContainer) initUseCases() {
-	sc.orderUsecase = usecase.NewOrderUsecase(sc.orderRepo, sc.shopServiceAdapter)
+	sc.orderUsecase = usecase.NewOrderUsecase(
+		sc.orderRepo,
+		sc.shopServiceAdapter,
+		sc.productServiceAdapter,
+	)
 	log.Println("Order use case initialized")
 }
 
@@ -94,6 +101,22 @@ func (sc *DependencyContainer) initShopServiceAdapter() error {
 
 	sc.shopServiceAdapter = adapter
 	log.Println("Shop service adapter initialized")
+	return nil
+}
+
+func (sc *DependencyContainer) initProductServiceAdapter() error {
+	productServiceAddr := fmt.Sprintf("%s:%s", sc.config.ProductServiceAdapter.Host, sc.config.ProductServiceAdapter.Port)
+	if productServiceAddr == "" {
+		return fmt.Errorf("product service address is not configured")
+	}
+
+	adapter, err := adapter.NewGrpcProductAdapter(productServiceAddr)
+	if err != nil {
+		return fmt.Errorf("failed to create product service adapter: %w", err)
+	}
+
+	sc.productServiceAdapter = adapter
+	log.Println("Product service adapter initialized")
 	return nil
 }
 
