@@ -6,6 +6,8 @@ option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/product/v1;p
 
 service ProductService {
     rpc GetProductInfo(GetProductInfoRequest) returns (GetProductInfoResponse) {}
+    rpc ReserveProduct(ReserveProductRequest) returns (ReserveProductResponse) {}
+    rpc UnreserveProduct(UnreserveProductRequest) returns (UnreserveProductResponse) {}
 }
 
 message GetProductInfoRequest {
@@ -16,4 +18,24 @@ message GetProductInfoResponse {
     bool exists = 1;
     string shop_id = 2;
     string product_id = 3;
+}
+
+message ReserveProductRequest {
+    string shop_id = 1;
+    string product_id = 2;
+    int32 quantity = 3;
+}
+
+message ReserveProductResponse {
+    bool success = 1;
+}
+
+message UnreserveProductRequest {
+    string shop_id = 1;
+    string product_id = 2;
+    int32 quantity = 3;
+}
+
+message UnreserveProductResponse {
+    bool success = 1;
 }
