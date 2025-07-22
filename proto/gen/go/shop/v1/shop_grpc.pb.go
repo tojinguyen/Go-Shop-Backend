@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ShopServiceClient interface {
 	CheckShopOwnership(ctx context.Context, in *CheckShopOwnershipRequest, opts ...grpc.CallOption) (*CheckShopOwnershipResponse, error)
 	CheckShopExists(ctx context.Context, in *CheckShopExistsRequest, opts ...grpc.CallOption) (*CheckShopExistsResponse, error)
+	CheckPromotionEligibility(ctx context.Context, in *CheckPromotionEligibilityRequest, opts ...grpc.CallOption) (*CheckPromotionEligibilityResponse, error)
 }
 
 type shopServiceClient struct {
@@ -52,12 +53,22 @@ func (c *shopServiceClient) CheckShopExists(ctx context.Context, in *CheckShopEx
 	return out, nil
 }
 
+func (c *shopServiceClient) CheckPromotionEligibility(ctx context.Context, in *CheckPromotionEligibilityRequest, opts ...grpc.CallOption) (*CheckPromotionEligibilityResponse, error) {
+	out := new(CheckPromotionEligibilityResponse)
+	err := c.cc.Invoke(ctx, "/goshop.shop.v1.ShopService/CheckPromotionEligibility", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ShopServiceServer is the server API for ShopService service.
 // All implementations must embed UnimplementedShopServiceServer
 // for forward compatibility
 type ShopServiceServer interface {
 	CheckShopOwnership(context.Context, *CheckShopOwnershipRequest) (*CheckShopOwnershipResponse, error)
 	CheckShopExists(context.Context, *CheckShopExistsRequest) (*CheckShopExistsResponse, error)
+	CheckPromotionEligibility(context.Context, *CheckPromotionEligibilityRequest) (*CheckPromotionEligibilityResponse, error)
 	mustEmbedUnimplementedShopServiceServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedShopServiceServer) CheckShopOwnership(context.Context, *Check
 }
 func (UnimplementedShopServiceServer) CheckShopExists(context.Context, *CheckShopExistsRequest) (*CheckShopExistsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckShopExists not implemented")
+}
+func (UnimplementedShopServiceServer) CheckPromotionEligibility(context.Context, *CheckPromotionEligibilityRequest) (*CheckPromotionEligibilityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckPromotionEligibility not implemented")
 }
 func (UnimplementedShopServiceServer) mustEmbedUnimplementedShopServiceServer() {}
 
@@ -120,6 +134,24 @@ func _ShopService_CheckShopExists_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ShopService_CheckPromotionEligibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckPromotionEligibilityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShopServiceServer).CheckPromotionEligibility(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/goshop.shop.v1.ShopService/CheckPromotionEligibility",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShopServiceServer).CheckPromotionEligibility(ctx, req.(*CheckPromotionEligibilityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ShopService_ServiceDesc is the grpc.ServiceDesc for ShopService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var ShopService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckShopExists",
 			Handler:    _ShopService_CheckShopExists_Handler,
+		},
+		{
+			MethodName: "CheckPromotionEligibility",
+			Handler:    _ShopService_CheckPromotionEligibility_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

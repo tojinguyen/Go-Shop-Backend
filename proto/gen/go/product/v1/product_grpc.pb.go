@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProductServiceClient interface {
 	GetProductInfo(ctx context.Context, in *GetProductInfoRequest, opts ...grpc.CallOption) (*GetProductInfoResponse, error)
+	GetProductsInfo(ctx context.Context, in *GetProductsInfoRequest, opts ...grpc.CallOption) (*GetProductsInfoResponse, error)
 	ReserveProduct(ctx context.Context, in *ReserveProductRequest, opts ...grpc.CallOption) (*ReserveProductResponse, error)
 	UnreserveProduct(ctx context.Context, in *UnreserveProductRequest, opts ...grpc.CallOption) (*UnreserveProductResponse, error)
 }
@@ -38,6 +39,15 @@ func NewProductServiceClient(cc grpc.ClientConnInterface) ProductServiceClient {
 func (c *productServiceClient) GetProductInfo(ctx context.Context, in *GetProductInfoRequest, opts ...grpc.CallOption) (*GetProductInfoResponse, error) {
 	out := new(GetProductInfoResponse)
 	err := c.cc.Invoke(ctx, "/goshop.product.v1.ProductService/GetProductInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) GetProductsInfo(ctx context.Context, in *GetProductsInfoRequest, opts ...grpc.CallOption) (*GetProductsInfoResponse, error) {
+	out := new(GetProductsInfoResponse)
+	err := c.cc.Invoke(ctx, "/goshop.product.v1.ProductService/GetProductsInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +77,7 @@ func (c *productServiceClient) UnreserveProduct(ctx context.Context, in *Unreser
 // for forward compatibility
 type ProductServiceServer interface {
 	GetProductInfo(context.Context, *GetProductInfoRequest) (*GetProductInfoResponse, error)
+	GetProductsInfo(context.Context, *GetProductsInfoRequest) (*GetProductsInfoResponse, error)
 	ReserveProduct(context.Context, *ReserveProductRequest) (*ReserveProductResponse, error)
 	UnreserveProduct(context.Context, *UnreserveProductRequest) (*UnreserveProductResponse, error)
 	mustEmbedUnimplementedProductServiceServer()
@@ -78,6 +89,9 @@ type UnimplementedProductServiceServer struct {
 
 func (UnimplementedProductServiceServer) GetProductInfo(context.Context, *GetProductInfoRequest) (*GetProductInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProductInfo not implemented")
+}
+func (UnimplementedProductServiceServer) GetProductsInfo(context.Context, *GetProductsInfoRequest) (*GetProductsInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProductsInfo not implemented")
 }
 func (UnimplementedProductServiceServer) ReserveProduct(context.Context, *ReserveProductRequest) (*ReserveProductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReserveProduct not implemented")
@@ -112,6 +126,24 @@ func _ProductService_GetProductInfo_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProductServiceServer).GetProductInfo(ctx, req.(*GetProductInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_GetProductsInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProductsInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).GetProductsInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/goshop.product.v1.ProductService/GetProductsInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).GetProductsInfo(ctx, req.(*GetProductsInfoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -162,6 +194,10 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetProductInfo",
 			Handler:    _ProductService_GetProductInfo_Handler,
+		},
+		{
+			MethodName: "GetProductsInfo",
+			Handler:    _ProductService_GetProductsInfo_Handler,
 		},
 		{
 			MethodName: "ReserveProduct",

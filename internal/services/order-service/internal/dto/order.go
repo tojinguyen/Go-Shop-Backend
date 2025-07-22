@@ -8,7 +8,6 @@ type CreateOrderItemRequest struct {
 type CreateOrderRequest struct {
 	ShopID            string                   `json:"shop_id" binding:"required,uuid"`
 	ShippingAddressID string                   `json:"shipping_address_id" binding:"required,uuid"`
-	BillingAddressID  string                   `json:"billing_address_id" binding:"required,uuid"`
 	PromotionID       *string                  `json:"promotion_id,omitempty" binding:"omitempty,uuid"`
 	Note              string                   `json:"note"`
 	Items             []CreateOrderItemRequest `json:"items" binding:"required,min=1,dive"`
