@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	common_middleware "github.com/toji-dev/go-shop/internal/pkg/middleware"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/order-service/internal/dependency-container"
-	"github.com/toji-dev/go-shop/internal/services/order-service/internal/handler"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/middleware"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
@@ -32,7 +31,7 @@ func Init(router *gin.Engine, dependencyContainer *dependency_container.Dependen
 		})
 	})
 
-	orderHandler := handler.NewOrderHandler(dependencyContainer)
+	orderHandler := dependencyContainer.GetOrderHandler()
 
 	v1 := router.Group("/api/v1")
 	{

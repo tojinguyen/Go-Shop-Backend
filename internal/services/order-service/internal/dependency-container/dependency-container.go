@@ -6,6 +6,7 @@ import (
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/config"
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/adapter"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/handler"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/usecase"
@@ -17,6 +18,8 @@ type DependencyContainer struct {
 	orderRepo    repository.OrderRepository
 	orderUsecase usecase.OrderUsecase
 	orderHandler handler.OrderHandler
+
+	shopServiceAdapter adapter.ShopServiceAdapter
 }
 
 func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
@@ -29,6 +32,8 @@ func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 	}
 
 	container.initRepositories()
+
+	container.initShopServiceAdapter()
 
 	container.initUseCases()
 
@@ -67,13 +72,33 @@ func (sc *DependencyContainer) initRepositories() {
 }
 
 func (sc *DependencyContainer) initUseCases() {
-	sc.orderUsecase = usecase.NewOrderUsecase(sc.orderRepo)
+	sc.orderUsecase = usecase.NewOrderUsecase(sc.orderRepo, sc.shopServiceAdapter)
 	log.Println("Order use case initialized")
 }
 
 func (sc *DependencyContainer) initOrderHandler() {
 	sc.orderHandler = handler.NewOrderHandler(sc.orderUsecase)
 	log.Println("Order handler initialized")
+}
+
+func (sc *DependencyContainer) initShopServiceAdapter() error {
+	shopServiceAddr := fmt.Sprintf("%s:%s", sc.config.ShopServiceAdapter.Host, sc.config.ShopServiceAdapter.Port)
+	if shopServiceAddr == "" {
+		return fmt.Errorf("shop service address is not configured")
+	}
+
+	adapter, err := adapter.NewGrpcShopAdapter(shopServiceAddr)
+	if err != nil {
+		return fmt.Errorf("failed to create shop service adapter: %w", err)
+	}
+
+	sc.shopServiceAdapter = adapter
+	log.Println("Shop service adapter initialized")
+	return nil
+}
+
+func (sc *DependencyContainer) GetOrderHandler() handler.OrderHandler {
+	return sc.orderHandler
 }
 
 func (sc *DependencyContainer) GetConfig() *config.Config {
