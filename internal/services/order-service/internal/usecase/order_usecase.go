@@ -3,8 +3,11 @@ package usecase
 import (
 	"errors"
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/dto"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/adapter"
@@ -114,6 +117,38 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 	}
 
 	// Call to product service to reserve stock
+	var reserveItems []*product_v1.ReserveProduct
+	for _, item := range req.Items {
+		reserveItems = append(reserveItems, &product_v1.ReserveProduct{
+			ProductId: item.ProductID,
+			Quantity:  int32(item.Quantity),
+		})
+	}
+
+	orderId := uuid.New().String()
+
+	batchReserveReq := &product_v1.ReserveProductsRequest{
+		ShopId:   req.ShopID,
+		OrderId:  orderId,
+		Products: reserveItems,
+	}
+
+	reserveResp, err := u.productServiceAdapter.ReserveProducts(ctx, batchReserveReq)
+	if err != nil {
+		// Lỗi này là lỗi mạng hoặc lỗi hệ thống của ProductService
+		return nil, apperror.NewDependencyFailure(fmt.Sprintf("Failed to call ReserveProducts: %s", err.Error()))
+	}
+
+	if !reserveResp.Success {
+		var errorDetails []string
+		for _, status := range reserveResp.ProductStatuses {
+			if !status.Success {
+				errorDetails = append(errorDetails, fmt.Sprintf("product %s: %s", status.ProductId, status.Message))
+			}
+		}
+		log.Printf("Failed to reserve products: %s", strings.Join(errorDetails, ", "))
+		return nil, apperror.NewConflict("Failed to reserve all products", strings.Join(errorDetails, ", "))
+	}
 
 	// Create order in repository
 

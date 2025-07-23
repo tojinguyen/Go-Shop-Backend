@@ -50,7 +50,7 @@ message ReserveProduct {
 
 message ReserveProductsResponse {
     bool success = 1;
-    repeated ProductReservationStatus reservations = 2;
+    repeated ProductReservationStatus product_statuses = 2;
 }
 
 message ProductReservationStatus {
@@ -60,8 +60,9 @@ message ProductReservationStatus {
 }
 
 message UnreserveProductsRequest {
-    string shop_id = 1;
-    repeated UnreserveProduct products = 2;
+    string order_id = 1;
+    string shop_id = 2;
+    repeated UnreserveProduct products = 3;
 }
 
 message UnreserveProduct {

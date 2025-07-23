@@ -402,11 +402,11 @@ func (x *ReserveProduct) GetQuantity() int32 {
 }
 
 type ReserveProductsResponse struct {
-	state         protoimpl.MessageState      `protogen:"open.v1"`
-	Success       bool                        `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Reservations  []*ProductReservationStatus `protobuf:"bytes,2,rep,name=reservations,proto3" json:"reservations,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState      `protogen:"open.v1"`
+	Success         bool                        `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	ProductStatuses []*ProductReservationStatus `protobuf:"bytes,2,rep,name=product_statuses,json=productStatuses,proto3" json:"product_statuses,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ReserveProductsResponse) Reset() {
@@ -446,9 +446,9 @@ func (x *ReserveProductsResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *ReserveProductsResponse) GetReservations() []*ProductReservationStatus {
+func (x *ReserveProductsResponse) GetProductStatuses() []*ProductReservationStatus {
 	if x != nil {
-		return x.Reservations
+		return x.ProductStatuses
 	}
 	return nil
 }
@@ -515,8 +515,9 @@ func (x *ProductReservationStatus) GetMessage() string {
 
 type UnreserveProductsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ShopId        string                 `protobuf:"bytes,1,opt,name=shop_id,json=shopId,proto3" json:"shop_id,omitempty"`
-	Products      []*UnreserveProduct    `protobuf:"bytes,2,rep,name=products,proto3" json:"products,omitempty"`
+	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	ShopId        string                 `protobuf:"bytes,2,opt,name=shop_id,json=shopId,proto3" json:"shop_id,omitempty"`
+	Products      []*UnreserveProduct    `protobuf:"bytes,3,rep,name=products,proto3" json:"products,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -549,6 +550,13 @@ func (x *UnreserveProductsRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UnreserveProductsRequest.ProtoReflect.Descriptor instead.
 func (*UnreserveProductsRequest) Descriptor() ([]byte, []int) {
 	return file_product_v1_product_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UnreserveProductsRequest) GetOrderId() string {
+	if x != nil {
+		return x.OrderId
+	}
+	return ""
 }
 
 func (x *UnreserveProductsRequest) GetShopId() string {
@@ -699,18 +707,19 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\x0eReserveProduct\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\tR\tproductId\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\x05R\bquantity\"\x84\x01\n" +
+	"\bquantity\x18\x02 \x01(\x05R\bquantity\"\x8b\x01\n" +
 	"\x17ReserveProductsResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12O\n" +
-	"\freservations\x18\x02 \x03(\v2+.goshop.product.v1.ProductReservationStatusR\freservations\"m\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12V\n" +
+	"\x10product_statuses\x18\x02 \x03(\v2+.goshop.product.v1.ProductReservationStatusR\x0fproductStatuses\"m\n" +
 	"\x18ProductReservationStatus\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\tR\tproductId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"t\n" +
-	"\x18UnreserveProductsRequest\x12\x17\n" +
-	"\ashop_id\x18\x01 \x01(\tR\x06shopId\x12?\n" +
-	"\bproducts\x18\x02 \x03(\v2#.goshop.product.v1.UnreserveProductR\bproducts\"M\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\x8f\x01\n" +
+	"\x18UnreserveProductsRequest\x12\x19\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x17\n" +
+	"\ashop_id\x18\x02 \x01(\tR\x06shopId\x12?\n" +
+	"\bproducts\x18\x03 \x03(\v2#.goshop.product.v1.UnreserveProductR\bproducts\"M\n" +
 	"\x10UnreserveProduct\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\tR\tproductId\x12\x1a\n" +
@@ -755,7 +764,7 @@ var file_product_v1_product_proto_depIdxs = []int32{
 	4,  // 0: goshop.product.v1.GetProductInfoResponse.product:type_name -> goshop.product.v1.ProductInfo
 	4,  // 1: goshop.product.v1.GetProductsInfoResponse.products:type_name -> goshop.product.v1.ProductInfo
 	6,  // 2: goshop.product.v1.ReserveProductsRequest.products:type_name -> goshop.product.v1.ReserveProduct
-	8,  // 3: goshop.product.v1.ReserveProductsResponse.reservations:type_name -> goshop.product.v1.ProductReservationStatus
+	8,  // 3: goshop.product.v1.ReserveProductsResponse.product_statuses:type_name -> goshop.product.v1.ProductReservationStatus
 	10, // 4: goshop.product.v1.UnreserveProductsRequest.products:type_name -> goshop.product.v1.UnreserveProduct
 	8,  // 5: goshop.product.v1.UnreserveProductsResponse.reservations:type_name -> goshop.product.v1.ProductReservationStatus
 	0,  // 6: goshop.product.v1.ProductService.GetProductInfo:input_type -> goshop.product.v1.GetProductInfoRequest

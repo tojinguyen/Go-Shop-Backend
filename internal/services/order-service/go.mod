@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/gin-gonic/gin v1.10.1
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/lib/pq v1.10.9
 	github.com/toji-dev/go-shop/internal/pkg v0.0.0-00010101000000-000000000000

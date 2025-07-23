@@ -10,6 +10,8 @@ import (
 
 type ProductServiceAdapter interface {
 	GetProductsInfo(ctx context.Context, req *product_v1.GetProductsInfoRequest) (*product_v1.GetProductsInfoResponse, error)
+	ReserveProducts(ctx context.Context, req *product_v1.ReserveProductsRequest) (*product_v1.ReserveProductsResponse, error)
+	UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error)
 	Close() error
 }
 
@@ -34,6 +36,14 @@ func NewGrpcProductAdapter(productServiceAddr string) (ProductServiceAdapter, er
 
 func (a *grpcProductAdapter) GetProductsInfo(ctx context.Context, req *product_v1.GetProductsInfoRequest) (*product_v1.GetProductsInfoResponse, error) {
 	return a.client.GetProductsInfo(ctx, req)
+}
+
+func (a *grpcProductAdapter) ReserveProducts(ctx context.Context, req *product_v1.ReserveProductsRequest) (*product_v1.ReserveProductsResponse, error) {
+	return a.client.ReserveProducts(ctx, req)
+}
+
+func (a *grpcProductAdapter) UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error) {
+	return a.client.UnreserveProducts(ctx, req)
 }
 
 func (a *grpcProductAdapter) Close() error {
