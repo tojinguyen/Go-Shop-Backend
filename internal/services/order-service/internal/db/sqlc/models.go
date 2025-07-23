@@ -14,6 +14,7 @@ import (
 type OrderStatus string
 
 const (
+	OrderStatusPENDING        OrderStatus = "PENDING"
 	OrderStatusPENDINGPAYMENT OrderStatus = "PENDING_PAYMENT"
 	OrderStatusPAYMENTFAILED  OrderStatus = "PAYMENT_FAILED"
 	OrderStatusPROCESSING     OrderStatus = "PROCESSING"

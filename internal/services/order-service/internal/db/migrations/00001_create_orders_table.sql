@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 CREATE TYPE order_status AS ENUM 
 (
+    'PENDING',
     'PENDING_PAYMENT',
     'PAYMENT_FAILED',
     'PROCESSING',
@@ -18,7 +19,7 @@ CREATE TABLE orders (
     shipping_address_id UUID NOT NULL,
     promotion_id UUID,
 
-    order_status order_status NOT NULL DEFAULT 'PENDING_PAYMENT',
+    order_status order_status NOT NULL DEFAULT 'PENDING',
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

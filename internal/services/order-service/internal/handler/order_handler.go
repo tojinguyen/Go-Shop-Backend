@@ -27,7 +27,6 @@ func NewOrderHandler(orderUsecase usecase.OrderUsecase) OrderHandler {
 }
 
 func (h *orderHandler) GetOrdersByOwnerID(c *gin.Context) {
-
 }
 
 func (h *orderHandler) CreateOrder(c *gin.Context) {

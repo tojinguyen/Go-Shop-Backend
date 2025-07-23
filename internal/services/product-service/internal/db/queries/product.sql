@@ -52,3 +52,17 @@ SET
   product_status = 'DISCONTINUED', -- Hoặc một trạng thái xóa khác
   updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL;
+
+-- name: GetProductsByIDs :many
+SELECT * FROM products
+WHERE id = ANY(@product_ids::uuid[]) AND delete_at IS NULL;
+
+
+-- name: UpdateProductStock :one
+UPDATE products
+SET
+    quantity = $2,
+    reserve_quantity = $3,
+    updated_at = NOW()
+WHERE id = $1 AND delete_at IS NULL
+RETURNING *;
