@@ -70,6 +70,9 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 			Price:     price,
 		}
 	}
+
+	finalPrice := totalAmount
+
 	// Validate Promotions
 	discountAmount := 0.0
 	if req.PromotionID != nil && *req.PromotionID != "" {
@@ -89,7 +92,7 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 			return nil, apperror.NewBadRequest("Invalid promotion code", errors.New("promotion code is not eligible"))
 		}
 
-		totalAmount -= float64(promotionRes.Discount)
+		finalPrice -= float64(promotionRes.Discount)
 		discountAmount = float64(promotionRes.Discount)
 	}
 
@@ -102,6 +105,7 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 		PromotionCode:     req.PromotionID,
 		DiscountAmount:    discountAmount,
 		TotalAmount:       totalAmount,
+		FinalPrice:        finalPrice,
 		Status:            domain.OrderStatusPENDING,
 		Items:             orderItems,
 	}
@@ -128,6 +132,7 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 	}
 
 	reserveResp, err := u.productServiceAdapter.ReserveProducts(ctx, reserveReq)
+
 	if err != nil {
 		log.Printf("CRITICAL: ReserveProducts call failed for order %s. Marking as FAILED. Error: %v", orderID, err)
 		u.orderRepo.UpdateOrderStatus(ctx, orderID, sqlc.OrderStatusFAILED)

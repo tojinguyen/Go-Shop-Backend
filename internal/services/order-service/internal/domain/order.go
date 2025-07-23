@@ -21,6 +21,7 @@ type Order struct {
 	PromotionCode     *string     `json:"promotion_code,omitempty"`
 	DiscountAmount    float64     `json:"discount_amount"`
 	TotalAmount       float64     `json:"total_amount"`
+	FinalPrice        float64     `json:"final_price"`
 	Status            OrderStatus `json:"status"`
 	Items             []OrderItem `json:"items"`
 	CreatedAt         string      `json:"created_at"`
