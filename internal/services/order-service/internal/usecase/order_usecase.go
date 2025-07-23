@@ -48,7 +48,7 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, req dto.CreateOrderRequest)
 		return nil, apperror.NewInternal(fmt.Sprintf("Failed to get address: %s", err.Error()))
 	}
 
-	if address == nil {
+	if address == nil || address.DeletedAt != nil {
 		return nil, apperror.NewNotFound("Shipping address", req.ShippingAddressID)
 	}
 
