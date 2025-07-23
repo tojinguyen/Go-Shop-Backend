@@ -7,8 +7,8 @@ option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/product/v1;p
 service ProductService {
     rpc GetProductInfo(GetProductInfoRequest) returns (GetProductInfoResponse) {}
     rpc GetProductsInfo(GetProductsInfoRequest) returns (GetProductsInfoResponse) {}
-    rpc ReserveProduct(ReserveProductRequest) returns (ReserveProductResponse) {}
-    rpc UnreserveProduct(UnreserveProductRequest) returns (UnreserveProductResponse) {}
+    rpc ReserveProducts(ReserveProductsRequest) returns (ReserveProductsResponse) {}
+    rpc UnreserveProducts(UnreserveProductsRequest) returns (UnreserveProductsResponse) {}
 }
 
 message GetProductInfoRequest {
@@ -37,22 +37,39 @@ message ProductInfo {
     int32 quantity = 5;
 }
 
-message ReserveProductRequest {
-    string shop_id = 1;
-    string product_id = 2;
-    int32 quantity = 3;
+message ReserveProductsRequest {
+    string order_id = 1;
+    string shop_id = 2;
+    repeated ReserveProduct products = 3;
 }
 
-message ReserveProductResponse {
+message ReserveProduct {
+    string product_id = 1;
+    int32 quantity = 2;
+}
+
+message ReserveProductsResponse {
     bool success = 1;
+    repeated ProductReservationStatus reservations = 2;
 }
 
-message UnreserveProductRequest {
+message ProductReservationStatus {
+    string product_id = 1;
+    bool success = 2;
+    string message = 3;
+}
+
+message UnreserveProductsRequest {
     string shop_id = 1;
-    string product_id = 2;
-    int32 quantity = 3;
+    repeated UnreserveProduct products = 2;
 }
 
-message UnreserveProductResponse {
+message UnreserveProduct {
+    string product_id = 1;
+    int32 quantity = 2;
+}
+
+message UnreserveProductsResponse {
     bool success = 1;
+    repeated ProductReservationStatus reservations = 2;
 }

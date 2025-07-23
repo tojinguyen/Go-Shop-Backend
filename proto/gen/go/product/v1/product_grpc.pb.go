@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProductService_GetProductInfo_FullMethodName   = "/goshop.product.v1.ProductService/GetProductInfo"
-	ProductService_GetProductsInfo_FullMethodName  = "/goshop.product.v1.ProductService/GetProductsInfo"
-	ProductService_ReserveProduct_FullMethodName   = "/goshop.product.v1.ProductService/ReserveProduct"
-	ProductService_UnreserveProduct_FullMethodName = "/goshop.product.v1.ProductService/UnreserveProduct"
+	ProductService_GetProductInfo_FullMethodName    = "/goshop.product.v1.ProductService/GetProductInfo"
+	ProductService_GetProductsInfo_FullMethodName   = "/goshop.product.v1.ProductService/GetProductsInfo"
+	ProductService_ReserveProducts_FullMethodName   = "/goshop.product.v1.ProductService/ReserveProducts"
+	ProductService_UnreserveProducts_FullMethodName = "/goshop.product.v1.ProductService/UnreserveProducts"
 )
 
 // ProductServiceClient is the client API for ProductService service.
@@ -31,8 +31,8 @@ const (
 type ProductServiceClient interface {
 	GetProductInfo(ctx context.Context, in *GetProductInfoRequest, opts ...grpc.CallOption) (*GetProductInfoResponse, error)
 	GetProductsInfo(ctx context.Context, in *GetProductsInfoRequest, opts ...grpc.CallOption) (*GetProductsInfoResponse, error)
-	ReserveProduct(ctx context.Context, in *ReserveProductRequest, opts ...grpc.CallOption) (*ReserveProductResponse, error)
-	UnreserveProduct(ctx context.Context, in *UnreserveProductRequest, opts ...grpc.CallOption) (*UnreserveProductResponse, error)
+	ReserveProducts(ctx context.Context, in *ReserveProductsRequest, opts ...grpc.CallOption) (*ReserveProductsResponse, error)
+	UnreserveProducts(ctx context.Context, in *UnreserveProductsRequest, opts ...grpc.CallOption) (*UnreserveProductsResponse, error)
 }
 
 type productServiceClient struct {
@@ -63,20 +63,20 @@ func (c *productServiceClient) GetProductsInfo(ctx context.Context, in *GetProdu
 	return out, nil
 }
 
-func (c *productServiceClient) ReserveProduct(ctx context.Context, in *ReserveProductRequest, opts ...grpc.CallOption) (*ReserveProductResponse, error) {
+func (c *productServiceClient) ReserveProducts(ctx context.Context, in *ReserveProductsRequest, opts ...grpc.CallOption) (*ReserveProductsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ReserveProductResponse)
-	err := c.cc.Invoke(ctx, ProductService_ReserveProduct_FullMethodName, in, out, cOpts...)
+	out := new(ReserveProductsResponse)
+	err := c.cc.Invoke(ctx, ProductService_ReserveProducts_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *productServiceClient) UnreserveProduct(ctx context.Context, in *UnreserveProductRequest, opts ...grpc.CallOption) (*UnreserveProductResponse, error) {
+func (c *productServiceClient) UnreserveProducts(ctx context.Context, in *UnreserveProductsRequest, opts ...grpc.CallOption) (*UnreserveProductsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UnreserveProductResponse)
-	err := c.cc.Invoke(ctx, ProductService_UnreserveProduct_FullMethodName, in, out, cOpts...)
+	out := new(UnreserveProductsResponse)
+	err := c.cc.Invoke(ctx, ProductService_UnreserveProducts_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +89,8 @@ func (c *productServiceClient) UnreserveProduct(ctx context.Context, in *Unreser
 type ProductServiceServer interface {
 	GetProductInfo(context.Context, *GetProductInfoRequest) (*GetProductInfoResponse, error)
 	GetProductsInfo(context.Context, *GetProductsInfoRequest) (*GetProductsInfoResponse, error)
-	ReserveProduct(context.Context, *ReserveProductRequest) (*ReserveProductResponse, error)
-	UnreserveProduct(context.Context, *UnreserveProductRequest) (*UnreserveProductResponse, error)
+	ReserveProducts(context.Context, *ReserveProductsRequest) (*ReserveProductsResponse, error)
+	UnreserveProducts(context.Context, *UnreserveProductsRequest) (*UnreserveProductsResponse, error)
 	mustEmbedUnimplementedProductServiceServer()
 }
 
@@ -107,11 +107,11 @@ func (UnimplementedProductServiceServer) GetProductInfo(context.Context, *GetPro
 func (UnimplementedProductServiceServer) GetProductsInfo(context.Context, *GetProductsInfoRequest) (*GetProductsInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProductsInfo not implemented")
 }
-func (UnimplementedProductServiceServer) ReserveProduct(context.Context, *ReserveProductRequest) (*ReserveProductResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReserveProduct not implemented")
+func (UnimplementedProductServiceServer) ReserveProducts(context.Context, *ReserveProductsRequest) (*ReserveProductsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReserveProducts not implemented")
 }
-func (UnimplementedProductServiceServer) UnreserveProduct(context.Context, *UnreserveProductRequest) (*UnreserveProductResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnreserveProduct not implemented")
+func (UnimplementedProductServiceServer) UnreserveProducts(context.Context, *UnreserveProductsRequest) (*UnreserveProductsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnreserveProducts not implemented")
 }
 func (UnimplementedProductServiceServer) mustEmbedUnimplementedProductServiceServer() {}
 func (UnimplementedProductServiceServer) testEmbeddedByValue()                        {}
@@ -170,38 +170,38 @@ func _ProductService_GetProductsInfo_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProductService_ReserveProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReserveProductRequest)
+func _ProductService_ReserveProducts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReserveProductsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProductServiceServer).ReserveProduct(ctx, in)
+		return srv.(ProductServiceServer).ReserveProducts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ProductService_ReserveProduct_FullMethodName,
+		FullMethod: ProductService_ReserveProducts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProductServiceServer).ReserveProduct(ctx, req.(*ReserveProductRequest))
+		return srv.(ProductServiceServer).ReserveProducts(ctx, req.(*ReserveProductsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProductService_UnreserveProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnreserveProductRequest)
+func _ProductService_UnreserveProducts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnreserveProductsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProductServiceServer).UnreserveProduct(ctx, in)
+		return srv.(ProductServiceServer).UnreserveProducts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ProductService_UnreserveProduct_FullMethodName,
+		FullMethod: ProductService_UnreserveProducts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProductServiceServer).UnreserveProduct(ctx, req.(*UnreserveProductRequest))
+		return srv.(ProductServiceServer).UnreserveProducts(ctx, req.(*UnreserveProductsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -222,12 +222,12 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProductService_GetProductsInfo_Handler,
 		},
 		{
-			MethodName: "ReserveProduct",
-			Handler:    _ProductService_ReserveProduct_Handler,
+			MethodName: "ReserveProducts",
+			Handler:    _ProductService_ReserveProducts_Handler,
 		},
 		{
-			MethodName: "UnreserveProduct",
-			Handler:    _ProductService_UnreserveProduct_Handler,
+			MethodName: "UnreserveProducts",
+			Handler:    _ProductService_UnreserveProducts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
