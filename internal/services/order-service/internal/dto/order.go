@@ -17,7 +17,6 @@ type OrderResponse struct {
 	ID                string              `json:"id"`
 	ShopID            string              `json:"shop_id"`
 	ShippingAddressID string              `json:"shipping_address_id"`
-	BillingAddressID  string              `json:"billing_address_id"`
 	PromotionID       *string             `json:"promotion_id,omitempty"`
 	Note              string              `json:"note"`
 	DiscountAmount    float64             `json:"discount_amount"`
