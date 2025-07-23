@@ -22,6 +22,7 @@ const (
 	OrderStatusDELIVERING     OrderStatus = "DELIVERING"
 	OrderStatusDELIVERED      OrderStatus = "DELIVERED"
 	OrderStatusCANCELED       OrderStatus = "CANCELED"
+	OrderStatusFAILED         OrderStatus = "FAILED"
 )
 
 func (e *OrderStatus) Scan(src interface{}) error {

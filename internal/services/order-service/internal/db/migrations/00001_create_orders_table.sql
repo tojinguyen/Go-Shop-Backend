@@ -9,7 +9,8 @@ CREATE TYPE order_status AS ENUM
     'SHIPPED',
     'DELIVERING',
     'DELIVERED',
-    'CANCELED'
+    'CANCELED',
+    'FAILED'
 );
 
 CREATE TABLE orders (
