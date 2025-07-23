@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package goshop.cart.v1;
+
+option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/cart/v1;cart_v1";
+
+service CartService {
+    rpc GetCart(GetCartRequest) returns (GetCartResponse);
+}
+
+message GetCartRequest {
+    string user_id = 1; 
+}
+
+message GetCartResponse {
+    string owner_id = 1;
+    repeated CartItem items = 2;
+}
+
+message CartItem {
+    string product_id = 1; 
+    string shop_id = 2;
+    int32 quantity = 3; 
+}
+
+

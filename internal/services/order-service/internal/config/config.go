@@ -12,6 +12,10 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
 	App      AppConfig      `mapstructure:"app"`
+
+	ShopServiceAdapter    ExternalServiceConfig `mapstructure:"shop_service_adapter"`
+	ProductServiceAdapter ExternalServiceConfig `mapstructure:"product_service_adapter"`
+	UserServiceAdapter    ExternalServiceConfig `mapstructure:"user_service_adapter"`
 }
 
 type ServerConfig struct {
@@ -52,6 +56,11 @@ type GrpcConfig struct {
 	ProductServicePort int    `mapstructure:"product_service_port"`
 }
 
+type ExternalServiceConfig struct {
+	Host string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -82,6 +91,18 @@ func Load() (*Config, error) {
 			Port:     getEnv("REDIS_PORT", "6379"),
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       getIntEnv("REDIS_DB", 1),
+		},
+		ShopServiceAdapter: ExternalServiceConfig{
+			Host: getEnv("SHOP_SERVICE_GRPC_HOST", "localhost"),
+			Port: getEnv("SHOP_SERVICE_GRPC_PORT", "8081"),
+		},
+		ProductServiceAdapter: ExternalServiceConfig{
+			Host: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
+			Port: getEnv("PRODUCT_SERVICE_GRPC_PORT", "8082"),
+		},
+		UserServiceAdapter: ExternalServiceConfig{
+			Host: getEnv("USER_SERVICE_GRPC_HOST", "localhost"),
+			Port: getEnv("USER_SERVICE_GRPC_PORT", "8084"),
 		},
 	}
 	return cfg, nil

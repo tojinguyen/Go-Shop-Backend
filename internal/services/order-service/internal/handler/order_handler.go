@@ -1,8 +1,21 @@
 package handler
 
-import "github.com/toji-dev/go-shop/internal/services/order-service/internal/usecase"
+import (
+	"fmt"
+
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
+
+	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/apperror"
+	"github.com/toji-dev/go-shop/internal/pkg/response"
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/dto"
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/usecase"
+)
 
 type OrderHandler interface {
+	GetOrdersByOwnerID(c *gin.Context)
+	CreateOrder(c *gin.Context)
+	GetOrderByID(c *gin.Context)
 }
 
 type orderHandler struct {
@@ -11,4 +24,34 @@ type orderHandler struct {
 
 func NewOrderHandler(orderUsecase usecase.OrderUsecase) OrderHandler {
 	return &orderHandler{orderUsecase: orderUsecase}
+}
+
+func (h *orderHandler) GetOrdersByOwnerID(c *gin.Context) {
+
+}
+
+func (h *orderHandler) CreateOrder(c *gin.Context) {
+	var request dto.CreateOrderRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		response.BadRequest(c, string(apperror.CodeBadRequest), "Invalid request body", err.Error())
+		return
+	}
+
+	userId, exists := c.Get(constant.ContextKeyUserID)
+	if !exists {
+		response.Unauthorized(c, string(apperror.CodeUnauthorized), "User not authenticated")
+		return
+	}
+
+	order, err := h.orderUsecase.CreateOrder(c, userId.(string), request)
+	if err != nil {
+		response.InternalServerError(c, string(apperror.CodeInternal), fmt.Sprintf("Failed to create order: %s", err.Error()))
+		return
+	}
+
+	response.Success(c, "Order created successfully", order)
+}
+
+func (h *orderHandler) GetOrderByID(c *gin.Context) {
+
 }
