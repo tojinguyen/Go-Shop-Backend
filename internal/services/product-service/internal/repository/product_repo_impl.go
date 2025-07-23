@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
@@ -194,4 +195,31 @@ func toDomain(p *sqlc.Product) (*product.Product, error) {
 		p.CreatedAt.Time,
 		p.UpdatedAt.Time,
 	)
+}
+
+func (r *pgProductRepository) GetByIDs(ctx context.Context, ids []string) ([]*product.Product, error) {
+	if len(ids) == 0 {
+		return []*product.Product{}, nil
+	}
+
+	pgIDs := make([]pgtype.UUID, len(ids))
+	for i, id := range ids {
+		pgIDs[i] = converter.UUIDToPgUUID(uuid.Must(uuid.Parse(id)))
+	}
+
+	sqlcProducts, err := r.queries.GetProductsByIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, apperror.New(apperror.CodeDatabaseError, "failed to get products by IDs", apperror.TypeInternal).Wrap(err)
+	}
+
+	domainProducts := make([]*product.Product, 0, len(sqlcProducts))
+	for _, p := range sqlcProducts {
+		domainProduct, err := toDomain(&p)
+		if err != nil {
+			return nil, apperror.New(apperror.CodeConversionError, "failed to convert db model to domain", apperror.TypeInternal).Wrap(err)
+		}
+		domainProducts = append(domainProducts, domainProduct)
+	}
+
+	return domainProducts, nil
 }
