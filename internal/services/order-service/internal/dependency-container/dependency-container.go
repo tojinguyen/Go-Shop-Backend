@@ -147,3 +147,11 @@ func (sc *DependencyContainer) GetOrderHandler() handler.OrderHandler {
 func (sc *DependencyContainer) GetConfig() *config.Config {
 	return sc.config
 }
+
+func (sc *DependencyContainer) GetOrderRepository() repository.OrderRepository {
+	return sc.orderRepo
+}
+
+func (sc *DependencyContainer) GetProductServiceAdapter() adapter.ProductServiceAdapter {
+	return sc.productServiceAdapter
+}

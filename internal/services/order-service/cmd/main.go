@@ -8,6 +8,7 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/config"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/order-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/router"
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/worker"
 )
 
 func main() {
@@ -21,6 +22,12 @@ func main() {
 
 	// Initialize dependency container
 	dependencyContainer := dependency_container.NewDependencyContainer(cfg)
+
+	scheduler := worker.NewScheduler(dependencyContainer)
+	scheduler.RegisterJobs()
+
+	// Chạy scheduler trong một goroutine riêng
+	go scheduler.Start()
 
 	// Initialize Gin router
 	r := gin.Default()
