@@ -3,6 +3,8 @@ package handler
 import (
 	"fmt"
 
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
@@ -35,7 +37,13 @@ func (h *orderHandler) CreateOrder(c *gin.Context) {
 		return
 	}
 
-	order, err := h.orderUsecase.CreateOrder(c, request)
+	userId, exists := c.Get(constant.ContextKeyUserID)
+	if !exists {
+		response.Unauthorized(c, string(apperror.CodeUnauthorized), "User not authenticated")
+		return
+	}
+
+	order, err := h.orderUsecase.CreateOrder(c, userId.(string), request)
 	if err != nil {
 		response.InternalServerError(c, string(apperror.CodeInternal), fmt.Sprintf("Failed to create order: %s", err.Error()))
 		return

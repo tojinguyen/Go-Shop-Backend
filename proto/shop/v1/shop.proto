@@ -7,7 +7,7 @@ option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1;shop
 service ShopService {
   rpc CheckShopOwnership(CheckShopOwnershipRequest) returns (CheckShopOwnershipResponse);
   rpc CheckShopExists(CheckShopExistsRequest) returns (CheckShopExistsResponse);
-  rpc CheckPromotionEligibility(CheckPromotionEligibilityRequest) returns (CheckPromotionEligibilityResponse);
+  rpc CalculatePromotion(CalculatePromotionRequest) returns (CalculatePromotionResponse);
 }
 
 message CheckShopOwnershipRequest {
@@ -27,8 +27,14 @@ message CheckShopExistsResponse {
   bool exists = 1;
 }
 
-message CheckPromotionEligibilityRequest {
+message CalculatePromotionRequest {
+  string shop_id = 1;
+  string user_id = 2;
+  string promotion_code = 4; 
+  int32 total_amount = 5;
 }
 
-message CheckPromotionEligibilityResponse {
+message CalculatePromotionResponse {
+  bool eligible = 1;
+  float discount = 2;
 }

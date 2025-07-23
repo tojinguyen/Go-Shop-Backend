@@ -40,7 +40,7 @@ proto-gen:
 # Lệnh để cập nhật go.mod trong thư mục generated code
 .PHONY: proto-tidy
 proto-tidy:
-	@echo "🧹 Tidying Go modules in generated proto directory..."
+	@echo "Tidying Go modules in generated proto directory..."
 	@cd $(GEN_DIR_GO) && go mod tidy
 	@echo "Go modules for generated code are up to date."
 

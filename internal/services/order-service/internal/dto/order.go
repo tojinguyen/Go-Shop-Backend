@@ -20,6 +20,7 @@ type OrderResponse struct {
 	BillingAddressID  string              `json:"billing_address_id"`
 	PromotionID       *string             `json:"promotion_id,omitempty"`
 	Note              string              `json:"note"`
+	DiscountAmount    float64             `json:"discount_amount"`
 	TotalAmount       float64             `json:"total_amount"`
 	Status            string              `json:"status"`
 	CreatedAt         string              `json:"created_at"`

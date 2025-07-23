@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ShopService_CheckShopOwnership_FullMethodName        = "/goshop.shop.v1.ShopService/CheckShopOwnership"
-	ShopService_CheckShopExists_FullMethodName           = "/goshop.shop.v1.ShopService/CheckShopExists"
-	ShopService_CheckPromotionEligibility_FullMethodName = "/goshop.shop.v1.ShopService/CheckPromotionEligibility"
+	ShopService_CheckShopOwnership_FullMethodName = "/goshop.shop.v1.ShopService/CheckShopOwnership"
+	ShopService_CheckShopExists_FullMethodName    = "/goshop.shop.v1.ShopService/CheckShopExists"
+	ShopService_CalculatePromotion_FullMethodName = "/goshop.shop.v1.ShopService/CalculatePromotion"
 )
 
 // ShopServiceClient is the client API for ShopService service.
@@ -30,7 +30,7 @@ const (
 type ShopServiceClient interface {
 	CheckShopOwnership(ctx context.Context, in *CheckShopOwnershipRequest, opts ...grpc.CallOption) (*CheckShopOwnershipResponse, error)
 	CheckShopExists(ctx context.Context, in *CheckShopExistsRequest, opts ...grpc.CallOption) (*CheckShopExistsResponse, error)
-	CheckPromotionEligibility(ctx context.Context, in *CheckPromotionEligibilityRequest, opts ...grpc.CallOption) (*CheckPromotionEligibilityResponse, error)
+	CalculatePromotion(ctx context.Context, in *CalculatePromotionRequest, opts ...grpc.CallOption) (*CalculatePromotionResponse, error)
 }
 
 type shopServiceClient struct {
@@ -61,10 +61,10 @@ func (c *shopServiceClient) CheckShopExists(ctx context.Context, in *CheckShopEx
 	return out, nil
 }
 
-func (c *shopServiceClient) CheckPromotionEligibility(ctx context.Context, in *CheckPromotionEligibilityRequest, opts ...grpc.CallOption) (*CheckPromotionEligibilityResponse, error) {
+func (c *shopServiceClient) CalculatePromotion(ctx context.Context, in *CalculatePromotionRequest, opts ...grpc.CallOption) (*CalculatePromotionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CheckPromotionEligibilityResponse)
-	err := c.cc.Invoke(ctx, ShopService_CheckPromotionEligibility_FullMethodName, in, out, cOpts...)
+	out := new(CalculatePromotionResponse)
+	err := c.cc.Invoke(ctx, ShopService_CalculatePromotion_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (c *shopServiceClient) CheckPromotionEligibility(ctx context.Context, in *C
 type ShopServiceServer interface {
 	CheckShopOwnership(context.Context, *CheckShopOwnershipRequest) (*CheckShopOwnershipResponse, error)
 	CheckShopExists(context.Context, *CheckShopExistsRequest) (*CheckShopExistsResponse, error)
-	CheckPromotionEligibility(context.Context, *CheckPromotionEligibilityRequest) (*CheckPromotionEligibilityResponse, error)
+	CalculatePromotion(context.Context, *CalculatePromotionRequest) (*CalculatePromotionResponse, error)
 	mustEmbedUnimplementedShopServiceServer()
 }
 
@@ -94,8 +94,8 @@ func (UnimplementedShopServiceServer) CheckShopOwnership(context.Context, *Check
 func (UnimplementedShopServiceServer) CheckShopExists(context.Context, *CheckShopExistsRequest) (*CheckShopExistsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckShopExists not implemented")
 }
-func (UnimplementedShopServiceServer) CheckPromotionEligibility(context.Context, *CheckPromotionEligibilityRequest) (*CheckPromotionEligibilityResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckPromotionEligibility not implemented")
+func (UnimplementedShopServiceServer) CalculatePromotion(context.Context, *CalculatePromotionRequest) (*CalculatePromotionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CalculatePromotion not implemented")
 }
 func (UnimplementedShopServiceServer) mustEmbedUnimplementedShopServiceServer() {}
 func (UnimplementedShopServiceServer) testEmbeddedByValue()                     {}
@@ -154,20 +154,20 @@ func _ShopService_CheckShopExists_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ShopService_CheckPromotionEligibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckPromotionEligibilityRequest)
+func _ShopService_CalculatePromotion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CalculatePromotionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ShopServiceServer).CheckPromotionEligibility(ctx, in)
+		return srv.(ShopServiceServer).CalculatePromotion(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ShopService_CheckPromotionEligibility_FullMethodName,
+		FullMethod: ShopService_CalculatePromotion_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShopServiceServer).CheckPromotionEligibility(ctx, req.(*CheckPromotionEligibilityRequest))
+		return srv.(ShopServiceServer).CalculatePromotion(ctx, req.(*CalculatePromotionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -188,8 +188,8 @@ var ShopService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ShopService_CheckShopExists_Handler,
 		},
 		{
-			MethodName: "CheckPromotionEligibility",
-			Handler:    _ShopService_CheckPromotionEligibility_Handler,
+			MethodName: "CalculatePromotion",
+			Handler:    _ShopService_CalculatePromotion_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

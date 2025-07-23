@@ -205,26 +205,30 @@ func (x *CheckShopExistsResponse) GetExists() bool {
 	return false
 }
 
-type CheckPromotionEligibilityRequest struct {
+type CalculatePromotionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	ShopId        string                 `protobuf:"bytes,1,opt,name=shop_id,json=shopId,proto3" json:"shop_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PromotionCode string                 `protobuf:"bytes,4,opt,name=promotion_code,json=promotionCode,proto3" json:"promotion_code,omitempty"`
+	TotalAmount   int32                  `protobuf:"varint,5,opt,name=total_amount,json=totalAmount,proto3" json:"total_amount,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CheckPromotionEligibilityRequest) Reset() {
-	*x = CheckPromotionEligibilityRequest{}
+func (x *CalculatePromotionRequest) Reset() {
+	*x = CalculatePromotionRequest{}
 	mi := &file_shop_v1_shop_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CheckPromotionEligibilityRequest) String() string {
+func (x *CalculatePromotionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CheckPromotionEligibilityRequest) ProtoMessage() {}
+func (*CalculatePromotionRequest) ProtoMessage() {}
 
-func (x *CheckPromotionEligibilityRequest) ProtoReflect() protoreflect.Message {
+func (x *CalculatePromotionRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_shop_v1_shop_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -236,31 +240,61 @@ func (x *CheckPromotionEligibilityRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CheckPromotionEligibilityRequest.ProtoReflect.Descriptor instead.
-func (*CheckPromotionEligibilityRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CalculatePromotionRequest.ProtoReflect.Descriptor instead.
+func (*CalculatePromotionRequest) Descriptor() ([]byte, []int) {
 	return file_shop_v1_shop_proto_rawDescGZIP(), []int{4}
 }
 
-type CheckPromotionEligibilityResponse struct {
+func (x *CalculatePromotionRequest) GetShopId() string {
+	if x != nil {
+		return x.ShopId
+	}
+	return ""
+}
+
+func (x *CalculatePromotionRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *CalculatePromotionRequest) GetPromotionCode() string {
+	if x != nil {
+		return x.PromotionCode
+	}
+	return ""
+}
+
+func (x *CalculatePromotionRequest) GetTotalAmount() int32 {
+	if x != nil {
+		return x.TotalAmount
+	}
+	return 0
+}
+
+type CalculatePromotionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Eligible      bool                   `protobuf:"varint,1,opt,name=eligible,proto3" json:"eligible,omitempty"`
+	Discount      float32                `protobuf:"fixed32,2,opt,name=discount,proto3" json:"discount,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CheckPromotionEligibilityResponse) Reset() {
-	*x = CheckPromotionEligibilityResponse{}
+func (x *CalculatePromotionResponse) Reset() {
+	*x = CalculatePromotionResponse{}
 	mi := &file_shop_v1_shop_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CheckPromotionEligibilityResponse) String() string {
+func (x *CalculatePromotionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CheckPromotionEligibilityResponse) ProtoMessage() {}
+func (*CalculatePromotionResponse) ProtoMessage() {}
 
-func (x *CheckPromotionEligibilityResponse) ProtoReflect() protoreflect.Message {
+func (x *CalculatePromotionResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_shop_v1_shop_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -272,9 +306,23 @@ func (x *CheckPromotionEligibilityResponse) ProtoReflect() protoreflect.Message 
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CheckPromotionEligibilityResponse.ProtoReflect.Descriptor instead.
-func (*CheckPromotionEligibilityResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use CalculatePromotionResponse.ProtoReflect.Descriptor instead.
+func (*CalculatePromotionResponse) Descriptor() ([]byte, []int) {
 	return file_shop_v1_shop_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CalculatePromotionResponse) GetEligible() bool {
+	if x != nil {
+		return x.Eligible
+	}
+	return false
+}
+
+func (x *CalculatePromotionResponse) GetDiscount() float32 {
+	if x != nil {
+		return x.Discount
+	}
+	return 0
 }
 
 var File_shop_v1_shop_proto protoreflect.FileDescriptor
@@ -290,13 +338,19 @@ const file_shop_v1_shop_proto_rawDesc = "" +
 	"\x16CheckShopExistsRequest\x12\x17\n" +
 	"\ashop_id\x18\x01 \x01(\tR\x06shopId\"1\n" +
 	"\x17CheckShopExistsResponse\x12\x16\n" +
-	"\x06exists\x18\x01 \x01(\bR\x06exists\"\"\n" +
-	" CheckPromotionEligibilityRequest\"#\n" +
-	"!CheckPromotionEligibilityResponse2\xe1\x02\n" +
+	"\x06exists\x18\x01 \x01(\bR\x06exists\"\x97\x01\n" +
+	"\x19CalculatePromotionRequest\x12\x17\n" +
+	"\ashop_id\x18\x01 \x01(\tR\x06shopId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12%\n" +
+	"\x0epromotion_code\x18\x04 \x01(\tR\rpromotionCode\x12!\n" +
+	"\ftotal_amount\x18\x05 \x01(\x05R\vtotalAmount\"T\n" +
+	"\x1aCalculatePromotionResponse\x12\x1a\n" +
+	"\beligible\x18\x01 \x01(\bR\beligible\x12\x1a\n" +
+	"\bdiscount\x18\x02 \x01(\x02R\bdiscount2\xcb\x02\n" +
 	"\vShopService\x12k\n" +
 	"\x12CheckShopOwnership\x12).goshop.shop.v1.CheckShopOwnershipRequest\x1a*.goshop.shop.v1.CheckShopOwnershipResponse\x12b\n" +
-	"\x0fCheckShopExists\x12&.goshop.shop.v1.CheckShopExistsRequest\x1a'.goshop.shop.v1.CheckShopExistsResponse\x12\x80\x01\n" +
-	"\x19CheckPromotionEligibility\x120.goshop.shop.v1.CheckPromotionEligibilityRequest\x1a1.goshop.shop.v1.CheckPromotionEligibilityResponseB@Z>github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1;shop_v1b\x06proto3"
+	"\x0fCheckShopExists\x12&.goshop.shop.v1.CheckShopExistsRequest\x1a'.goshop.shop.v1.CheckShopExistsResponse\x12k\n" +
+	"\x12CalculatePromotion\x12).goshop.shop.v1.CalculatePromotionRequest\x1a*.goshop.shop.v1.CalculatePromotionResponseB@Z>github.com/toji-dev/go-shop/proto/gen/go/proto/shop/v1;shop_v1b\x06proto3"
 
 var (
 	file_shop_v1_shop_proto_rawDescOnce sync.Once
@@ -312,20 +366,20 @@ func file_shop_v1_shop_proto_rawDescGZIP() []byte {
 
 var file_shop_v1_shop_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_shop_v1_shop_proto_goTypes = []any{
-	(*CheckShopOwnershipRequest)(nil),         // 0: goshop.shop.v1.CheckShopOwnershipRequest
-	(*CheckShopOwnershipResponse)(nil),        // 1: goshop.shop.v1.CheckShopOwnershipResponse
-	(*CheckShopExistsRequest)(nil),            // 2: goshop.shop.v1.CheckShopExistsRequest
-	(*CheckShopExistsResponse)(nil),           // 3: goshop.shop.v1.CheckShopExistsResponse
-	(*CheckPromotionEligibilityRequest)(nil),  // 4: goshop.shop.v1.CheckPromotionEligibilityRequest
-	(*CheckPromotionEligibilityResponse)(nil), // 5: goshop.shop.v1.CheckPromotionEligibilityResponse
+	(*CheckShopOwnershipRequest)(nil),  // 0: goshop.shop.v1.CheckShopOwnershipRequest
+	(*CheckShopOwnershipResponse)(nil), // 1: goshop.shop.v1.CheckShopOwnershipResponse
+	(*CheckShopExistsRequest)(nil),     // 2: goshop.shop.v1.CheckShopExistsRequest
+	(*CheckShopExistsResponse)(nil),    // 3: goshop.shop.v1.CheckShopExistsResponse
+	(*CalculatePromotionRequest)(nil),  // 4: goshop.shop.v1.CalculatePromotionRequest
+	(*CalculatePromotionResponse)(nil), // 5: goshop.shop.v1.CalculatePromotionResponse
 }
 var file_shop_v1_shop_proto_depIdxs = []int32{
 	0, // 0: goshop.shop.v1.ShopService.CheckShopOwnership:input_type -> goshop.shop.v1.CheckShopOwnershipRequest
 	2, // 1: goshop.shop.v1.ShopService.CheckShopExists:input_type -> goshop.shop.v1.CheckShopExistsRequest
-	4, // 2: goshop.shop.v1.ShopService.CheckPromotionEligibility:input_type -> goshop.shop.v1.CheckPromotionEligibilityRequest
+	4, // 2: goshop.shop.v1.ShopService.CalculatePromotion:input_type -> goshop.shop.v1.CalculatePromotionRequest
 	1, // 3: goshop.shop.v1.ShopService.CheckShopOwnership:output_type -> goshop.shop.v1.CheckShopOwnershipResponse
 	3, // 4: goshop.shop.v1.ShopService.CheckShopExists:output_type -> goshop.shop.v1.CheckShopExistsResponse
-	5, // 5: goshop.shop.v1.ShopService.CheckPromotionEligibility:output_type -> goshop.shop.v1.CheckPromotionEligibilityResponse
+	5, // 5: goshop.shop.v1.ShopService.CalculatePromotion:output_type -> goshop.shop.v1.CalculatePromotionResponse
 	3, // [3:6] is the sub-list for method output_type
 	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

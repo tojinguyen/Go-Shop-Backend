@@ -10,6 +10,7 @@ import (
 
 type ShopServiceAdapter interface {
 	CheckShopExists(ctx context.Context, shopID string) (bool, error)
+	CalculatePromotion(ctx context.Context, req *shop_v1.CalculatePromotionRequest) (*shop_v1.CalculatePromotionResponse, error)
 	Close() error
 }
 
@@ -42,6 +43,10 @@ func (a *grpcShopAdapter) CheckShopExists(ctx context.Context, shopID string) (b
 	}
 
 	return res.GetExists(), nil
+}
+
+func (a *grpcShopAdapter) CalculatePromotion(ctx context.Context, req *shop_v1.CalculatePromotionRequest) (*shop_v1.CalculatePromotionResponse, error) {
+	return a.client.CalculatePromotion(ctx, req)
 }
 
 func (a *grpcShopAdapter) Close() error {
