@@ -69,7 +69,7 @@ func (x *GetAddressRequest) GetUserId() string {
 type GetAddressResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Addresses     []*Address             `protobuf:"bytes,2,rep,name=addresses,proto3" json:"addresses,omitempty"`
+	Address       *Address               `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -111,9 +111,9 @@ func (x *GetAddressResponse) GetUserId() string {
 	return ""
 }
 
-func (x *GetAddressResponse) GetAddresses() []*Address {
+func (x *GetAddressResponse) GetAddress() *Address {
 	if x != nil {
-		return x.Addresses
+		return x.Address
 	}
 	return nil
 }
@@ -264,10 +264,10 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"\x12user/v1/user.proto\x12\x0egoshop.user.v1\x1a\x1fgoogle/protobuf/timestamp.proto\",\n" +
 	"\x11GetAddressRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"d\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"`\n" +
 	"\x12GetAddressResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x125\n" +
-	"\taddresses\x18\x02 \x03(\v2\x17.goshop.user.v1.AddressR\taddresses\"\x9e\x03\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x121\n" +
+	"\aaddress\x18\x02 \x01(\v2\x17.goshop.user.v1.AddressR\aaddress\"\x9e\x03\n" +
 	"\aAddress\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
@@ -286,10 +286,9 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2b\n" +
-	"\vUserService\x12S\n" +
-	"\n" +
-	"GetAddress\x12!.goshop.user.v1.GetAddressRequest\x1a\".goshop.user.v1.GetAddressResponseB@Z>github.com/toji-dev/go-shop/proto/gen/go/proto/user/v1;user_v1b\x06proto3"
+	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2f\n" +
+	"\vUserService\x12W\n" +
+	"\x0eGetAddressById\x12!.goshop.user.v1.GetAddressRequest\x1a\".goshop.user.v1.GetAddressResponseB@Z>github.com/toji-dev/go-shop/proto/gen/go/proto/user/v1;user_v1b\x06proto3"
 
 var (
 	file_user_v1_user_proto_rawDescOnce sync.Once
@@ -311,12 +310,12 @@ var file_user_v1_user_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
 var file_user_v1_user_proto_depIdxs = []int32{
-	2, // 0: goshop.user.v1.GetAddressResponse.addresses:type_name -> goshop.user.v1.Address
+	2, // 0: goshop.user.v1.GetAddressResponse.address:type_name -> goshop.user.v1.Address
 	3, // 1: goshop.user.v1.Address.deleted_at:type_name -> google.protobuf.Timestamp
 	3, // 2: goshop.user.v1.Address.created_at:type_name -> google.protobuf.Timestamp
 	3, // 3: goshop.user.v1.Address.updated_at:type_name -> google.protobuf.Timestamp
-	0, // 4: goshop.user.v1.UserService.GetAddress:input_type -> goshop.user.v1.GetAddressRequest
-	1, // 5: goshop.user.v1.UserService.GetAddress:output_type -> goshop.user.v1.GetAddressResponse
+	0, // 4: goshop.user.v1.UserService.GetAddressById:input_type -> goshop.user.v1.GetAddressRequest
+	1, // 5: goshop.user.v1.UserService.GetAddressById:output_type -> goshop.user.v1.GetAddressResponse
 	5, // [5:6] is the sub-list for method output_type
 	4, // [4:5] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name

@@ -7,7 +7,7 @@ package goshop.user.v1;
 option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/user/v1;user_v1";
 
 service UserService {
-    rpc GetAddress(GetAddressRequest) returns (GetAddressResponse);
+    rpc GetAddressById(GetAddressRequest) returns (GetAddressResponse);
 }
 
 message GetAddressRequest {
@@ -16,7 +16,7 @@ message GetAddressRequest {
 
 message GetAddressResponse {
     string user_id = 1;
-    repeated Address addresses = 2;
+    Address address = 2;
 }
 
 message Address {
