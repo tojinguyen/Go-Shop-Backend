@@ -66,3 +66,8 @@ SET
     updated_at = NOW()
 WHERE id = $1 AND delete_at IS NULL
 RETURNING *;
+
+-- name: GetProductsByIDsForUpdate :many
+SELECT * FROM products
+WHERE id = ANY(@product_ids::uuid[]) AND delete_at IS NULL
+FOR UPDATE;

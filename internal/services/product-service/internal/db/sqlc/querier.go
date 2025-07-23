@@ -16,6 +16,7 @@ type Querier interface {
 	GetListProductsByShop(ctx context.Context, arg GetListProductsByShopParams) ([]Product, error)
 	GetProductByID(ctx context.Context, id pgtype.UUID) (Product, error)
 	GetProductsByIDs(ctx context.Context, productIds []pgtype.UUID) ([]Product, error)
+	GetProductsByIDsForUpdate(ctx context.Context, productIds []pgtype.UUID) ([]Product, error)
 	SoftDeleteProduct(ctx context.Context, id pgtype.UUID) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)

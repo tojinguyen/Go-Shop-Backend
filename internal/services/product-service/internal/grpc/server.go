@@ -76,3 +76,25 @@ func (s *Server) GetProductsInfo(ctx context.Context, req *product_v1.GetProduct
 
 	return &product_v1.GetProductsInfoResponse{Valid: true, Products: productInfos}, nil
 }
+
+func (s *Server) ReserveProducts(ctx context.Context, req *product_v1.ReserveProductsRequest) (*product_v1.ReserveProductsResponse, error) {
+	statuses, err := s.productRepo.ReserveStock(ctx, req.GetProducts())
+	if err != nil {
+		log.Printf("Error during stock reservation for order %s: %v", req.OrderId, err)
+		return &product_v1.ReserveProductsResponse{Success: false}, err
+	}
+
+	// Check if all reservations were successful
+	allSuccess := true
+	for _, status := range statuses {
+		if !status.Success {
+			allSuccess = false
+			break
+		}
+	}
+
+	return &product_v1.ReserveProductsResponse{
+		Success:         allSuccess,
+		ProductStatuses: statuses,
+	}, nil
+}
