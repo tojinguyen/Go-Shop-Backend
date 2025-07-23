@@ -24,7 +24,7 @@ const (
 
 type GetAddressRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	AddressId     string                 `protobuf:"bytes,1,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -59,16 +59,15 @@ func (*GetAddressRequest) Descriptor() ([]byte, []int) {
 	return file_user_v1_user_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetAddressRequest) GetUserId() string {
+func (x *GetAddressRequest) GetAddressId() string {
 	if x != nil {
-		return x.UserId
+		return x.AddressId
 	}
 	return ""
 }
 
 type GetAddressResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Address       *Address               `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -102,13 +101,6 @@ func (x *GetAddressResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetAddressResponse.ProtoReflect.Descriptor instead.
 func (*GetAddressResponse) Descriptor() ([]byte, []int) {
 	return file_user_v1_user_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetAddressResponse) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 func (x *GetAddressResponse) GetAddress() *Address {
@@ -262,11 +254,11 @@ var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x12user/v1/user.proto\x12\x0egoshop.user.v1\x1a\x1fgoogle/protobuf/timestamp.proto\",\n" +
-	"\x11GetAddressRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"`\n" +
-	"\x12GetAddressResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x121\n" +
+	"\x12user/v1/user.proto\x12\x0egoshop.user.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"2\n" +
+	"\x11GetAddressRequest\x12\x1d\n" +
+	"\n" +
+	"address_id\x18\x01 \x01(\tR\taddressId\"G\n" +
+	"\x12GetAddressResponse\x121\n" +
 	"\aaddress\x18\x02 \x01(\v2\x17.goshop.user.v1.AddressR\aaddress\"\x9e\x03\n" +
 	"\aAddress\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +

@@ -21,13 +21,13 @@ func NewUserGRPCServer(addressRepo repository.AddressRepository) *Server {
 }
 
 func (s *Server) GetAddressById(ctx context.Context, req *user_v1.GetAddressRequest) (*user_v1.GetAddressResponse, error) {
-	address, err := s.addressRepo.GetAddressByID(ctx, req.UserId)
+	address, err := s.addressRepo.GetAddressByID(ctx, req.AddressId)
 	if err != nil {
 		return nil, err
 	}
 
 	if address == nil {
-		return nil, apperror.NewNotFound("Address", req.UserId)
+		return nil, apperror.NewNotFound("Address", req.AddressId)
 	}
 
 	addressProto := &user_v1.Address{
@@ -47,7 +47,6 @@ func (s *Server) GetAddressById(ctx context.Context, req *user_v1.GetAddressRequ
 	}
 
 	return &user_v1.GetAddressResponse{
-		UserId:  address.UserID,
 		Address: addressProto,
 	}, nil
 }

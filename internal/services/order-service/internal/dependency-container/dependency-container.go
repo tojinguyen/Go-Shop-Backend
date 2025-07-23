@@ -21,6 +21,7 @@ type DependencyContainer struct {
 
 	shopServiceAdapter    adapter.ShopServiceAdapter
 	productServiceAdapter adapter.ProductServiceAdapter
+	userAdapter           adapter.UserServiceAdapter
 }
 
 func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
@@ -37,6 +38,8 @@ func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 	container.initShopServiceAdapter()
 
 	container.initProductServiceAdapter()
+
+	container.initUserServiceAdapter()
 
 	container.initUseCases()
 
@@ -79,6 +82,7 @@ func (sc *DependencyContainer) initUseCases() {
 		sc.orderRepo,
 		sc.shopServiceAdapter,
 		sc.productServiceAdapter,
+		sc.userAdapter,
 	)
 	log.Println("Order use case initialized")
 }
@@ -117,6 +121,22 @@ func (sc *DependencyContainer) initProductServiceAdapter() error {
 
 	sc.productServiceAdapter = adapter
 	log.Println("Product service adapter initialized")
+	return nil
+}
+
+func (sc *DependencyContainer) initUserServiceAdapter() error {
+	userServiceAddr := fmt.Sprintf("%s:%s", sc.config.UserServiceAdapter.Host, sc.config.UserServiceAdapter.Port)
+	if userServiceAddr == "" {
+		return fmt.Errorf("user service address is not configured")
+	}
+
+	adapter, err := adapter.NewGrpcUserAdapter(userServiceAddr)
+	if err != nil {
+		return fmt.Errorf("failed to create user service adapter: %w", err)
+	}
+
+	sc.userAdapter = adapter
+	log.Println("User service adapter initialized")
 	return nil
 }
 
