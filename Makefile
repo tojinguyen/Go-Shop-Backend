@@ -25,7 +25,7 @@ GEN_DIR_GO := proto/gen/go
 
 # Liệt kê trực tiếp các file proto ở đây.
 # Mỗi khi bạn thêm một file .proto mới, chỉ cần thêm nó vào danh sách này.
-PROTO_FILES :=     shop/v1/shop.proto     product/v1/product.proto     cart/v1/cart.proto
+PROTO_FILES :=     shop/v1/shop.proto     product/v1/product.proto     cart/v1/cart.proto     user/v1/user.proto
 
 # Lệnh chính để generate code
 .PHONY: proto-gen
