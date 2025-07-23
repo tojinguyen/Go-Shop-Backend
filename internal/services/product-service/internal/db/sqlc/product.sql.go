@@ -172,6 +172,93 @@ func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, 
 	return i, err
 }
 
+const getProductsByIDs = `-- name: GetProductsByIDs :many
+SELECT id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at FROM products
+WHERE id = ANY($1::uuid[]) AND delete_at IS NULL
+`
+
+func (q *Queries) GetProductsByIDs(ctx context.Context, productIds []pgtype.UUID) ([]Product, error) {
+	rows, err := q.db.Query(ctx, getProductsByIDs, productIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Product{}
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.ShopID,
+			&i.ProductName,
+			&i.ThumbnailUrl,
+			&i.ProductDescription,
+			&i.CategoryID,
+			&i.Price,
+			&i.Currency,
+			&i.Quantity,
+			&i.ReserveQuantity,
+			&i.ProductStatus,
+			&i.SoldCount,
+			&i.RatingAvg,
+			&i.TotalReviews,
+			&i.CreatedAt,
+			&i.DeleteAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsByIDsForUpdate = `-- name: GetProductsByIDsForUpdate :many
+SELECT id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at FROM products
+WHERE id = ANY($1::uuid[]) AND delete_at IS NULL
+FOR UPDATE
+`
+
+func (q *Queries) GetProductsByIDsForUpdate(ctx context.Context, productIds []pgtype.UUID) ([]Product, error) {
+	rows, err := q.db.Query(ctx, getProductsByIDsForUpdate, productIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Product{}
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.ShopID,
+			&i.ProductName,
+			&i.ThumbnailUrl,
+			&i.ProductDescription,
+			&i.CategoryID,
+			&i.Price,
+			&i.Currency,
+			&i.Quantity,
+			&i.ReserveQuantity,
+			&i.ProductStatus,
+			&i.SoldCount,
+			&i.RatingAvg,
+			&i.TotalReviews,
+			&i.CreatedAt,
+			&i.DeleteAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const softDeleteProduct = `-- name: SoftDeleteProduct :exec
 UPDATE products
 SET
@@ -226,6 +313,47 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.ThumbnailUrl,
 		arg.ProductStatus,
 	)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ShopID,
+		&i.ProductName,
+		&i.ThumbnailUrl,
+		&i.ProductDescription,
+		&i.CategoryID,
+		&i.Price,
+		&i.Currency,
+		&i.Quantity,
+		&i.ReserveQuantity,
+		&i.ProductStatus,
+		&i.SoldCount,
+		&i.RatingAvg,
+		&i.TotalReviews,
+		&i.CreatedAt,
+		&i.DeleteAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateProductStock = `-- name: UpdateProductStock :one
+UPDATE products
+SET
+    quantity = $2,
+    reserve_quantity = $3,
+    updated_at = NOW()
+WHERE id = $1 AND delete_at IS NULL
+RETURNING id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at
+`
+
+type UpdateProductStockParams struct {
+	ID              pgtype.UUID `json:"id"`
+	Quantity        int32       `json:"quantity"`
+	ReserveQuantity int32       `json:"reserve_quantity"`
+}
+
+func (q *Queries) UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error) {
+	row := q.db.QueryRow(ctx, updateProductStock, arg.ID, arg.Quantity, arg.ReserveQuantity)
 	var i Product
 	err := row.Scan(
 		&i.ID,

@@ -52,5 +52,49 @@ func (s *Server) GetProductInfo(ctx context.Context, req *product_v1.GetProductI
 }
 
 func (s *Server) GetProductsInfo(ctx context.Context, req *product_v1.GetProductsInfoRequest) (*product_v1.GetProductsInfoResponse, error) {
-	return nil, nil
+	products, err := s.productRepo.GetByIDs(ctx, req.ProductIds)
+	if err != nil {
+		log.Printf("Error retrieving products by IDs: %v", err)
+		return &product_v1.GetProductsInfoResponse{Valid: false}, err
+	}
+
+	if len(products) != len(req.ProductIds) {
+		log.Printf("Mismatch count: requested %d, found %d", len(req.ProductIds), len(products))
+		return &product_v1.GetProductsInfoResponse{Valid: false}, nil // Some products not found
+	}
+
+	var productInfos []*product_v1.ProductInfo
+	for _, p := range products {
+		productInfos = append(productInfos, &product_v1.ProductInfo{
+			Id:       p.ID().String(),
+			ShopId:   p.ShopID().String(),
+			Price:    int32(p.Price().GetAmount()), // Consider using float or a proper money type
+			Currency: p.Price().GetCurrency(),
+			Quantity: int32(p.Quantity()),
+		})
+	}
+
+	return &product_v1.GetProductsInfoResponse{Valid: true, Products: productInfos}, nil
+}
+
+func (s *Server) ReserveProducts(ctx context.Context, req *product_v1.ReserveProductsRequest) (*product_v1.ReserveProductsResponse, error) {
+	statuses, err := s.productRepo.ReserveStock(ctx, req.GetProducts())
+	if err != nil {
+		log.Printf("Error during stock reservation for order %s: %v", req.OrderId, err)
+		return &product_v1.ReserveProductsResponse{Success: false}, err
+	}
+
+	// Check if all reservations were successful
+	allSuccess := true
+	for _, status := range statuses {
+		if !status.Success {
+			allSuccess = false
+			break
+		}
+	}
+
+	return &product_v1.ReserveProductsResponse{
+		Success:         allSuccess,
+		ProductStatuses: statuses,
+	}, nil
 }

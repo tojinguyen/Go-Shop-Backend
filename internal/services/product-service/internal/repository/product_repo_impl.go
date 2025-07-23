@@ -8,11 +8,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/db/sqlc"
 	product "github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
+	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
 )
 
 type pgProductRepository struct {
@@ -194,4 +196,129 @@ func toDomain(p *sqlc.Product) (*product.Product, error) {
 		p.CreatedAt.Time,
 		p.UpdatedAt.Time,
 	)
+}
+
+func (r *pgProductRepository) GetByIDs(ctx context.Context, ids []string) ([]*product.Product, error) {
+	if len(ids) == 0 {
+		return []*product.Product{}, nil
+	}
+
+	pgIDs := make([]pgtype.UUID, len(ids))
+	for i, id := range ids {
+		pgIDs[i] = converter.UUIDToPgUUID(uuid.Must(uuid.Parse(id)))
+	}
+
+	sqlcProducts, err := r.queries.GetProductsByIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, apperror.New(apperror.CodeDatabaseError, "failed to get products by IDs", apperror.TypeInternal).Wrap(err)
+	}
+
+	domainProducts := make([]*product.Product, 0, len(sqlcProducts))
+	for _, p := range sqlcProducts {
+		domainProduct, err := toDomain(&p)
+		if err != nil {
+			return nil, apperror.New(apperror.CodeConversionError, "failed to convert db model to domain", apperror.TypeInternal).Wrap(err)
+		}
+		domainProducts = append(domainProducts, domainProduct)
+	}
+
+	return domainProducts, nil
+}
+
+func (r *pgProductRepository) ReserveStock(ctx context.Context, items []*product_v1.ReserveProduct) ([]*product_v1.ProductReservationStatus, error) {
+	// Bắt đầu một giao dịch CSDL.
+	tx, err := r.db.BeginTransaction(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := r.queries.WithTx(tx)
+
+	// Chuẩn bị dữ liệu để query và kiểm tra
+	productIDs := make([]pgtype.UUID, len(items))
+	requestedQuantityMap := make(map[string]int32, len(items))
+	for i, item := range items {
+		productIDs[i] = converter.StringToPgUUID(item.ProductId)
+		requestedQuantityMap[item.ProductId] = item.Quantity
+	}
+
+	// BƯỚC 1: LẤY VÀ KHOÁ CÁC SẢN PHẨM
+	dbProducts, err := qtx.GetProductsByIDsForUpdate(ctx, productIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get and lock products: %w", err)
+	}
+
+	// Chuyển đổi sang map để dễ dàng truy cập
+	productMap := make(map[string]sqlc.Product, len(dbProducts))
+	for _, p := range dbProducts {
+		productMap[p.ID.String()] = p
+	}
+
+	statuses := make([]*product_v1.ProductReservationStatus, len(items))
+	allSuccess := true
+
+	// BƯỚC 2: KIỂM TRA TỒN KHO TRONG GIAO DỊCH
+	// Vòng lặp này chỉ để kiểm tra và tạo ra các thông báo trạng thái.
+	for i, item := range items {
+		product, ok := productMap[item.ProductId]
+		if !ok {
+			allSuccess = false
+			statuses[i] = &product_v1.ProductReservationStatus{
+				ProductId: item.ProductId,
+				Success:   false,
+				Message:   "Product not found",
+			}
+			continue
+		}
+
+		availableStock := product.Quantity - product.ReserveQuantity
+		if availableStock < item.Quantity {
+			allSuccess = false
+			statuses[i] = &product_v1.ProductReservationStatus{
+				ProductId: item.ProductId,
+				Success:   false,
+				Message:   fmt.Sprintf("Insufficient stock. Available: %d, Requested: %d", availableStock, item.Quantity),
+			}
+			continue
+		}
+
+		// Nếu đủ hàng, tạo trạng thái thành công
+		statuses[i] = &product_v1.ProductReservationStatus{
+			ProductId: item.ProductId,
+			Success:   true,
+			Message:   "Reserved",
+		}
+	}
+
+	// BƯỚC 3: QUYẾT ĐỊNH COMMIT HAY ROLLBACK
+	if !allSuccess {
+		log.Printf("Stock reservation failed for one or more items. Rolling back transaction.")
+		return statuses, nil // Trả về lỗi nghiệp vụ, không phải lỗi hệ thống
+	}
+
+	// BƯỚC 4: THỰC HIỆN CẬP NHẬT
+	for _, item := range items {
+		product := productMap[item.ProductId]
+		newReserveQuantity := product.ReserveQuantity + item.Quantity
+
+		_, err := qtx.UpdateProductStock(ctx, sqlc.UpdateProductStockParams{
+			ID:              product.ID,
+			Quantity:        product.Quantity,
+			ReserveQuantity: newReserveQuantity,
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to update stock for product %s: %w", item.ProductId, err)
+		}
+	}
+
+	// BƯỚC 5: COMMIT GIAO DỊCH
+	// Nếu mọi thứ thành công, commit để lưu lại tất cả các thay đổi.
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit stock reservation transaction: %w", err)
+	}
+
+	log.Println("Stock reservation transaction committed successfully.")
+	return statuses, nil
 }

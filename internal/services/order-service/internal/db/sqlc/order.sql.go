@@ -114,3 +114,31 @@ func (q *Queries) GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]
 	}
 	return items, nil
 }
+
+const updateOrderStatus = `-- name: UpdateOrderStatus :one
+UPDATE orders
+SET order_status = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at
+`
+
+type UpdateOrderStatusParams struct {
+	ID          pgtype.UUID `json:"id"`
+	OrderStatus OrderStatus `json:"order_status"`
+}
+
+func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (Order, error) {
+	row := q.db.QueryRow(ctx, updateOrderStatus, arg.ID, arg.OrderStatus)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ShopID,
+		&i.ShippingAddressID,
+		&i.PromotionID,
+		&i.OrderStatus,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

@@ -14,6 +14,7 @@ import (
 type OrderStatus string
 
 const (
+	OrderStatusPENDING        OrderStatus = "PENDING"
 	OrderStatusPENDINGPAYMENT OrderStatus = "PENDING_PAYMENT"
 	OrderStatusPAYMENTFAILED  OrderStatus = "PAYMENT_FAILED"
 	OrderStatusPROCESSING     OrderStatus = "PROCESSING"
@@ -21,6 +22,7 @@ const (
 	OrderStatusDELIVERING     OrderStatus = "DELIVERING"
 	OrderStatusDELIVERED      OrderStatus = "DELIVERED"
 	OrderStatusCANCELED       OrderStatus = "CANCELED"
+	OrderStatusFAILED         OrderStatus = "FAILED"
 )
 
 func (e *OrderStatus) Scan(src interface{}) error {

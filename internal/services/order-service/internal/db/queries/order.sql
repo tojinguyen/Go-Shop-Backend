@@ -21,3 +21,9 @@ WHERE id = $1;
 -- name: GetOrdersByUserID :many
 SELECT * FROM orders
 WHERE user_id = $1;
+
+-- name: UpdateOrderStatus :one
+UPDATE orders
+SET order_status = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING *;
