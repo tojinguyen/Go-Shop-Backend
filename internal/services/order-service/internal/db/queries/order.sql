@@ -1,10 +1,10 @@
 -- name: CreateOrder :one 
 INSERT INTO orders 
 (
+    id,
     user_id,
     shop_id,
     shipping_address_id,
-    billing_address_id,
     promotion_id,
     order_status
 )

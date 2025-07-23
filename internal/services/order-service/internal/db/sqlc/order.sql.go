@@ -14,10 +14,10 @@ import (
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders 
 (
+    id,
     user_id,
     shop_id,
     shipping_address_id,
-    billing_address_id,
     promotion_id,
     order_status
 )
@@ -25,24 +25,24 @@ VALUES
 (
     $1, $2, $3, $4, $5, $6
 )
-RETURNING id, user_id, shop_id, shipping_address_id, billing_address_id, promotion_id, order_status, created_at, updated_at
+RETURNING id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at
 `
 
 type CreateOrderParams struct {
+	ID                pgtype.UUID `json:"id"`
 	UserID            pgtype.UUID `json:"user_id"`
 	ShopID            pgtype.UUID `json:"shop_id"`
 	ShippingAddressID pgtype.UUID `json:"shipping_address_id"`
-	BillingAddressID  pgtype.UUID `json:"billing_address_id"`
 	PromotionID       pgtype.UUID `json:"promotion_id"`
 	OrderStatus       OrderStatus `json:"order_status"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
 	row := q.db.QueryRow(ctx, createOrder,
+		arg.ID,
 		arg.UserID,
 		arg.ShopID,
 		arg.ShippingAddressID,
-		arg.BillingAddressID,
 		arg.PromotionID,
 		arg.OrderStatus,
 	)
@@ -52,7 +52,6 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.UserID,
 		&i.ShopID,
 		&i.ShippingAddressID,
-		&i.BillingAddressID,
 		&i.PromotionID,
 		&i.OrderStatus,
 		&i.CreatedAt,
@@ -62,7 +61,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, user_id, shop_id, shipping_address_id, billing_address_id, promotion_id, order_status, created_at, updated_at FROM orders
+SELECT id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at FROM orders
 WHERE id = $1
 `
 
@@ -74,7 +73,6 @@ func (q *Queries) GetOrderByID(ctx context.Context, id pgtype.UUID) (Order, erro
 		&i.UserID,
 		&i.ShopID,
 		&i.ShippingAddressID,
-		&i.BillingAddressID,
 		&i.PromotionID,
 		&i.OrderStatus,
 		&i.CreatedAt,
@@ -84,7 +82,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, id pgtype.UUID) (Order, erro
 }
 
 const getOrdersByUserID = `-- name: GetOrdersByUserID :many
-SELECT id, user_id, shop_id, shipping_address_id, billing_address_id, promotion_id, order_status, created_at, updated_at FROM orders
+SELECT id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at FROM orders
 WHERE user_id = $1
 `
 
@@ -102,7 +100,6 @@ func (q *Queries) GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]
 			&i.UserID,
 			&i.ShopID,
 			&i.ShippingAddressID,
-			&i.BillingAddressID,
 			&i.PromotionID,
 			&i.OrderStatus,
 			&i.CreatedAt,

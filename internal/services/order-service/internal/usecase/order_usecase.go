@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/dto"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/adapter"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/repository"
@@ -151,6 +152,45 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 	}
 
 	// Create order in repository
+	domainOrder := &domain.Order{
+		ID:                orderId,
+		OwnerID:           userId,
+		ShopID:            req.ShopID,
+		ShippingAddressID: req.ShippingAddressID,
+		PromotionCode:     req.PromotionID,
+		DiscountAmount:    order.DiscountAmount,
+		TotalAmount:       order.TotalAmount,
+		Status:            "PENDING_PAYMENT",
+		Items:             make([]domain.OrderItem, len(req.Items)),
+	}
+
+	orderCreated, err := u.orderRepo.CreateOrder(ctx, domainOrder)
+	if err != nil {
+		log.Printf("Failed to create order in DB, compensating reservation for order %s", batchReserveReq.OrderId)
+
+		var unreserveItems []*product_v1.UnreserveProduct
+		for _, item := range req.Items {
+			unreserveItems = append(unreserveItems, &product_v1.UnreserveProduct{
+				ProductId: item.ProductID,
+				Quantity:  int32(item.Quantity),
+			})
+		}
+
+		_, unreserveErr := u.productServiceAdapter.UnreserveProducts(ctx, &product_v1.UnreserveProductsRequest{
+			ShopId:   req.ShopID,
+			OrderId:  batchReserveReq.OrderId,
+			Products: unreserveItems,
+		})
+
+		if unreserveErr != nil {
+			log.Printf("CRITICAL: Failed to compensate product reservation for order %s. Manual intervention required. Error: %v", batchReserveReq.OrderId, unreserveErr)
+		}
+		return nil, apperror.NewInternal(fmt.Sprintf("Failed to create order: %s", err.Error()))
+	}
+
+	order.ID = orderCreated.ID
+	order.CreatedAt = orderCreated.CreatedAt
+	order.UpdatedAt = orderCreated.UpdatedAt
 
 	return order, nil
 }

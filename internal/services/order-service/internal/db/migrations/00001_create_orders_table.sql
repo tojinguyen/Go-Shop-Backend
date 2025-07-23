@@ -16,7 +16,6 @@ CREATE TABLE orders (
     user_id UUID NOT NULL,
     shop_id UUID NOT NULL,
     shipping_address_id UUID NOT NULL,
-    billing_address_id UUID NOT NULL,
     promotion_id UUID,
 
     order_status order_status NOT NULL DEFAULT 'PENDING_PAYMENT',
