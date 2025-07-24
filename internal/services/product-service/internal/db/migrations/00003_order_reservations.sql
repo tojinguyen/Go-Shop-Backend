@@ -2,7 +2,8 @@
 -- +goose StatementBegin
 CREATE TYPE reservation_status AS ENUM (
     'RESERVED',   -- Hàng đã được đặt trước, đang chờ thanh toán
-    'COMMITTED',  -- Đơn hàng đã thanh toán, số lượng đã được trừ khỏi kho chính
+    'UNRESERVED', -- Đơn hàng đã được hoàn lại hàng vào kho 
+    'PAID',       -- Đơn hàng đã thanh toán, hàng đã được giao
     'CANCELLED'   -- Đơn hàng bị hủy, hàng đã được trả lại kho
 );
 
