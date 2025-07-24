@@ -34,7 +34,7 @@ func NewProductRepository(db *postgresql_infra.PostgreSQLService) ProductReposit
 	}
 }
 
-func (r *pgProductRepository) Save(ctx context.Context, p *product.Product) error {
+func (r *pgProductRepository) Save(ctx context.Context, p *product.Product) (*product.Product, error) {
 	params := sqlc.CreateProductParams{
 		ShopID:             converter.UUIDToPgUUID(p.ShopID()),
 		ProductName:        p.Name(),
@@ -48,11 +48,18 @@ func (r *pgProductRepository) Save(ctx context.Context, p *product.Product) erro
 		ProductStatus:      sqlc.ProductStatus(p.Status()),
 	}
 
-	_, err := r.queries.CreateProduct(ctx, params)
+	product, err := r.queries.CreateProduct(ctx, params)
 	if err != nil {
-		return fmt.Errorf("failed to save product to db: %w", err)
+		return nil, fmt.Errorf("failed to save product to db: %w", err)
 	}
-	return nil
+
+	// Chuyển đổi từ DB model (sqlc) sang Domain model
+	productDomain, err := toDomain(&product)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert db model to domain: %w", err)
+	}
+
+	return productDomain, nil
 }
 
 func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*product.Product, error) {

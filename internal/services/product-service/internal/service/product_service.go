@@ -89,12 +89,13 @@ func (s *ProductService) CreateProduct(ctx *gin.Context, req *dto.CreateProductR
 		return nil, err
 	}
 
-	if err := s.productRepo.Save(ctx, newProduct); err != nil {
-		log.Printf("could not save product: %v", err)
-		return nil, fmt.Errorf("could not save product: %w", err)
+	product, err := s.productRepo.Save(ctx, newProduct)
+	if err != nil {
+		log.Fatalf("could not create new product: %v", err)
+		return nil, err
 	}
 
-	return newProduct, nil
+	return product, nil
 }
 
 func (s *ProductService) GetProductByID(ctx context.Context, id string) (*product.Product, error) {
