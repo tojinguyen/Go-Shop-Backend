@@ -48,7 +48,6 @@ func (r *addressRepository) CreateAddress(ctx context.Context, params sqlc.Creat
 		Country:   address.Country.String,
 		Lat:       *converter.PgFloat8ToFloat64Ptr(address.Lat),
 		Long:      *converter.PgFloat8ToFloat64Ptr(address.Long),
-		DeletedAt: *converter.PgTimeToTimePtr(address.DeletedAt),
 		CreatedAt: address.CreatedAt.Time,
 		UpdatedAt: address.UpdatedAt.Time,
 	}, nil
@@ -60,7 +59,7 @@ func (r *addressRepository) GetAddressByID(ctx context.Context, addressID string
 		return nil, err
 	}
 
-	return &domain.Address{
+	addressDomain := &domain.Address{
 		ID:        address.ID.String(),
 		UserID:    address.UserID.String(),
 		IsDefault: address.IsDefault.Bool,
@@ -71,10 +70,15 @@ func (r *addressRepository) GetAddressByID(ctx context.Context, addressID string
 		Country:   address.Country.String,
 		Lat:       *converter.PgFloat8ToFloat64Ptr(address.Lat),
 		Long:      *converter.PgFloat8ToFloat64Ptr(address.Long),
-		DeletedAt: *converter.PgTimeToTimePtr(address.DeletedAt),
 		CreatedAt: address.CreatedAt.Time,
 		UpdatedAt: address.UpdatedAt.Time,
-	}, nil
+	}
+
+	if address.DeletedAt.Valid {
+		addressDomain.DeletedAt = address.DeletedAt.Time
+	}
+
+	return addressDomain, nil
 }
 
 func (r *addressRepository) UpdateAddress(ctx context.Context, params sqlc.UpdateAddressParams) (*domain.Address, error) {
@@ -83,7 +87,7 @@ func (r *addressRepository) UpdateAddress(ctx context.Context, params sqlc.Updat
 		return nil, err
 	}
 
-	return &domain.Address{
+	addressRes := &domain.Address{
 		ID:        address.ID.String(),
 		UserID:    address.UserID.String(),
 		IsDefault: address.IsDefault.Bool,
@@ -94,10 +98,15 @@ func (r *addressRepository) UpdateAddress(ctx context.Context, params sqlc.Updat
 		Country:   address.Country.String,
 		Lat:       *converter.PgFloat8ToFloat64Ptr(address.Lat),
 		Long:      *converter.PgFloat8ToFloat64Ptr(address.Long),
-		DeletedAt: *converter.PgTimeToTimePtr(address.DeletedAt),
 		CreatedAt: address.CreatedAt.Time,
 		UpdatedAt: address.UpdatedAt.Time,
-	}, nil
+	}
+
+	if address.DeletedAt.Valid {
+		addressRes.DeletedAt = address.DeletedAt.Time
+	}
+
+	return addressRes, nil
 }
 
 func (r *addressRepository) DeleteAddress(ctx context.Context, addressID string) error {
@@ -127,10 +136,13 @@ func (r *addressRepository) GetAddressesByUserID(ctx context.Context, userID str
 			Country:   address.Country.String,
 			Lat:       *converter.PgFloat8ToFloat64Ptr(address.Lat),
 			Long:      *converter.PgFloat8ToFloat64Ptr(address.Long),
-			DeletedAt: *converter.PgTimeToTimePtr(address.DeletedAt),
 			CreatedAt: address.CreatedAt.Time,
 			UpdatedAt: address.UpdatedAt.Time,
 		})
+
+		if address.DeletedAt.Valid {
+			result[len(result)-1].DeletedAt = address.DeletedAt.Time
+		}
 	}
 
 	return result, nil
@@ -142,7 +154,7 @@ func (r *addressRepository) GetDefaultAddressByUserID(ctx context.Context, userI
 		return nil, err
 	}
 
-	return &domain.Address{
+	addressRes := &domain.Address{
 		ID:        address.ID.String(),
 		UserID:    address.UserID.String(),
 		IsDefault: address.IsDefault.Bool,
@@ -153,10 +165,15 @@ func (r *addressRepository) GetDefaultAddressByUserID(ctx context.Context, userI
 		Country:   address.Country.String,
 		Lat:       *converter.PgFloat8ToFloat64Ptr(address.Lat),
 		Long:      *converter.PgFloat8ToFloat64Ptr(address.Long),
-		DeletedAt: *converter.PgTimeToTimePtr(address.DeletedAt),
 		CreatedAt: address.CreatedAt.Time,
 		UpdatedAt: address.UpdatedAt.Time,
-	}, nil
+	}
+
+	if address.DeletedAt.Valid {
+		addressRes.DeletedAt = address.DeletedAt.Time
+	}
+
+	return addressRes, nil
 }
 
 func (r *addressRepository) SetDefaultAddress(ctx context.Context, params sqlc.SetDefaultAddressParams) (*domain.Address, error) {
@@ -165,6 +182,5 @@ func (r *addressRepository) SetDefaultAddress(ctx context.Context, params sqlc.S
 		return nil, err
 	}
 
-	// Get the updated default address
 	return r.GetAddressByID(ctx, params.ID.String())
 }
