@@ -322,3 +322,18 @@ func (r *pgProductRepository) ReserveStock(ctx context.Context, items []*product
 	log.Println("Stock reservation transaction committed successfully.")
 	return statuses, nil
 }
+
+func (r *pgProductRepository) IsOrderReserved(ctx context.Context, orderID string) (bool, error) {
+	pgOrderID := converter.StringToPgUUID(orderID)
+
+	// Sử dụng query để kiểm tra xem đơn hàng đã được đặt trước hay chưa
+	isReserved, err := r.queries.IsOrderReserved(ctx, pgOrderID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check order reservation: %w", err)
+	}
+
+	return isReserved, nil
+}
