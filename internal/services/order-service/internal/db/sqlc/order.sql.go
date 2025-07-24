@@ -115,6 +115,47 @@ func (q *Queries) GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]
 	return items, nil
 }
 
+const getStaleOrders = `-- name: GetStaleOrders :many
+SELECT id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at FROM orders 
+WHERE order_status = 'PENDING'
+AND updated_at < $1
+LIMIT $2
+`
+
+type GetStaleOrdersParams struct {
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Limit     int32              `json:"limit"`
+}
+
+func (q *Queries) GetStaleOrders(ctx context.Context, arg GetStaleOrdersParams) ([]Order, error) {
+	rows, err := q.db.Query(ctx, getStaleOrders, arg.UpdatedAt, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Order{}
+	for rows.Next() {
+		var i Order
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ShopID,
+			&i.ShippingAddressID,
+			&i.PromotionID,
+			&i.OrderStatus,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateOrderStatus = `-- name: UpdateOrderStatus :one
 UPDATE orders
 SET order_status = $2, updated_at = NOW()
