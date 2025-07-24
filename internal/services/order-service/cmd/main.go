@@ -36,7 +36,7 @@ func main() {
 	router.Init(r, dependencyContainer)
 
 	// Start server
-	if err := r.Run(":8082"); err != nil {
+	if err := r.Run(cfg.Server.GetServerAddress()); err != nil {
 		fmt.Printf("Failed to start server: %v", err)
 	}
 }
