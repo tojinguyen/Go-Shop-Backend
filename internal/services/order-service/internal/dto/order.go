@@ -21,6 +21,7 @@ type OrderResponse struct {
 	Note              string              `json:"note"`
 	DiscountAmount    float64             `json:"discount_amount"`
 	TotalAmount       float64             `json:"total_amount"`
+	FinalAmount       float64             `json:"final_amount"`
 	Status            string              `json:"status"`
 	CreatedAt         string              `json:"created_at"`
 	UpdatedAt         string              `json:"updated_at"`

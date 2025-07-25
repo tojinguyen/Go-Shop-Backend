@@ -34,7 +34,7 @@ func NewProductRepository(db *postgresql_infra.PostgreSQLService) ProductReposit
 	}
 }
 
-func (r *pgProductRepository) Save(ctx context.Context, p *product.Product) error {
+func (r *pgProductRepository) Save(ctx context.Context, p *product.Product) (*product.Product, error) {
 	params := sqlc.CreateProductParams{
 		ShopID:             converter.UUIDToPgUUID(p.ShopID()),
 		ProductName:        p.Name(),
@@ -48,11 +48,18 @@ func (r *pgProductRepository) Save(ctx context.Context, p *product.Product) erro
 		ProductStatus:      sqlc.ProductStatus(p.Status()),
 	}
 
-	_, err := r.queries.CreateProduct(ctx, params)
+	product, err := r.queries.CreateProduct(ctx, params)
 	if err != nil {
-		return fmt.Errorf("failed to save product to db: %w", err)
+		return nil, fmt.Errorf("failed to save product to db: %w", err)
 	}
-	return nil
+
+	// Chuyển đổi từ DB model (sqlc) sang Domain model
+	productDomain, err := toDomain(&product)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert db model to domain: %w", err)
+	}
+
+	return productDomain, nil
 }
 
 func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*product.Product, error) {
@@ -321,4 +328,19 @@ func (r *pgProductRepository) ReserveStock(ctx context.Context, items []*product
 
 	log.Println("Stock reservation transaction committed successfully.")
 	return statuses, nil
+}
+
+func (r *pgProductRepository) IsOrderReserved(ctx context.Context, orderID string) (bool, error) {
+	pgOrderID := converter.StringToPgUUID(orderID)
+
+	// Sử dụng query để kiểm tra xem đơn hàng đã được đặt trước hay chưa
+	isReserved, err := r.queries.IsOrderReserved(ctx, pgOrderID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check order reservation: %w", err)
+	}
+
+	return isReserved, nil
 }

@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
@@ -14,6 +16,7 @@ import (
 type OrderRepository interface {
 	CreateOrder(ctx *gin.Context, order *domain.Order) (*domain.Order, error)
 	UpdateOrderStatus(ctx *gin.Context, orderID string, status sqlc.OrderStatus) (*domain.Order, error)
+	GetStaleOrders(ctx context.Context, olderThan time.Time, limit int) ([]*domain.Order, error)
 }
 
 type orderRepository struct {
@@ -97,6 +100,32 @@ func (r *orderRepository) UpdateOrderStatus(ctx *gin.Context, orderID string, st
 		return nil, fmt.Errorf("failed to update order status: %w", err)
 	}
 	return toDomainOrder(&updatedOrder), nil
+}
+
+func (r *orderRepository) GetStaleOrders(ctx context.Context, olderThan time.Time, limit int) ([]*domain.Order, error) {
+	if limit <= 0 {
+		return nil, fmt.Errorf("limit must be greater than 0")
+	}
+
+	if olderThan.IsZero() {
+		return nil, fmt.Errorf("olderThan time cannot be zero")
+	}
+
+	param := sqlc.GetStaleOrdersParams{
+		UpdatedAt: converter.TimePtrToPgTime(&olderThan),
+		Limit:     int32(limit),
+	}
+
+	orders, err := r.queries.GetStaleOrders(ctx, param)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stale orders: %w", err)
+	}
+
+	domainOrders := make([]*domain.Order, len(orders))
+	for i, order := range orders {
+		domainOrders[i] = toDomainOrder(&order)
+	}
+	return domainOrders, nil
 }
 
 func toDomainOrder(dbOrder *sqlc.Order) *domain.Order {

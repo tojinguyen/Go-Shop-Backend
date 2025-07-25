@@ -204,7 +204,7 @@ func main() {
 
 	go startMetricsServer()
 
-	go runGrpcServer(cfg, shopRepo)
+	go runGrpcServer(cfg, shopRepo, promoRepo)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -221,7 +221,7 @@ func main() {
 	log.Println("Shutting down shop service...")
 }
 
-func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository) {
+func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository, promotionRepo promotion_repo.PromotionRepository) {
 	address := config.GRPC.Host + ":" + config.GRPC.Port
 	log.Printf("Starting gRPC server on %s", address)
 	lis, err := net.Listen("tcp", address)
@@ -229,20 +229,13 @@ func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository) {
 		log.Fatalf("failed to listen for grpc on port %s: %v", config.GRPC.Host, err)
 	}
 	s := grpc.NewServer()
-	grpcServer := shop_grpc.NewShopGRPCServer(shopRepo)
+	grpcServer := shop_grpc.NewShopGRPCServer(shopRepo, promotionRepo)
 	shop_v1.RegisterShopServiceServer(s, grpcServer)
 	log.Printf("gRPC server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve gRPC: %v", err)
 	}
 }
-
-// func prometheusHandler() gin.HandlerFunc {
-// 	h := promhttp.Handler()
-// 	return func(c *gin.Context) {
-// 		h.ServeHTTP(c.Writer, c.Request)
-// 	}
-// }
 
 func startMetricsServer() {
 	metricsRouter := gin.New()

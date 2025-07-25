@@ -9,6 +9,7 @@ service ProductService {
     rpc GetProductsInfo(GetProductsInfoRequest) returns (GetProductsInfoResponse) {}
     rpc ReserveProducts(ReserveProductsRequest) returns (ReserveProductsResponse) {}
     rpc UnreserveProducts(UnreserveProductsRequest) returns (UnreserveProductsResponse) {}
+    rpc GetOrderReservationStatus(GetOrderReservationStatusRequest) returns (GetOrderReservationStatusResponse) {}
 }
 
 message GetProductInfoRequest {
@@ -73,4 +74,21 @@ message UnreserveProduct {
 message UnreserveProductsResponse {
     bool success = 1;
     repeated ProductReservationStatus reservations = 2;
+}
+
+message GetOrderReservationStatusRequest {
+    string order_id = 1;
+}
+
+message GetOrderReservationStatusResponse {
+    enum ReservationStatus {
+        RESERVED = 0;   // Order is reserved
+        COMMITTED = 1; // Order is committed
+        CANCELLED = 2;  // Order is cancelled
+    }
+
+    string order_id = 1;
+    string shop_id = 2;
+    string status = 3; // "RESERVED", "UNRESERVED", "CANCELLED"
+
 }

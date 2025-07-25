@@ -68,12 +68,12 @@ func (a *AppConfig) IsProduction() bool {
 func Load() (*Config, error) {
 	cfg := &Config{
 		App: AppConfig{
-			Name:        getEnv("APP_NAME", "cart-service"),
+			Name:        getEnv("APP_NAME", "order-service"),
 			Environment: getEnv("ENVIRONMENT", "development"),
 		},
 		Server: ServerConfig{
 			Host: getEnv("SERVER_HOST", "0.0.0.0"),
-			Port: getEnv("SERVER_PORT", "8083"),
+			Port: getEnv("ORDER_SERVICE_PORT", "8084"),
 		},
 		Database: DatabaseConfig{
 			Host:         getEnv("ORDER_SERVICE_DB_HOST", "localhost"),

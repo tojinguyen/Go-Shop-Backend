@@ -13,7 +13,10 @@ services:
       - "${NGINX_PORT:-80}:80"
     depends_on:
       - user-service
+      - product-service
       - shop-service
+      - cart-service
+      - order-service
     networks:
       - go-shop-network
     restart: unless-stopped

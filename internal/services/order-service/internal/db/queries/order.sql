@@ -27,3 +27,10 @@ UPDATE orders
 SET order_status = $2, updated_at = NOW()
 WHERE id = $1
 RETURNING *;
+
+
+-- name: GetStaleOrders :many
+SELECT * FROM orders 
+WHERE order_status = 'PENDING'
+AND updated_at < $1
+LIMIT $2;

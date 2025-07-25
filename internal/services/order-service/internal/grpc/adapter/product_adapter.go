@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"log"
 
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
 	"google.golang.org/grpc"
@@ -12,6 +13,7 @@ type ProductServiceAdapter interface {
 	GetProductsInfo(ctx context.Context, req *product_v1.GetProductsInfoRequest) (*product_v1.GetProductsInfoResponse, error)
 	ReserveProducts(ctx context.Context, req *product_v1.ReserveProductsRequest) (*product_v1.ReserveProductsResponse, error)
 	UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error)
+	IsOrderReserved(ctx context.Context, req *product_v1.IsOrderReservedRequest) (*product_v1.IsOrderReservedResponse, error)
 	Close() error
 }
 
@@ -21,12 +23,16 @@ type grpcProductAdapter struct {
 }
 
 func NewGrpcProductAdapter(productServiceAddr string) (ProductServiceAdapter, error) {
+	log.Printf("Connecting to product service at %s", productServiceAddr)
 	conn, err := grpc.NewClient(productServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
+		log.Printf("Failed to connect to product service: %v", err)
 		return nil, err
 	}
 
 	client := product_v1.NewProductServiceClient(conn)
+
+	log.Printf("Successfully connected to product service at %s", productServiceAddr)
 
 	return &grpcProductAdapter{
 		conn:   conn,
@@ -44,6 +50,10 @@ func (a *grpcProductAdapter) ReserveProducts(ctx context.Context, req *product_v
 
 func (a *grpcProductAdapter) UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error) {
 	return a.client.UnreserveProducts(ctx, req)
+}
+
+func (a *grpcProductAdapter) IsOrderReserved(ctx context.Context, req *product_v1.IsOrderReservedRequest) (*product_v1.IsOrderReservedResponse, error) {
+	return a.client.IsOrderReserved(ctx, req)
 }
 
 func (a *grpcProductAdapter) Close() error {

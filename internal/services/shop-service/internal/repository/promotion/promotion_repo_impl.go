@@ -49,8 +49,10 @@ func (r *PostgresPromotionRepository) Create(ctx context.Context, p *domain.Prom
 }
 
 func (r *PostgresPromotionRepository) GetByID(ctx context.Context, id string) (*domain.Promotion, error) {
+	log.Printf("Fetching promotion with ID: %s", id)
 	promo, err := r.queries.GetPromotionByID(ctx, converter.StringToPgUUID(id))
 	if err != nil {
+		log.Printf("Error fetching promotion by ID: %v", err)
 		if err == pgx.ErrNoRows {
 			return nil, nil // Return nil, nil if not found
 		}

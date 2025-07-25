@@ -17,9 +17,10 @@ type Server struct {
 	promotionRepo promotionRepo.PromotionRepository
 }
 
-func NewShopGRPCServer(repo shopRepo.ShopRepository) *Server {
+func NewShopGRPCServer(repo shopRepo.ShopRepository, promotionRepo promotionRepo.PromotionRepository) *Server {
 	return &Server{
-		shopRepo: repo,
+		shopRepo:      repo,
+		promotionRepo: promotionRepo,
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,7 +15,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
+	user_grpc "github.com/toji-dev/go-shop/internal/services/user-service/internal/grpc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
+	user_v1 "github.com/toji-dev/go-shop/proto/gen/go/user/v1"
+	"google.golang.org/grpc"
 )
 
 //	@title			User Service API
@@ -70,6 +74,8 @@ func main() {
 
 	go startMetricsServer()
 
+	go runGrpcServer(serviceContainer.GetConfig(), &serviceContainer)
+
 	// Start server in a goroutine
 	go func() {
 		log.Printf("%s starting on %s", serviceContainer.GetConfig().App.Name, serviceContainer.GetConfig().Server.GetServerAddress())
@@ -104,5 +110,21 @@ func startMetricsServer() {
 	log.Println("Starting metrics server on :9100")
 	if err := metricsRouter.Run(":9100"); err != nil {
 		log.Fatalf("Failed to start metrics server: %v", err)
+	}
+}
+
+func runGrpcServer(cfg *config.Config, serviceContainer *container.ServiceContainer) {
+	address := cfg.GRPC.Host + ":" + cfg.GRPC.Port
+	log.Printf("Starting gRPC server on %s", address)
+	lis, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Fatalf("failed to listen for grpc on port %s: %v", cfg.GRPC.Host, err)
+	}
+	s := grpc.NewServer()
+	grpcServer := user_grpc.NewUserGRPCServer(serviceContainer.GetAddressRepo())
+	user_v1.RegisterUserServiceServer(s, grpcServer)
+	log.Printf("gRPC server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve gRPC: %v", err)
 	}
 }

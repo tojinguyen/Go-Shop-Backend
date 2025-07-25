@@ -56,6 +56,49 @@ func (ns NullProductStatus) Value() (driver.Value, error) {
 	return string(ns.ProductStatus), nil
 }
 
+type ReservationStatus string
+
+const (
+	ReservationStatusRESERVED  ReservationStatus = "RESERVED"
+	ReservationStatusCOMMITTED ReservationStatus = "COMMITTED"
+	ReservationStatusCANCELLED ReservationStatus = "CANCELLED"
+)
+
+func (e *ReservationStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ReservationStatus(s)
+	case string:
+		*e = ReservationStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ReservationStatus: %T", src)
+	}
+	return nil
+}
+
+type NullReservationStatus struct {
+	ReservationStatus ReservationStatus `json:"reservation_status"`
+	Valid             bool              `json:"valid"` // Valid is true if ReservationStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullReservationStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ReservationStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ReservationStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullReservationStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ReservationStatus), nil
+}
+
 type Category struct {
 	ID                  pgtype.UUID        `json:"id"`
 	ParentID            pgtype.UUID        `json:"parent_id"`
@@ -63,6 +106,15 @@ type Category struct {
 	CategoryDescription pgtype.Text        `json:"category_description"`
 	CreatedAt           pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+}
+
+type OrderReservation struct {
+	ID                pgtype.UUID        `json:"id"`
+	OrderID           pgtype.UUID        `json:"order_id"`
+	ShopID            pgtype.UUID        `json:"shop_id"`
+	ReservationStatus ReservationStatus  `json:"reservation_status"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Product struct {
