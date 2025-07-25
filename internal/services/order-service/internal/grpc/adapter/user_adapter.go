@@ -55,7 +55,7 @@ func (a *grpcUserAdapter) GetAddressById(ctx context.Context, addressID string) 
 		return nil, apperror.NewNotFound("Address", addressID)
 	}
 
-	log.Printf("Successfully fetched address with ID: %s", addressID)
+	log.Printf("Successfully fetched address with ID: %v", resp.Address)
 
 	return resp.Address, nil
 }

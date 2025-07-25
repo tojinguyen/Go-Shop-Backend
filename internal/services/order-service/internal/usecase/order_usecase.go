@@ -40,11 +40,18 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 		return nil, err
 	}
 
+	log.Printf("Order request: %+v\n", req)
+	log.Printf("User ID: %d", len(req.Items))
+
 	// Validate products in order items
 	productIDs := make([]string, 0, len(req.Items))
 	quantityMap := make(map[string]int32)
+
+	log.Printf("Validating products for order items")
+
 	for i, item := range req.Items {
-		productIDs[i] = item.ProductID
+		log.Printf("Validating item %d: ProductID=%s, Quantity=%d", i+1, item.ProductID, item.Quantity)
+		productIDs = append(productIDs, item.ProductID)
 		quantityMap[item.ProductID] = int32(item.Quantity)
 	}
 
@@ -85,6 +92,7 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 
 		promotionRes, err := u.shopServiceAdapter.CalculatePromotion(ctx, promotionReq)
 		if err != nil {
+			log.Printf("Error calculating promotion: %v", err)
 			return nil, apperror.NewInternal(fmt.Sprintf("Failed to calculate promotion: %s", err.Error()))
 		}
 
@@ -189,7 +197,7 @@ func (u *orderUsecase) validatePrerequisites(ctx *gin.Context, req *dto.CreateOr
 		return apperror.NewInternal(fmt.Sprintf("Failed to get address: %s", err.Error()))
 	}
 
-	if address == nil || address.DeletedAt != nil {
+	if address == nil {
 		log.Printf("Shipping address with ID %s not found or deleted with data: %+v", req.ShippingAddressID, address)
 		return apperror.NewNotFound("Shipping address", req.ShippingAddressID)
 	}
