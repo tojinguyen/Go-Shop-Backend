@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"log"
 
 	user_v1 "github.com/toji-dev/go-shop/proto/gen/go/user/v1"
 	"google.golang.org/grpc"
@@ -19,12 +20,16 @@ type grpcUserAdapter struct {
 }
 
 func NewGrpcUserAdapter(userServiceAddr string) (UserServiceAdapter, error) {
+	log.Printf("Connecting to user service at %s", userServiceAddr)
 	conn, err := grpc.NewClient(userServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
+		log.Printf("Failed to connect to user service: %v", err)
 		return nil, err
 	}
 
 	client := user_v1.NewUserServiceClient(conn)
+
+	log.Printf("Successfully connected to user service at %s", userServiceAddr)
 
 	return &grpcUserAdapter{
 		conn:   conn,

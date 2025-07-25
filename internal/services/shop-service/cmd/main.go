@@ -237,13 +237,6 @@ func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository) {
 	}
 }
 
-// func prometheusHandler() gin.HandlerFunc {
-// 	h := promhttp.Handler()
-// 	return func(c *gin.Context) {
-// 		h.ServeHTTP(c.Writer, c.Request)
-// 	}
-// }
-
 func startMetricsServer() {
 	metricsRouter := gin.New()
 	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))

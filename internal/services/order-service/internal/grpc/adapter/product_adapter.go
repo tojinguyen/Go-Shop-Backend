@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"log"
 
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
 	"google.golang.org/grpc"
@@ -22,12 +23,16 @@ type grpcProductAdapter struct {
 }
 
 func NewGrpcProductAdapter(productServiceAddr string) (ProductServiceAdapter, error) {
+	log.Printf("Connecting to product service at %s", productServiceAddr)
 	conn, err := grpc.NewClient(productServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
+		log.Printf("Failed to connect to product service: %v", err)
 		return nil, err
 	}
 
 	client := product_v1.NewProductServiceClient(conn)
+
+	log.Printf("Successfully connected to product service at %s", productServiceAddr)
 
 	return &grpcProductAdapter{
 		conn:   conn,

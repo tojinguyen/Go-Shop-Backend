@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"log"
 
 	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/shop/v1"
 	"google.golang.org/grpc"
@@ -20,12 +21,16 @@ type grpcShopAdapter struct {
 }
 
 func NewGrpcShopAdapter(shopServiceAddr string) (ShopServiceAdapter, error) {
+	log.Printf("Connecting to shop service at %s", shopServiceAddr)
 	conn, err := grpc.NewClient(shopServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
+		log.Printf("Failed to connect to shop service: %v", err)
 		return nil, err
 	}
 
 	client := shop_v1.NewShopServiceClient(conn)
+
+	log.Printf("Successfully connected to shop service at %s", shopServiceAddr)
 
 	return &grpcShopAdapter{
 		conn:   conn,
