@@ -18,6 +18,7 @@ type Config struct {
 	CORS     CORSConfig     `json:"cors"`
 	App      AppConfig      `json:"app"`
 	Email    EmailConfig    `json:"email"`
+	GRPC     GRPCConfig     `json:"grpc"`
 }
 
 // ServerConfig holds server configuration
@@ -89,6 +90,11 @@ type EmailConfig struct {
 	TemplatePath string `json:"template_path"`
 }
 
+type GRPCConfig struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if it exists
@@ -149,6 +155,10 @@ func Load() (*Config, error) {
 			UseTLS:       getBoolEnvWithDefault("USER_SERVICE_SMTP_USE_TLS", true),
 			UseSSL:       getBoolEnvWithDefault("USER_SERVICE_SMTP_USE_SSL", false),
 			TemplatePath: getEnvWithDefault("USER_SERVICE_EMAIL_TEMPLATE_PATH", "./templates/email"),
+		},
+		GRPC: GRPCConfig{
+			Host: getEnvWithDefault("USER_SERVICE_GRPC_HOST", "localhost"),
+			Port: getEnvWithDefault("USER_SERVICE_GRPC_PORT", "50051"),
 		},
 	}
 
