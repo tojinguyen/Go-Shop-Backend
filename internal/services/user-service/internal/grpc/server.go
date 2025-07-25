@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"log"
 
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
@@ -23,10 +24,12 @@ func NewUserGRPCServer(addressRepo repository.AddressRepository) *Server {
 func (s *Server) GetAddressById(ctx context.Context, req *user_v1.GetAddressRequest) (*user_v1.GetAddressResponse, error) {
 	address, err := s.addressRepo.GetAddressByID(ctx, req.AddressId)
 	if err != nil {
+		log.Printf("Error fetching address by ID: %v", err)
 		return nil, err
 	}
 
 	if address == nil {
+		log.Printf("Address with ID %s not found", req.AddressId)
 		return nil, apperror.NewNotFound("Address", req.AddressId)
 	}
 

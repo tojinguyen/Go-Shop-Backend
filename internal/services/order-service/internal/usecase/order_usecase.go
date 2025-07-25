@@ -179,19 +179,23 @@ func (u *orderUsecase) validatePrerequisites(ctx *gin.Context, req *dto.CreateOr
 
 	// Validate shipping address
 	if req.ShippingAddressID == "" {
+		log.Printf("Order creation failed: Shipping address ID is required")
 		return apperror.NewBadRequest("Address cannot be empty", errors.New("shipping_address_id is required"))
 	}
 
 	address, err := u.userAdapter.GetAddressById(ctx, req.ShippingAddressID)
 	if err != nil {
+		log.Printf("Error fetching address: %v", err)
 		return apperror.NewInternal(fmt.Sprintf("Failed to get address: %s", err.Error()))
 	}
 
 	if address == nil || address.DeletedAt != nil {
+		log.Printf("Shipping address with ID %s not found or deleted with data: %+v", req.ShippingAddressID, address)
 		return apperror.NewNotFound("Shipping address", req.ShippingAddressID)
 	}
 
 	if len(req.Items) == 0 {
+		log.Printf("Order creation failed: No items provided")
 		return apperror.NewBadRequest("Order must contain at least one item", nil)
 	}
 

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
@@ -54,8 +55,10 @@ func (r *addressRepository) CreateAddress(ctx context.Context, params sqlc.Creat
 }
 
 func (r *addressRepository) GetAddressByID(ctx context.Context, addressID string) (*domain.Address, error) {
+	log.Printf("Fetching address with ID: %s", addressID)
 	address, err := r.queries.GetAddressById(ctx, converter.StringToPgUUID(addressID))
 	if err != nil {
+		log.Printf("Error fetching address: %v", err)
 		return nil, err
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	user_v1 "github.com/toji-dev/go-shop/proto/gen/go/user/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -38,6 +39,7 @@ func NewGrpcUserAdapter(userServiceAddr string) (UserServiceAdapter, error) {
 }
 
 func (a *grpcUserAdapter) GetAddressById(ctx context.Context, addressID string) (*user_v1.Address, error) {
+	log.Printf("Requesting address with ID: %s", addressID)
 	req := &user_v1.GetAddressRequest{
 		AddressId: addressID,
 	}
@@ -45,8 +47,16 @@ func (a *grpcUserAdapter) GetAddressById(ctx context.Context, addressID string) 
 	resp, err := a.client.GetAddressById(ctx, req)
 
 	if err != nil {
+		log.Printf("Error fetching address by ID: %v", err)
 		return nil, err
 	}
+	if resp == nil || resp.Address == nil {
+		log.Printf("No address found for ID: %s", addressID)
+		return nil, apperror.NewNotFound("Address", addressID)
+	}
+
+	log.Printf("Successfully fetched address with ID: %s", addressID)
+
 	return resp.Address, nil
 }
 
