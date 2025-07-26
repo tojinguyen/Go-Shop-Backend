@@ -2,15 +2,19 @@
 INSERT INTO orders 
 (
     id,
-    user_id,
+    owner_id,
     shop_id,
     shipping_address_id,
     promotion_id,
+    shipping_fee,
+    discount_amount,
+    total_amount,
+    final_amount,
     order_status
 )
 VALUES 
 (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
 RETURNING *;
 
@@ -20,7 +24,7 @@ WHERE id = $1;
 
 -- name: GetOrdersByUserID :many
 SELECT * FROM orders
-WHERE user_id = $1;
+WHERE owner_id = $1;
 
 -- name: UpdateOrderStatus :one
 UPDATE orders

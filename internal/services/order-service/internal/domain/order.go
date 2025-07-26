@@ -19,7 +19,7 @@ type Order struct {
 	ShopID            string      `json:"shop_id"`
 	ShippingAddressID string      `json:"shipping_address_id"`
 	PromotionCode     *string     `json:"promotion_code,omitempty"`
-	Note              string      `json:"note"`
+	ShippingFee       float64     `json:"shipping_fee"`
 	DiscountAmount    float64     `json:"discount_amount"`
 	TotalAmount       float64     `json:"total_amount"`
 	FinalPrice        float64     `json:"final_price"`

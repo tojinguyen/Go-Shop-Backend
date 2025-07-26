@@ -15,10 +15,15 @@ CREATE TYPE order_status AS ENUM
 
 CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL,
+    owner_id UUID NOT NULL,
     shop_id UUID NOT NULL,
     shipping_address_id UUID NOT NULL,
     promotion_id UUID,
+
+    shipping_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    discount_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    total_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    final_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
 
     order_status order_status NOT NULL DEFAULT 'PENDING',
     

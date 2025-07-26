@@ -62,10 +62,14 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 
 type Order struct {
 	ID                pgtype.UUID        `json:"id"`
-	UserID            pgtype.UUID        `json:"user_id"`
+	OwnerID           pgtype.UUID        `json:"owner_id"`
 	ShopID            pgtype.UUID        `json:"shop_id"`
 	ShippingAddressID pgtype.UUID        `json:"shipping_address_id"`
 	PromotionID       pgtype.UUID        `json:"promotion_id"`
+	ShippingFee       pgtype.Numeric     `json:"shipping_fee"`
+	DiscountAmount    pgtype.Numeric     `json:"discount_amount"`
+	TotalAmount       pgtype.Numeric     `json:"total_amount"`
+	FinalAmount       pgtype.Numeric     `json:"final_amount"`
 	OrderStatus       OrderStatus        `json:"order_status"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`

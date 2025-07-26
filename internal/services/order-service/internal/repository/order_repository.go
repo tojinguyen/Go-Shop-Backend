@@ -49,9 +49,13 @@ func (r *orderRepository) CreateOrder(ctx *gin.Context, order *domain.Order) (*d
 	// Step 1: Create the main order record
 	orderParams := sqlc.CreateOrderParams{
 		ID:                converter.StringToPgUUID(order.ID),
-		UserID:            converter.StringToPgUUID(order.OwnerID),
+		OwnerID:           converter.StringToPgUUID(order.OwnerID),
 		ShopID:            converter.StringToPgUUID(order.ShopID),
 		ShippingAddressID: converter.StringToPgUUID(order.ShippingAddressID),
+		ShippingFee:       converter.Float64ToPgNumeric(order.ShippingFee),
+		DiscountAmount:    converter.Float64ToPgNumeric(order.DiscountAmount),
+		TotalAmount:       converter.Float64ToPgNumeric(order.TotalAmount),
+		FinalAmount:       converter.Float64ToPgNumeric(order.FinalPrice),
 		OrderStatus:       sqlc.OrderStatus(order.Status),
 	}
 	if order.PromotionCode != nil {
@@ -137,11 +141,15 @@ func toDomainOrder(dbOrder *sqlc.Order) *domain.Order {
 
 	return &domain.Order{
 		ID:                converter.PgUUIDToString(dbOrder.ID),
-		OwnerID:           converter.PgUUIDToString(dbOrder.UserID),
+		OwnerID:           converter.PgUUIDToString(dbOrder.OwnerID),
 		ShopID:            converter.PgUUIDToString(dbOrder.ShopID),
 		ShippingAddressID: converter.PgUUIDToString(dbOrder.ShippingAddressID),
-		Status:            domain.OrderStatus(dbOrder.OrderStatus),
 		PromotionCode:     &promotionCode,
+		ShippingFee:       converter.PgNumericToFloat64(dbOrder.ShippingFee),
+		DiscountAmount:    converter.PgNumericToFloat64(dbOrder.DiscountAmount),
+		TotalAmount:       converter.PgNumericToFloat64(dbOrder.TotalAmount),
+		FinalPrice:        converter.PgNumericToFloat64(dbOrder.FinalAmount),
+		Status:            domain.OrderStatus(dbOrder.OrderStatus),
 	}
 }
 
