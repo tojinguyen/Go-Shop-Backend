@@ -12,6 +12,7 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
 	App      AppConfig      `mapstructure:"app"`
+	Momo     MomoConfig     `mapstructure:"momo"`
 }
 
 type ServerConfig struct {
@@ -57,6 +58,13 @@ type ExternalServiceConfig struct {
 	Port string `mapstructure:"port"`
 }
 
+type MomoConfig struct {
+	PartnerCode string `mapstructure:"partner_code"`
+	AccessKey   string `mapstructure:"access_key"`
+	SecretKey   string `mapstructure:"secret_key"`
+	ApiEndpoint string `mapstructure:"api_endpoint"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -87,6 +95,12 @@ func Load() (*Config, error) {
 			Port:     getEnv("REDIS_PORT", "6379"),
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       getIntEnv("REDIS_DB", 1),
+		},
+		Momo: MomoConfig{
+			PartnerCode: getEnv("MOMO_PARTNER_CODE", ""),
+			AccessKey:   getEnv("MOMO_ACCESS_KEY", ""),
+			SecretKey:   getEnv("MOMO_SECRET_KEY", ""),
+			ApiEndpoint: getEnv("MOMO_API_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/create"),
 		},
 	}
 	return cfg, nil
