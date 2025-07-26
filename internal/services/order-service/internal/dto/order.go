@@ -9,7 +9,6 @@ type CreateOrderRequest struct {
 	ShopID            string                   `json:"shop_id" binding:"required,uuid"`
 	ShippingAddressID string                   `json:"shipping_address_id" binding:"required,uuid"`
 	PromotionID       *string                  `json:"promotion_id,omitempty" binding:"omitempty,uuid"`
-	Note              string                   `json:"note"`
 	Items             []CreateOrderItemRequest `json:"items" binding:"required,min=1,dive"`
 }
 
@@ -18,7 +17,7 @@ type OrderResponse struct {
 	ShopID            string              `json:"shop_id"`
 	ShippingAddressID string              `json:"shipping_address_id"`
 	PromotionID       *string             `json:"promotion_id,omitempty"`
-	Note              string              `json:"note"`
+	ShippingFee       float64             `json:"shipping_fee"`
 	DiscountAmount    float64             `json:"discount_amount"`
 	TotalAmount       float64             `json:"total_amount"`
 	FinalAmount       float64             `json:"final_amount"`

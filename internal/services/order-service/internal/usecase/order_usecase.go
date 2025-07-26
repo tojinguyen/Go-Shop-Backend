@@ -68,6 +68,8 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 	totalAmount := 0.0
 	orderItems := make([]domain.OrderItem, len(productsInfo.Products))
 
+	log.Printf("Product info retrieved with %d products", len(productsInfo.Products))
+
 	for i, p := range productsInfo.Products {
 		price := float64(p.Price)
 		totalAmount += price * float64(quantityMap[p.Id])
@@ -79,6 +81,8 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 	}
 
 	finalPrice := totalAmount
+
+	log.Printf("Total amount calculated: %.2f", totalAmount)
 
 	// Validate Promotions
 	discountAmount := 0.0
@@ -104,6 +108,8 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 		discountAmount = float64(promotionRes.Discount)
 	}
 
+	log.Printf("Final price after promotion: %.2f (Discount: %.2f)", finalPrice, discountAmount)
+
 	// Create the order with PENDING status FIRST
 	pendingOrder := &domain.Order{
 		ID:                orderID,
@@ -111,6 +117,7 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 		ShopID:            req.ShopID,
 		ShippingAddressID: req.ShippingAddressID,
 		PromotionCode:     req.PromotionID,
+		ShippingFee:       0,
 		DiscountAmount:    discountAmount,
 		TotalAmount:       totalAmount,
 		FinalPrice:        finalPrice,

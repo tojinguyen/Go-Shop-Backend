@@ -15,44 +15,60 @@ const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders 
 (
     id,
-    user_id,
+    owner_id,
     shop_id,
     shipping_address_id,
     promotion_id,
+    shipping_fee,
+    discount_amount,
+    total_amount,
+    final_amount,
     order_status
 )
 VALUES 
 (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
-RETURNING id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at
+RETURNING id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at
 `
 
 type CreateOrderParams struct {
-	ID                pgtype.UUID `json:"id"`
-	UserID            pgtype.UUID `json:"user_id"`
-	ShopID            pgtype.UUID `json:"shop_id"`
-	ShippingAddressID pgtype.UUID `json:"shipping_address_id"`
-	PromotionID       pgtype.UUID `json:"promotion_id"`
-	OrderStatus       OrderStatus `json:"order_status"`
+	ID                pgtype.UUID    `json:"id"`
+	OwnerID           pgtype.UUID    `json:"owner_id"`
+	ShopID            pgtype.UUID    `json:"shop_id"`
+	ShippingAddressID pgtype.UUID    `json:"shipping_address_id"`
+	PromotionID       pgtype.UUID    `json:"promotion_id"`
+	ShippingFee       pgtype.Numeric `json:"shipping_fee"`
+	DiscountAmount    pgtype.Numeric `json:"discount_amount"`
+	TotalAmount       pgtype.Numeric `json:"total_amount"`
+	FinalAmount       pgtype.Numeric `json:"final_amount"`
+	OrderStatus       OrderStatus    `json:"order_status"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
 	row := q.db.QueryRow(ctx, createOrder,
 		arg.ID,
-		arg.UserID,
+		arg.OwnerID,
 		arg.ShopID,
 		arg.ShippingAddressID,
 		arg.PromotionID,
+		arg.ShippingFee,
+		arg.DiscountAmount,
+		arg.TotalAmount,
+		arg.FinalAmount,
 		arg.OrderStatus,
 	)
 	var i Order
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerID,
 		&i.ShopID,
 		&i.ShippingAddressID,
 		&i.PromotionID,
+		&i.ShippingFee,
+		&i.DiscountAmount,
+		&i.TotalAmount,
+		&i.FinalAmount,
 		&i.OrderStatus,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -61,7 +77,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at FROM orders
+SELECT id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at FROM orders
 WHERE id = $1
 `
 
@@ -70,10 +86,14 @@ func (q *Queries) GetOrderByID(ctx context.Context, id pgtype.UUID) (Order, erro
 	var i Order
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerID,
 		&i.ShopID,
 		&i.ShippingAddressID,
 		&i.PromotionID,
+		&i.ShippingFee,
+		&i.DiscountAmount,
+		&i.TotalAmount,
+		&i.FinalAmount,
 		&i.OrderStatus,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -82,12 +102,12 @@ func (q *Queries) GetOrderByID(ctx context.Context, id pgtype.UUID) (Order, erro
 }
 
 const getOrdersByUserID = `-- name: GetOrdersByUserID :many
-SELECT id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at FROM orders
-WHERE user_id = $1
+SELECT id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at FROM orders
+WHERE owner_id = $1
 `
 
-func (q *Queries) GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]Order, error) {
-	rows, err := q.db.Query(ctx, getOrdersByUserID, userID)
+func (q *Queries) GetOrdersByUserID(ctx context.Context, ownerID pgtype.UUID) ([]Order, error) {
+	rows, err := q.db.Query(ctx, getOrdersByUserID, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -97,10 +117,14 @@ func (q *Queries) GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]
 		var i Order
 		if err := rows.Scan(
 			&i.ID,
-			&i.UserID,
+			&i.OwnerID,
 			&i.ShopID,
 			&i.ShippingAddressID,
 			&i.PromotionID,
+			&i.ShippingFee,
+			&i.DiscountAmount,
+			&i.TotalAmount,
+			&i.FinalAmount,
 			&i.OrderStatus,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -116,7 +140,7 @@ func (q *Queries) GetOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]
 }
 
 const getStaleOrders = `-- name: GetStaleOrders :many
-SELECT id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at FROM orders 
+SELECT id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at FROM orders 
 WHERE order_status = 'PENDING'
 AND updated_at < $1
 LIMIT $2
@@ -138,10 +162,14 @@ func (q *Queries) GetStaleOrders(ctx context.Context, arg GetStaleOrdersParams) 
 		var i Order
 		if err := rows.Scan(
 			&i.ID,
-			&i.UserID,
+			&i.OwnerID,
 			&i.ShopID,
 			&i.ShippingAddressID,
 			&i.PromotionID,
+			&i.ShippingFee,
+			&i.DiscountAmount,
+			&i.TotalAmount,
+			&i.FinalAmount,
 			&i.OrderStatus,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -160,7 +188,7 @@ const updateOrderStatus = `-- name: UpdateOrderStatus :one
 UPDATE orders
 SET order_status = $2, updated_at = NOW()
 WHERE id = $1
-RETURNING id, user_id, shop_id, shipping_address_id, promotion_id, order_status, created_at, updated_at
+RETURNING id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at
 `
 
 type UpdateOrderStatusParams struct {
@@ -173,10 +201,14 @@ func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusPa
 	var i Order
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerID,
 		&i.ShopID,
 		&i.ShippingAddressID,
 		&i.PromotionID,
+		&i.ShippingFee,
+		&i.DiscountAmount,
+		&i.TotalAmount,
+		&i.FinalAmount,
 		&i.OrderStatus,
 		&i.CreatedAt,
 		&i.UpdatedAt,
