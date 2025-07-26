@@ -17,6 +17,7 @@ services:
       - shop-service
       - cart-service
       - order-service
+      - payment-service
     networks:
       - go-shop-network
     restart: unless-stopped
