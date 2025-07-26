@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 CREATE TYPE payment_status AS ENUM (
     'PENDING',
+    'PROCESSING',
     'SUCCESS',
     'FAILED',
     'REFUNDED'
