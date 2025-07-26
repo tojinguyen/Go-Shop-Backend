@@ -7,6 +7,7 @@ import (
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/handler"
+	paymentprovider "github.com/toji-dev/go-shop/internal/services/payment-service/internal/payment_provider"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/repository"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/usecase"
 )
@@ -17,6 +18,8 @@ type DependencyContainer struct {
 	paymentRepo    repository.PaymentRepository
 	paymentUseCase usecase.PaymentUseCase
 	paymentHandler handler.PaymentHandler
+
+	paymentMethodFactory *paymentprovider.PaymentProviderFactory
 }
 
 func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
@@ -69,6 +72,7 @@ func (sc *DependencyContainer) initRepositories() {
 func (sc *DependencyContainer) initUseCases() {
 	sc.paymentUseCase = usecase.NewPaymentUsecase(
 		sc.paymentRepo,
+		sc.paymentMethodFactory,
 	)
 	log.Println("Payment use case initialized")
 }

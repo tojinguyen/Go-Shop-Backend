@@ -1,8 +1,9 @@
 package dto
 
 type InitiatePaymentRequest struct {
-	OrderID       string `json:"order_id" binding:"required,uuid"`
-	PaymentMethod string `json:"payment_method" binding:"required,oneof=MOMO VNPAY COD"`
+	OrderID       string  `json:"order_id" binding:"required,uuid"`
+	PaymentMethod string  `json:"payment_method" binding:"required,oneof=MOMO VNPAY COD"`
+	Amount        float64 `json:"amount" binding:"required,min=1"`
 }
 
 type InitiatePaymentResponse struct {
