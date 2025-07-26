@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	common_middleware "github.com/toji-dev/go-shop/internal/pkg/middleware"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/payment-service/internal/dependency-container"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/middleware"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
@@ -30,13 +31,16 @@ func Init(router *gin.Engine, dependencyContainer *dependency_container.Dependen
 		})
 	})
 
-	// orderHandler := dependencyContainer.GetOrderHandler()
+	paymentHandler := dependencyContainer.GetPaymentHandler()
 
-	// v1 := router.Group("/api/v1")
-	// {
-	// 	orders := v1.Group("/orders")
-	// 	orders.Use(middleware.AuthHeaderMiddleware())
-	// 	{
-	// 	}
-	// }
+	v1 := router.Group("/api/v1")
+	{
+		payments := v1.Group("/payments")
+		payments.POST("/ipn/:provider", paymentHandler.HandleIPN)
+
+		payments.Use(middleware.AuthHeaderMiddleware())
+		{
+			payments.POST("/initiate", paymentHandler.InitiatePayment)
+		}
+	}
 }
