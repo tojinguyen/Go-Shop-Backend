@@ -5,6 +5,7 @@ import (
 
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/domain"
 )
@@ -65,10 +66,10 @@ func toDomain(p *sqlc.Payment) *domain.Payment {
 		UserID:                converter.PgUUIDToString(p.UserID),
 		Amount:                converter.PgNumericToFloat64(p.Amount),
 		Currency:              p.Currency,
-		Method:                domain.PaymentMethod(p.PaymentMethod),
+		Method:                constant.PaymentMethod(p.PaymentMethod),
 		Provider:              *converter.PgTextToStringPtr(p.PaymentProvider),
 		ProviderTransactionID: converter.PgTextToStringPtr(p.ProviderTransactionID),
-		Status:                domain.PaymentStatus(p.PaymentStatus),
+		Status:                constant.PaymentStatus(p.PaymentStatus),
 		CreatedAt:             p.CreatedAt.Time,
 		UpdatedAt:             p.UpdatedAt.Time,
 	}
