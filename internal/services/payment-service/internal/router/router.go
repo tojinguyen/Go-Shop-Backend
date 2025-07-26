@@ -27,7 +27,7 @@ func Init(router *gin.Engine, dependencyContainer *dependency_container.Dependen
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":  "ok",
-			"service": "order-service",
+			"service": "payment-service",
 		})
 	})
 
