@@ -1,4 +1,4 @@
-module github.com/toji-dev/go-shop/internal/services/order-service
+module github.com/toji-dev/go-shop/internal/services/payment-service
 
 go 1.24.3
 

@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	"github.com/toji-dev/go-shop/internal/services/order-service/internal/config"
-	dependency_container "github.com/toji-dev/go-shop/internal/services/order-service/internal/dependency-container"
-	"github.com/toji-dev/go-shop/internal/services/order-service/internal/router"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
+	dependency_container "github.com/toji-dev/go-shop/internal/services/payment-service/internal/dependency-container"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/router"
 )
 
 func main() {

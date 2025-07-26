@@ -1,8 +1,6 @@
 package handler
 
-import (
-	"github.com/toji-dev/go-shop/internal/services/order-service/internal/usecase"
-)
+import "github.com/toji-dev/go-shop/internal/services/payment-service/internal/usecase"
 
 type PaymentHandler interface {
 }
@@ -11,6 +9,6 @@ type paymentHandler struct {
 	orderUsecase usecase.PaymentUseCase
 }
 
-func NewOrderHandler(orderUsecase usecase.PaymentUseCase) PaymentHandler {
+func NewPaymentHandler(orderUsecase usecase.PaymentUseCase) PaymentHandler {
 	return &paymentHandler{orderUsecase: orderUsecase}
 }

@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"github.com/toji-dev/go-shop/internal/services/order-service/internal/repository"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/repository"
 )
 
 type PaymentUseCase interface {

@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 	common_middleware "github.com/toji-dev/go-shop/internal/pkg/middleware"
-	dependency_container "github.com/toji-dev/go-shop/internal/services/order-service/internal/dependency-container"
+	dependency_container "github.com/toji-dev/go-shop/internal/services/payment-service/internal/dependency-container"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
