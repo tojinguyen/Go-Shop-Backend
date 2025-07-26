@@ -1,24 +1,9 @@
 package domain
 
-import "time"
+import (
+	"time"
 
-type PaymentStatus string
-
-const (
-	PaymentStatusPending    PaymentStatus = "PENDING"
-	PaymentStatusProcessing PaymentStatus = "PROCESSING"
-	PaymentStatusCompleted  PaymentStatus = "SUCCESS"
-	PaymentStatusFailed     PaymentStatus = "FAILED"
-	PaymentStatusRefunded   PaymentStatus = "REFUNDED"
-)
-
-type PaymentMethod string
-
-const (
-	PaymentMethodCOD          PaymentMethod = "COD"
-	PaymentMethodCreditCard   PaymentMethod = "CREDIT_CARD"
-	PaymentMethodBankTransfer PaymentMethod = "BANK_TRANSFER"
-	PaymentMethodEWallet      PaymentMethod = "E_WALLET"
+	. "github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 )
 
 type Payment struct {
