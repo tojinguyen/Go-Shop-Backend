@@ -73,6 +73,7 @@ func toOrderResponse(order *domain.Order) *dto.OrderResponse {
 		ShopID:            order.ShopID,
 		ShippingAddressID: order.ShippingAddressID,
 		PromotionID:       order.PromotionCode,
+		ShippingFee:       order.ShippingFee,
 		DiscountAmount:    order.DiscountAmount,
 		TotalAmount:       order.TotalAmount,
 		FinalAmount:       order.FinalPrice,

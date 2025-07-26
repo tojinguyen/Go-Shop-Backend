@@ -17,6 +17,7 @@ type OrderResponse struct {
 	ShopID            string              `json:"shop_id"`
 	ShippingAddressID string              `json:"shipping_address_id"`
 	PromotionID       *string             `json:"promotion_id,omitempty"`
+	ShippingFee       float64             `json:"shipping_fee"`
 	DiscountAmount    float64             `json:"discount_amount"`
 	TotalAmount       float64             `json:"total_amount"`
 	FinalAmount       float64             `json:"final_amount"`
