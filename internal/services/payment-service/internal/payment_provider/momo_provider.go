@@ -17,7 +17,34 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/domain"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/dto"
 )
+
+type momoCreatePaymentRequest struct {
+	PartnerCode string `json:"partnerCode"`
+	RequestID   string `json:"requestId"`
+	Amount      int64  `json:"amount"`
+	OrderID     string `json:"orderId"`
+	OrderInfo   string `json:"orderInfo"`
+	RedirectURL string `json:"redirectUrl"`
+	IpnURL      string `json:"ipnUrl"`
+	RequestType string `json:"requestType"`
+	ExtraData   string `json:"extraData"`
+	Lang        string `json:"lang"`
+	Signature   string `json:"signature"`
+}
+
+type momoCreatePaymentResponse struct {
+	PartnerCode  string `json:"partnerCode"`
+	OrderID      string `json:"orderId"`
+	RequestID    string `json:"requestId"`
+	Amount       int64  `json:"amount"`
+	ResponseTime int64  `json:"responseTime"`
+	Message      string `json:"message"`
+	ResultCode   int    `json:"resultCode"`
+	PayURL       string `json:"payUrl"`
+	Deeplink     string `json:"deeplink"`
+}
 
 type momoProvider struct {
 	cfg config.MomoConfig
@@ -55,14 +82,26 @@ func (p *momoProvider) CreatePayment(ctx context.Context, data PaymentData) (*Cr
 		p.cfg.AccessKey, req.Amount, req.ExtraData, req.IpnURL, req.OrderID, req.OrderInfo, req.PartnerCode, req.RedirectURL, req.RequestID, req.RequestType)
 	req.Signature = p.generateSignature(rawSignature)
 
-	reqBody, _ := json.Marshal(req)
-	resp, err := http.Post(p.cfg.ApiEndpoint, "application/json", bytes.NewBuffer(reqBody))
-	// ... (xử lý response như cũ) ...
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error marshalling MoMo request: %v", err)
+		return nil, fmt.Errorf("failed to marshal MoMo request: %w", err)
+	}
+
+	httpRequest, err := http.NewRequestWithContext(ctx, "POST", p.cfg.ApiEndpoint, bytes.NewBuffer(reqBody))
+
+	if err != nil {
+		log.Printf("Error creating MoMo HTTP request: %v", err)
+		return nil, fmt.Errorf("failed to create MoMo HTTP request: %w", err)
+	}
+	httpRequest.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpRequest)
 	if err != nil {
 		log.Printf("Error sending request to MoMo: %v", err)
 		return nil, fmt.Errorf("failed to send request to MoMo: %w", err)
 	}
-
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
@@ -88,7 +127,7 @@ func (p *momoProvider) CreatePayment(ctx context.Context, data PaymentData) (*Cr
 }
 
 func (p *momoProvider) HandleIPN(r *http.Request) (*domain.Payment, error) {
-	var req MomoIPNRequest
+	var req dto.MomoIPNRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, fmt.Errorf("failed to decode IPN request: %w", err)
 	}
@@ -106,10 +145,11 @@ func (p *momoProvider) HandleIPN(r *http.Request) (*domain.Payment, error) {
 	}
 
 	// Chuyển đổi thành domain.Payment để usecase xử lý
+	providerTransID := fmt.Sprintf("%d", req.TransID)
 	payment := &domain.Payment{
 		OrderID:               originalOrderID,
 		Amount:                float64(req.Amount),
-		ProviderTransactionID: &[]string{fmt.Sprintf("%d", req.TransID)}[0],
+		ProviderTransactionID: &providerTransID,
 	}
 
 	if req.ResultCode == 0 {
