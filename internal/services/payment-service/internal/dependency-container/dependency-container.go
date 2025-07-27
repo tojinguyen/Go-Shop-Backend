@@ -95,6 +95,7 @@ func (sc *DependencyContainer) initUseCases() {
 	sc.paymentUseCase = usecase.NewPaymentUsecase(
 		sc.paymentRepo,
 		sc.paymentMethodFactory,
+		sc.orderServiceAdapter,
 	)
 	log.Println("Payment use case initialized")
 }

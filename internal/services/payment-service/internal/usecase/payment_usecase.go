@@ -11,6 +11,7 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/dto"
+	grpc_adapter "github.com/toji-dev/go-shop/internal/services/payment-service/internal/grpc/adapter"
 	paymentprovider "github.com/toji-dev/go-shop/internal/services/payment-service/internal/payment_provider"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/repository"
 )
@@ -23,12 +24,14 @@ type PaymentUseCase interface {
 type paymentUseCase struct {
 	paymentRepo     repository.PaymentRepository
 	providerFactory *paymentprovider.PaymentProviderFactory
+	orderAdapter    grpc_adapter.OrderServiceAdapter
 }
 
-func NewPaymentUsecase(paymentRepo repository.PaymentRepository, factory *paymentprovider.PaymentProviderFactory) PaymentUseCase {
+func NewPaymentUsecase(paymentRepo repository.PaymentRepository, factory *paymentprovider.PaymentProviderFactory, orderAdapter grpc_adapter.OrderServiceAdapter) PaymentUseCase {
 	return &paymentUseCase{
 		paymentRepo:     paymentRepo,
 		providerFactory: factory,
+		orderAdapter:    orderAdapter,
 	}
 }
 
