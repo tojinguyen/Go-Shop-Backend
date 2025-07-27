@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -58,21 +59,26 @@ func (p *momoProvider) CreatePayment(ctx context.Context, data PaymentData) (*Cr
 	resp, err := http.Post(p.cfg.ApiEndpoint, "application/json", bytes.NewBuffer(reqBody))
 	// ... (xử lý response như cũ) ...
 	if err != nil {
+		log.Printf("Error sending request to MoMo: %v", err)
 		return nil, fmt.Errorf("failed to send request to MoMo: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("Error reading MoMo response body: %v", err)
 		return nil, fmt.Errorf("failed to read MoMo response body: %w", err)
 	}
 
 	var momoResp MomoCreatePaymentResponse
 	if err := json.Unmarshal(body, &momoResp); err != nil {
+		log.Printf("Error unmarshalling MoMo response: %v", err)
 		return nil, fmt.Errorf("failed to unmarshal MoMo response: %w", err)
 	}
 
 	if momoResp.ResultCode != 0 {
+		log.Printf("MoMo returned an error: %s (code: %d)", momoResp.Message, momoResp.ResultCode)
 		return nil, fmt.Errorf("momo returned an error: %s (code: %d)", momoResp.Message, momoResp.ResultCode)
 	}
 
