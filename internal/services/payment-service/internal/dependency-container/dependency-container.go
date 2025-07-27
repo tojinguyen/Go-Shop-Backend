@@ -6,6 +6,7 @@ import (
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
+	grpc_adapter "github.com/toji-dev/go-shop/internal/services/payment-service/internal/grpc/adapter"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/handler"
 	paymentprovider "github.com/toji-dev/go-shop/internal/services/payment-service/internal/payment_provider"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/repository"
@@ -20,6 +21,8 @@ type DependencyContainer struct {
 	paymentHandler handler.PaymentHandler
 
 	paymentMethodFactory *paymentprovider.PaymentProviderFactory
+
+	orderServiceAdapter grpc_adapter.OrderServiceAdapter
 }
 
 func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
@@ -34,6 +37,8 @@ func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 	container.initRepositories()
 
 	container.initPaymentProviders()
+
+	container.initOrderServiceAdapter()
 
 	container.initUseCases()
 
@@ -74,6 +79,16 @@ func (sc *DependencyContainer) initRepositories() {
 func (sc *DependencyContainer) initPaymentProviders() {
 	sc.paymentMethodFactory = paymentprovider.NewPaymentProviderFactory()
 	log.Println("Payment provider factory initialized")
+}
+
+func (sc *DependencyContainer) initOrderServiceAdapter() {
+	var err error
+	address := fmt.Sprintf("%s:%d", sc.config.OrderGrpcConfig.OrderServiceHost, sc.config.OrderGrpcConfig.OrderServicePort)
+	sc.orderServiceAdapter, err = grpc_adapter.NewGrpcOrderAdapter(address)
+	if err != nil {
+		log.Fatalf("failed to initialize order service adapter: %v", err)
+	}
+	log.Println("Order service adapter initialized")
 }
 
 func (sc *DependencyContainer) initUseCases() {

@@ -8,11 +8,12 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	App      AppConfig      `mapstructure:"app"`
-	Momo     MomoConfig     `mapstructure:"momo"`
+	Server          ServerConfig   `mapstructure:"server"`
+	Database        DatabaseConfig `mapstructure:"database"`
+	Redis           RedisConfig    `mapstructure:"redis"`
+	App             AppConfig      `mapstructure:"app"`
+	Momo            MomoConfig     `mapstructure:"momo"`
+	OrderGrpcConfig GrpcConfig     `mapstructure:"order_grpc"`
 }
 
 type ServerConfig struct {
@@ -49,8 +50,8 @@ type AppConfig struct {
 }
 
 type GrpcConfig struct {
-	ProductServiceHost string `mapstructure:"product_service_host"`
-	ProductServicePort int    `mapstructure:"product_service_port"`
+	OrderServiceHost string `mapstructure:"order_service_host"`
+	OrderServicePort int    `mapstructure:"order_service_port"`
 }
 
 type ExternalServiceConfig struct {
@@ -101,6 +102,10 @@ func Load() (*Config, error) {
 			AccessKey:   getEnv("MOMO_ACCESS_KEY", ""),
 			SecretKey:   getEnv("MOMO_SECRET_KEY", ""),
 			ApiEndpoint: getEnv("MOMO_API_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/create"),
+		},
+		OrderGrpcConfig: GrpcConfig{
+			OrderServiceHost: getEnv("PRODUCT_SERVICE_HOST", "localhost"),
+			OrderServicePort: getIntEnv("PRODUCT_SERVICE_PORT", 8081),
 		},
 	}
 	return cfg, nil
