@@ -18,19 +18,19 @@ WORKDIR /build
 COPY . .
 
 # Di chuyển vào thư mục service và tải dependencies
-WORKDIR /build/internal/services/order-service
+WORKDIR /build/internal/services/payment-service
 RUN go mod download
 
 # --- Build ---
 # Di chuyển lại vào thư mục service để build
-WORKDIR /build/internal/services/order-service
+WORKDIR /build/internal/services/payment-service
 
 # Build the binary with security optimizations
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags='-w -s -extldflags "-static"' \
     -a -installsuffix cgo \
     -trimpath \
-    -o order-service ./cmd/main.go
+    -o payment-service ./cmd/main.go
 
 # Final stage - Use Alpine for better compatibility
 FROM alpine:latest
@@ -46,7 +46,7 @@ WORKDIR /app
 RUN chown appuser:appgroup /app
 
 # Copy the binary
-COPY --from=builder /build/internal/services/order-service/order-service /app/order-service
+COPY --from=builder /build/internal/services/payment-service/payment-service /app/payment-service
 
 # Change ownership of copied files
 RUN chown -R appuser:appgroup /app
@@ -54,8 +54,8 @@ RUN chown -R appuser:appgroup /app
 # Use non-root user
 USER appuser
 
-# Expose port for order-service
-EXPOSE 8084
+# Expose port for payment-service
+EXPOSE 8085
 
 # Run the binary
-ENTRYPOINT ["/app/order-service"]
+ENTRYPOINT ["/app/payment-service"]

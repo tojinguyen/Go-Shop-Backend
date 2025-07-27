@@ -78,7 +78,7 @@ func Load() (*Config, error) {
 		},
 		Server: ServerConfig{
 			Host: getEnv("SERVER_HOST", "0.0.0.0"),
-			Port: getEnv("ORDER_SERVICE_PORT", "8084"),
+			Port: getEnv("PAYMENT_SERVICE_PORT", "8085"),
 		},
 		Database: DatabaseConfig{
 			Host:         getEnv("PAYMENT_SERVICE_DB_HOST", "localhost"),
@@ -104,8 +104,8 @@ func Load() (*Config, error) {
 			ApiEndpoint: getEnv("MOMO_API_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/create"),
 		},
 		OrderGrpcConfig: GrpcConfig{
-			OrderServiceHost: getEnv("PRODUCT_SERVICE_HOST", "localhost"),
-			OrderServicePort: getIntEnv("PRODUCT_SERVICE_PORT", 8081),
+			OrderServiceHost: getEnv("ORDER_SERVICE_GRPC_HOST", "localhost"),
+			OrderServicePort: getIntEnv("ORDER_SERVICE_GRPC_PORT", 50054),
 		},
 	}
 	return cfg, nil

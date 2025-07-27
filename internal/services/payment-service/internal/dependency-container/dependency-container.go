@@ -78,6 +78,9 @@ func (sc *DependencyContainer) initRepositories() {
 
 func (sc *DependencyContainer) initPaymentProviders() {
 	sc.paymentMethodFactory = paymentprovider.NewPaymentProviderFactory()
+
+	momoProvider := paymentprovider.NewMomoProvider(sc.config.Momo)
+	sc.paymentMethodFactory.RegisterProvider(momoProvider)
 	log.Println("Payment provider factory initialized")
 }
 

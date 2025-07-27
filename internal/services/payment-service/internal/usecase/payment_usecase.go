@@ -40,12 +40,14 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 	// 1. Lấy provider từ factory
 	paymentProvider, err := uc.providerFactory.GetProvider(constant.PaymentProviderMethod(req.PaymentMethod))
 	if err != nil {
+		log.Printf("Error getting payment provider %s: %v", req.PaymentMethod, err)
 		return nil, err
 	}
 
 	orderRequest := &order_v1.GetOrderRequest{
 		OrderId: req.OrderID,
 	}
+
 	order, err := uc.orderAdapter.GetOrderInfo(ctx, orderRequest)
 
 	if err != nil {
@@ -72,7 +74,9 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 	}
 
 	paymentRecord, err := uc.paymentRepo.CreatePayment(ctx, params)
+
 	if err != nil {
+		log.Printf("Error creating payment record for OrderID %s: %v", req.OrderID, err)
 		return nil, fmt.Errorf("could not create payment record: %w", err)
 	}
 

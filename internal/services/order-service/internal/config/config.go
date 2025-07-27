@@ -16,6 +16,7 @@ type Config struct {
 	ShopServiceAdapter    ExternalServiceConfig `mapstructure:"shop_service_adapter"`
 	ProductServiceAdapter ExternalServiceConfig `mapstructure:"product_service_adapter"`
 	UserServiceAdapter    ExternalServiceConfig `mapstructure:"user_service_adapter"`
+	GRPC                  GrpcConfig            `mapstructure:"grpc"`
 }
 
 type ServerConfig struct {
@@ -52,8 +53,8 @@ type AppConfig struct {
 }
 
 type GrpcConfig struct {
-	ProductServiceHost string `mapstructure:"product_service_host"`
-	ProductServicePort int    `mapstructure:"product_service_port"`
+	ServiceHost string `mapstructure:"service_host"`
+	ServicePort int    `mapstructure:"service_port"`
 }
 
 type ExternalServiceConfig struct {
@@ -103,6 +104,10 @@ func Load() (*Config, error) {
 		UserServiceAdapter: ExternalServiceConfig{
 			Host: getEnv("USER_SERVICE_GRPC_HOST", "localhost"),
 			Port: getEnv("USER_SERVICE_GRPC_PORT", "8084"),
+		},
+		GRPC: GrpcConfig{
+			ServiceHost: getEnv("ORDER_SERVICE_GRPC_HOST", "localhost"),
+			ServicePort: getIntEnv("ORDER_SERVICE_GRPC_PORT", 50052),
 		},
 	}
 	return cfg, nil
