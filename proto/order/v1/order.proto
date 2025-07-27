@@ -26,13 +26,6 @@ message Order {
     float total_amount = 6;
     float final_amount = 7;
     string order_status = 8;
-    repeated OrderItem items = 9;
-    string created_at = 10;
-    string updated_at = 11;
-}
-
-message OrderItem {
-    string product_id = 1;
-    int32 quantity = 2;
-    float price = 3;
+    string created_at = 9;
+    string updated_at = 10;
 }

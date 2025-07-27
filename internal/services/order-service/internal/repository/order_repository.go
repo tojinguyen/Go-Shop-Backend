@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
@@ -17,6 +18,7 @@ type OrderRepository interface {
 	CreateOrder(ctx *gin.Context, order *domain.Order) (*domain.Order, error)
 	UpdateOrderStatus(ctx *gin.Context, orderID string, status sqlc.OrderStatus) (*domain.Order, error)
 	GetStaleOrders(ctx context.Context, olderThan time.Time, limit int) ([]*domain.Order, error)
+	GetOrderByID(ctx context.Context, orderID string) (*domain.Order, error)
 }
 
 type orderRepository struct {
@@ -151,6 +153,18 @@ func toDomainOrder(dbOrder *sqlc.Order) *domain.Order {
 		FinalPrice:        converter.PgNumericToFloat64(dbOrder.FinalAmount),
 		Status:            domain.OrderStatus(dbOrder.OrderStatus),
 	}
+}
+
+func (r *orderRepository) GetOrderByID(ctx context.Context, orderID string) (*domain.Order, error) {
+	order, err := r.queries.GetOrderByID(ctx, converter.StringToPgUUID(orderID))
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, apperror.NewNotFound("Order", orderID)
+		}
+		return nil, fmt.Errorf("failed to get order by ID %s: %w", orderID, err)
+	}
+
+	return toDomainOrder(&order), nil
 }
 
 func toDomainOrderItem(dbItem *sqlc.OrderItem) domain.OrderItem {

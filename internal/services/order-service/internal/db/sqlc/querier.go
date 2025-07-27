@@ -14,8 +14,10 @@ type Querier interface {
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	GetOrderByID(ctx context.Context, id pgtype.UUID) (Order, error)
-	GetOrdersByUserID(ctx context.Context, ownerID pgtype.UUID) ([]Order, error)
+	GetOrderByIDWithItems(ctx context.Context, id pgtype.UUID) (GetOrderByIDWithItemsRow, error)
+	GetOrdersByUserIDWithItems(ctx context.Context, arg GetOrdersByUserIDWithItemsParams) ([]GetOrdersByUserIDWithItemsRow, error)
 	GetStaleOrders(ctx context.Context, arg GetStaleOrdersParams) ([]Order, error)
+	// Bỏ qua bao nhiêu đơn hàng (để qua trang mới)
 	UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (Order, error)
 }
 
