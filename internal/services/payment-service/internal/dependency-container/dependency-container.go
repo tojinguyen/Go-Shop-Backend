@@ -33,6 +33,8 @@ func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 
 	container.initRepositories()
 
+	container.initPaymentProviders()
+
 	container.initUseCases()
 
 	container.initPaymentHandler()
@@ -67,6 +69,11 @@ func (sc *DependencyContainer) initPostgreSQL() error {
 func (sc *DependencyContainer) initRepositories() {
 	sc.paymentRepo = repository.NewPaymentRepository(sc.postgreSQL)
 	log.Println("Payment repository initialized")
+}
+
+func (sc *DependencyContainer) initPaymentProviders() {
+	sc.paymentMethodFactory = paymentprovider.NewPaymentProviderFactory()
+	log.Println("Payment provider factory initialized")
 }
 
 func (sc *DependencyContainer) initUseCases() {
