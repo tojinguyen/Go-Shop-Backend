@@ -87,6 +87,7 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 
 	result, err := paymentProvider.CreatePayment(ctx, paymentData)
 	if err != nil {
+		log.Printf("Error creating payment link for OrderID %s: %v", req.OrderID, err)
 		return nil, fmt.Errorf("payment provider failed: %w", err)
 	}
 
