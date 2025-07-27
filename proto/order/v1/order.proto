@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package goshop.order.v1;
+
+option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/order/v1;order_v1";
+
+service OrderService {
+    rpc GetOrder(GetOrderRequest) returns (GetOrderResponse) {}
+}
+
+message GetOrderRequest {
+    string order_id = 1;
+}
+
+message GetOrderResponse {
+    bool exists = 1;
+    Order order = 2;
+}
+
+message Order {
+    string id = 1;
+    string shop_id = 2;
+    string customer_id = 3;
+    float shipping_fee = 4;
+    float discount_amount = 5;
+    float total_amount = 6;
+    float final_amount = 7;
+    string order_status = 8;
+    repeated OrderItem items = 9;
+    string created_at = 10;
+    string updated_at = 11;
+}
+
+message OrderItem {
+    string product_id = 1;
+    int32 quantity = 2;
+    float price = 3;
+}

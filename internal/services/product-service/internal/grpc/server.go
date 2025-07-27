@@ -103,13 +103,3 @@ func (s *Server) UnreserveProducts(ctx context.Context, req *product_v1.Unreserv
 	log.Println("[ProductService] UnreserveProducts called, but not implemented yet.")
 	return nil, nil
 }
-
-func (s *Server) IsOrderReserved(ctx context.Context, req *product_v1.IsOrderReservedRequest) (*product_v1.IsOrderReservedResponse, error) {
-	reserved, err := s.productRepo.IsOrderReserved(ctx, req.OrderId)
-	if err != nil {
-		log.Printf("Error checking reservation for order %s: %v", req.OrderId, err)
-		return &product_v1.IsOrderReservedResponse{Reserved: false}, err
-	}
-
-	return &product_v1.IsOrderReservedResponse{Reserved: reserved}, nil
-}

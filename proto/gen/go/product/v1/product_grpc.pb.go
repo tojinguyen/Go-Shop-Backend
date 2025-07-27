@@ -26,7 +26,7 @@ type ProductServiceClient interface {
 	GetProductsInfo(ctx context.Context, in *GetProductsInfoRequest, opts ...grpc.CallOption) (*GetProductsInfoResponse, error)
 	ReserveProducts(ctx context.Context, in *ReserveProductsRequest, opts ...grpc.CallOption) (*ReserveProductsResponse, error)
 	UnreserveProducts(ctx context.Context, in *UnreserveProductsRequest, opts ...grpc.CallOption) (*UnreserveProductsResponse, error)
-	IsOrderReserved(ctx context.Context, in *IsOrderReservedRequest, opts ...grpc.CallOption) (*IsOrderReservedResponse, error)
+	GetOrderReservationStatus(ctx context.Context, in *GetOrderReservationStatusRequest, opts ...grpc.CallOption) (*GetOrderReservationStatusResponse, error)
 }
 
 type productServiceClient struct {
@@ -73,9 +73,9 @@ func (c *productServiceClient) UnreserveProducts(ctx context.Context, in *Unrese
 	return out, nil
 }
 
-func (c *productServiceClient) IsOrderReserved(ctx context.Context, in *IsOrderReservedRequest, opts ...grpc.CallOption) (*IsOrderReservedResponse, error) {
-	out := new(IsOrderReservedResponse)
-	err := c.cc.Invoke(ctx, "/goshop.product.v1.ProductService/IsOrderReserved", in, out, opts...)
+func (c *productServiceClient) GetOrderReservationStatus(ctx context.Context, in *GetOrderReservationStatusRequest, opts ...grpc.CallOption) (*GetOrderReservationStatusResponse, error) {
+	out := new(GetOrderReservationStatusResponse)
+	err := c.cc.Invoke(ctx, "/goshop.product.v1.ProductService/GetOrderReservationStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ type ProductServiceServer interface {
 	GetProductsInfo(context.Context, *GetProductsInfoRequest) (*GetProductsInfoResponse, error)
 	ReserveProducts(context.Context, *ReserveProductsRequest) (*ReserveProductsResponse, error)
 	UnreserveProducts(context.Context, *UnreserveProductsRequest) (*UnreserveProductsResponse, error)
-	IsOrderReserved(context.Context, *IsOrderReservedRequest) (*IsOrderReservedResponse, error)
+	GetOrderReservationStatus(context.Context, *GetOrderReservationStatusRequest) (*GetOrderReservationStatusResponse, error)
 	mustEmbedUnimplementedProductServiceServer()
 }
 
@@ -110,8 +110,8 @@ func (UnimplementedProductServiceServer) ReserveProducts(context.Context, *Reser
 func (UnimplementedProductServiceServer) UnreserveProducts(context.Context, *UnreserveProductsRequest) (*UnreserveProductsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnreserveProducts not implemented")
 }
-func (UnimplementedProductServiceServer) IsOrderReserved(context.Context, *IsOrderReservedRequest) (*IsOrderReservedResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IsOrderReserved not implemented")
+func (UnimplementedProductServiceServer) GetOrderReservationStatus(context.Context, *GetOrderReservationStatusRequest) (*GetOrderReservationStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrderReservationStatus not implemented")
 }
 func (UnimplementedProductServiceServer) mustEmbedUnimplementedProductServiceServer() {}
 
@@ -198,20 +198,20 @@ func _ProductService_UnreserveProducts_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProductService_IsOrderReserved_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IsOrderReservedRequest)
+func _ProductService_GetOrderReservationStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrderReservationStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProductServiceServer).IsOrderReserved(ctx, in)
+		return srv.(ProductServiceServer).GetOrderReservationStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/goshop.product.v1.ProductService/IsOrderReserved",
+		FullMethod: "/goshop.product.v1.ProductService/GetOrderReservationStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProductServiceServer).IsOrderReserved(ctx, req.(*IsOrderReservedRequest))
+		return srv.(ProductServiceServer).GetOrderReservationStatus(ctx, req.(*GetOrderReservationStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -240,8 +240,8 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProductService_UnreserveProducts_Handler,
 		},
 		{
-			MethodName: "IsOrderReserved",
-			Handler:    _ProductService_IsOrderReserved_Handler,
+			MethodName: "GetOrderReservationStatus",
+			Handler:    _ProductService_GetOrderReservationStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
