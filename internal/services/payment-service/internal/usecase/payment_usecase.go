@@ -14,6 +14,7 @@ import (
 	grpc_adapter "github.com/toji-dev/go-shop/internal/services/payment-service/internal/grpc/adapter"
 	paymentprovider "github.com/toji-dev/go-shop/internal/services/payment-service/internal/payment_provider"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/repository"
+	order_v1 "github.com/toji-dev/go-shop/proto/gen/go/order/v1"
 )
 
 type PaymentUseCase interface {
@@ -42,10 +43,22 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 		return nil, err
 	}
 
-	// 2. TODO: Gọi Order Service để lấy thông tin đơn hàng và xác thực (amount, currency, owner)
-	// Tạm thời dùng amount từ request
-	amount := req.Amount
+	orderRequest := &order_v1.GetOrderRequest{
+		OrderId: req.OrderID,
+	}
+	order, err := uc.orderAdapter.GetOrderInfo(ctx, orderRequest)
 
+	if err != nil {
+		log.Printf("Error retrieving order info for OrderID %s: %v", req.OrderID, err)
+		return nil, fmt.Errorf("could not retrieve order info: %w", err)
+	}
+
+	if order == nil {
+		log.Printf("Order not found for OrderID %s", req.OrderID)
+		return nil, fmt.Errorf("order not found for ID: %s", req.OrderID)
+	}
+
+	amount := float64(order.Order.FinalAmount)
 	paymentMethod := strings.ToUpper(req.PaymentMethod)
 
 	// 3. Tạo bản ghi payment trong DB
