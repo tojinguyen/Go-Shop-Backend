@@ -96,6 +96,7 @@ func (sc *DependencyContainer) initOrderServiceAdapter() {
 
 func (sc *DependencyContainer) initUseCases() {
 	sc.paymentUseCase = usecase.NewPaymentUsecase(
+		&sc.config.App,
 		sc.paymentRepo,
 		sc.paymentMethodFactory,
 		sc.orderServiceAdapter,

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/dto"
@@ -23,13 +24,15 @@ type PaymentUseCase interface {
 }
 
 type paymentUseCase struct {
+	appConfig       *config.AppConfig
 	paymentRepo     repository.PaymentRepository
 	providerFactory *paymentprovider.PaymentProviderFactory
 	orderAdapter    grpc_adapter.OrderServiceAdapter
 }
 
-func NewPaymentUsecase(paymentRepo repository.PaymentRepository, factory *paymentprovider.PaymentProviderFactory, orderAdapter grpc_adapter.OrderServiceAdapter) PaymentUseCase {
+func NewPaymentUsecase(appConfig *config.AppConfig, paymentRepo repository.PaymentRepository, factory *paymentprovider.PaymentProviderFactory, orderAdapter grpc_adapter.OrderServiceAdapter) PaymentUseCase {
 	return &paymentUseCase{
+		appConfig:       appConfig,
 		paymentRepo:     paymentRepo,
 		providerFactory: factory,
 		orderAdapter:    orderAdapter,
@@ -60,6 +63,11 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 		return nil, fmt.Errorf("order not found for ID: %s", req.OrderID)
 	}
 
+	if order.Order.CustomerId != userID {
+		log.Printf("User %s is not authorized to pay for OrderID %s", userID, req.OrderID)
+		return nil, fmt.Errorf("user is not authorized to pay for this order")
+	}
+
 	amount := float64(order.Order.FinalAmount)
 	paymentMethod := strings.ToUpper(req.PaymentMethod)
 
@@ -84,12 +92,13 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 	paymentData := paymentprovider.PaymentData{
 		OrderID:     req.OrderID,
 		Amount:      int64(amount),
-		OrderInfo:   fmt.Sprintf("Thanh toan don hang #%s", req.OrderID),
-		IPNURL:      fmt.Sprintf("https://your-domain.com/api/v1/payments/ipn/%s", strings.ToLower(string(paymentProvider.GetName()))),
-		RedirectURL: fmt.Sprintf("https://your-frontend.com/orders/%s", req.OrderID),
+		OrderInfo:   fmt.Sprintf("Thanh_toan_don_hang_%s", req.OrderID),
+		IPNURL:      fmt.Sprintf("%s/api/v1/payments/ipn/%s", uc.appConfig.ApiGatewayURL, strings.ToLower(string(paymentProvider.GetName()))),
+		RedirectURL: fmt.Sprintf("%s/orders/%s/result", uc.appConfig.FrontendURL, req.OrderID),
 	}
 
 	result, err := paymentProvider.CreatePayment(ctx, paymentData)
+
 	if err != nil {
 		log.Printf("Error creating payment link for OrderID %s: %v", req.OrderID, err)
 		return nil, fmt.Errorf("payment provider failed: %w", err)
@@ -106,12 +115,15 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 	// 1. Lấy provider từ factory
 	paymentProvider, err := uc.providerFactory.GetProvider(provider)
 	if err != nil {
+		log.Printf("Error getting payment provider %s: %v", provider, err)
 		return err
 	}
 
 	// 2. Dùng provider để xử lý IPN và xác thực
 	paymentUpdate, err := paymentProvider.HandleIPN(r)
+
 	if err != nil {
+		log.Printf("Error handling IPN for provider %s: %v", provider, err)
 		return fmt.Errorf("failed to handle IPN: %w", err)
 	}
 
@@ -138,6 +150,7 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 		ProviderTransactionID: converter.StringToPgText(paymentUpdate.ProviderTransactionID),
 	}
 	_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updateParams)
+
 	if err != nil {
 		return fmt.Errorf("failed to update payment status for order %s: %w", originalPayment.OrderID, err)
 	}
@@ -145,10 +158,8 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 	// 6. TODO: Gửi sự kiện hoặc gọi gRPC tới Order Service để cập nhật trạng thái đơn hàng
 	if paymentUpdate.Status == constant.PaymentStatusSuccess {
 		log.Printf("Payment for OrderID %s succeeded. Notifying Order Service...", originalPayment.OrderID)
-		// uc.orderClient.UpdateOrderStatus(...)
 	} else {
 		log.Printf("Payment for OrderID %s failed. Notifying Order Service...", originalPayment.OrderID)
-		// uc.orderClient.UpdateOrderStatus(...)
 	}
 
 	return nil

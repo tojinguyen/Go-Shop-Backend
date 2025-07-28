@@ -45,8 +45,10 @@ type RedisConfig struct {
 }
 
 type AppConfig struct {
-	Name        string `mapstructure:"name"`
-	Environment string `mapstructure:"environment"`
+	Name          string `mapstructure:"name"`
+	Environment   string `mapstructure:"environment"`
+	ApiGatewayURL string `mapstructure:"api_gateway_url"`
+	FrontendURL   string `mapstructure:"frontend_url"`
 }
 
 type GrpcConfig struct {
@@ -73,8 +75,10 @@ func (a *AppConfig) IsProduction() bool {
 func Load() (*Config, error) {
 	cfg := &Config{
 		App: AppConfig{
-			Name:        getEnv("APP_NAME", "order-service"),
-			Environment: getEnv("ENVIRONMENT", "development"),
+			Name:          getEnv("APP_NAME", "order-service"),
+			Environment:   getEnv("ENVIRONMENT", "development"),
+			ApiGatewayURL: getEnv("API_GATEWAY_URL", "http://localhost:80"),
+			FrontendURL:   getEnv("FRONTEND_URL", "http://localhost:3000"),
 		},
 		Server: ServerConfig{
 			Host: getEnv("SERVER_HOST", "0.0.0.0"),
