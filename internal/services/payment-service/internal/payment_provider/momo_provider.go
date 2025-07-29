@@ -162,10 +162,21 @@ func (p *momoProvider) HandleIPN(r *http.Request) (*domain.Payment, error) {
 	// Lấy lại orderID gốc (bỏ phần unique)
 	originalOrderID := strings.Split(req.OrderID, "_")[0]
 
-	// FIX: Thêm dấu & ở đầu raw signature string cho IPN
-	rawSignature := fmt.Sprintf("&accessKey=%s&amount=%d&extraData=%s&message=%s&orderId=%s&orderInfo=%s&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%d&resultCode=%d&transId=%d",
-		p.cfg.AccessKey, req.Amount, req.ExtraData, req.Message, req.OrderID, req.OrderInfo, req.OrderType,
-		req.PartnerCode, req.PayType, req.RequestID, req.ResponseTime, req.ResultCode, req.TransID)
+	rawSignature := fmt.Sprintf("accessKey=%s&amount=%d&extraData=%s&message=%s&orderId=%s&orderInfo=%s&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%d&resultCode=%d&transId=%d",
+		p.cfg.AccessKey,
+		req.Amount,
+		req.ExtraData,
+		req.Message,
+		req.OrderID,
+		req.OrderInfo,
+		req.OrderType,
+		req.PartnerCode,
+		req.PayType,
+		req.RequestID,
+		req.ResponseTime,
+		req.ResultCode,
+		req.TransID,
+	)
 
 	log.Printf("[MOMO IPN] Raw Signature for verification: %s", rawSignature)
 
