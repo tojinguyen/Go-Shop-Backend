@@ -103,20 +103,13 @@ func (p *momoProvider) CreatePayment(ctx context.Context, data PaymentData) (*Cr
 		req.RequestID,
 		req.RequestType,
 	)
-
-	// Debug log để kiểm tra raw signature
-	log.Printf("[MOMO DEBUG] Raw Signature String: %s", rawSignature)
-
 	req.Signature = p.generateSignature(rawSignature)
-	log.Printf("[MOMO DEBUG] Generated Signature: %s", req.Signature)
 
 	reqBody, err := json.Marshal(req)
 	if err != nil {
 		log.Printf("Error marshalling MoMo request: %v", err)
 		return nil, fmt.Errorf("failed to marshal MoMo request: %w", err)
 	}
-
-	log.Printf("[MOMO DEBUG] Request Payload: %s", string(reqBody))
 
 	httpRequest, err := http.NewRequestWithContext(ctx, "POST", p.cfg.ApiEndpoint, bytes.NewBuffer(reqBody))
 	if err != nil {
@@ -132,8 +125,6 @@ func (p *momoProvider) CreatePayment(ctx context.Context, data PaymentData) (*Cr
 		return nil, fmt.Errorf("failed to send request to MoMo: %w", err)
 	}
 	defer resp.Body.Close()
-
-	log.Printf("[MOMO DEBUG] MoMo Response Status: %d", resp.StatusCode)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -154,8 +145,6 @@ func (p *momoProvider) CreatePayment(ctx context.Context, data PaymentData) (*Cr
 		return nil, fmt.Errorf("momo returned an error: %s (code: %d)", momoResp.Message, momoResp.ResultCode)
 	}
 
-	log.Printf("[MOMO DEBUG] Payment created successfully. PayURL: %s", momoResp.PayURL)
-
 	return &CreatePaymentResult{
 		PayURL: momoResp.PayURL,
 	}, nil
@@ -173,10 +162,21 @@ func (p *momoProvider) HandleIPN(r *http.Request) (*domain.Payment, error) {
 	// Lấy lại orderID gốc (bỏ phần unique)
 	originalOrderID := strings.Split(req.OrderID, "_")[0]
 
-	// FIX: Thêm dấu & ở đầu raw signature string cho IPN
-	rawSignature := fmt.Sprintf("&accessKey=%s&amount=%d&extraData=%s&message=%s&orderId=%s&orderInfo=%s&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%d&resultCode=%d&transId=%d",
-		p.cfg.AccessKey, req.Amount, req.ExtraData, req.Message, req.OrderID, req.OrderInfo, req.OrderType,
-		req.PartnerCode, req.PayType, req.RequestID, req.ResponseTime, req.ResultCode, req.TransID)
+	rawSignature := fmt.Sprintf("accessKey=%s&amount=%d&extraData=%s&message=%s&orderId=%s&orderInfo=%s&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%d&resultCode=%d&transId=%d",
+		p.cfg.AccessKey,
+		req.Amount,
+		req.ExtraData,
+		req.Message,
+		req.OrderID,
+		req.OrderInfo,
+		req.OrderType,
+		req.PartnerCode,
+		req.PayType,
+		req.RequestID,
+		req.ResponseTime,
+		req.ResultCode,
+		req.TransID,
+	)
 
 	log.Printf("[MOMO IPN] Raw Signature for verification: %s", rawSignature)
 

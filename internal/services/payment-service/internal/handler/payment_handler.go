@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	common_constant "github.com/toji-dev/go-shop/internal/pkg/constant"
@@ -45,18 +46,18 @@ func (h *paymentHandler) InitiatePayment(c *gin.Context) {
 func (h *paymentHandler) HandleIPN(c *gin.Context) {
 	providerName := c.Param("provider")
 	if providerName == "" {
-		c.Status(400)
+		response.BadRequest(c, "INVALID_PROVIDER", "Provider name is required", "")
 		return
 	}
 
 	// Chuyển đổi tên provider sang enum
-	provider := constant.PaymentProviderMethod(providerName)
+	provider := constant.PaymentProviderMethod(strings.ToUpper(providerName))
 
 	err := h.paymentUseCase.HandleIPN(c.Request.Context(), provider, c.Request)
 	if err != nil {
 		log.Printf("Error handling IPN for %s: %v", providerName, err)
-		c.Status(500)
+		response.InternalServerError(c, "IPN_HANDLING_FAILED", err.Error())
 		return
 	}
-	c.Status(204)
+	response.NoContent(c)
 }

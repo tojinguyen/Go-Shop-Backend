@@ -112,6 +112,7 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 }
 
 func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.PaymentProviderMethod, r *http.Request) error {
+	log.Printf("Handling IPN for provider: %s", provider)
 	// 1. Lấy provider từ factory
 	paymentProvider, err := uc.providerFactory.GetProvider(provider)
 	if err != nil {
@@ -119,6 +120,7 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 		return err
 	}
 
+	log.Printf("Using provider: %s for IPN handling", paymentProvider.GetName())
 	// 2. Dùng provider để xử lý IPN và xác thực
 	paymentUpdate, err := paymentProvider.HandleIPN(r)
 
