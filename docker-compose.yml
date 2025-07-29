@@ -17,6 +17,7 @@ services:
       - shop-service
       - cart-service
       - order-service
+      - payment-service
     networks:
       - go-shop-network
     restart: unless-stopped
@@ -254,6 +255,46 @@ services:
       retries: 5
       start_period: 20s
 
+############## Payment Service Section ##############
+  payment-service:
+    build:
+      context: .
+      dockerfile: ./internal/services/payment-service/Dockerfile
+    container_name: ${PROJECT_NAME:-go-shop}-payment-service
+    ports:
+      - "${PAYMENT_SERVICE_PORT:-8085}:8085"
+    env_file:
+      - .env
+    depends_on:
+      postgres-payment-service:
+        condition: service_healthy
+      order-service:
+        condition: service_started
+    networks:
+      - go-shop-network
+    restart: unless-stopped
+
+  postgres-payment-service:
+    image: postgres:15
+    container_name: postgres-payment-service
+    ports:
+      - "${PAYMENT_SERVICE_DB_PORT:-6005}:5432"
+    environment:
+      POSTGRES_USER: ${PAYMENT_SERVICE_DB_USER}
+      POSTGRES_PASSWORD: ${PAYMENT_SERVICE_DB_PASSWORD}
+      POSTGRES_DB: ${PAYMENT_SERVICE_DB_NAME}
+    volumes:
+      - payment_postgres_data:/var/lib/postgresql/data
+    networks:
+      - go-shop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
 ############## Monitoring Service Section ##############
   prometheus:
     image: prom/prometheus:v2.47.2
@@ -324,6 +365,8 @@ services:
     restart: unless-stopped
 
 volumes:
+  payment_postgres_data:
+  order_postgres_data:
   cart_postgres_data:
   product_postgres_data:
   shop_postgres_data:

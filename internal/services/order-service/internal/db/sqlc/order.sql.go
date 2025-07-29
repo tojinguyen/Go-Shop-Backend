@@ -77,8 +77,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at FROM orders
-WHERE id = $1
+SELECT id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at FROM orders WHERE id = $1
 `
 
 func (q *Queries) GetOrderByID(ctx context.Context, id pgtype.UUID) (Order, error) {
@@ -101,20 +100,103 @@ func (q *Queries) GetOrderByID(ctx context.Context, id pgtype.UUID) (Order, erro
 	return i, err
 }
 
-const getOrdersByUserID = `-- name: GetOrdersByUserID :many
-SELECT id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at FROM orders
-WHERE owner_id = $1
+const getOrderByIDWithItems = `-- name: GetOrderByIDWithItems :one
+SELECT
+  o.id, o.owner_id, o.shop_id, o.shipping_address_id, o.promotion_id, o.shipping_fee, o.discount_amount, o.total_amount, o.final_amount, o.order_status, o.created_at, o.updated_at,
+  COALESCE(
+    (SELECT json_agg(oi.*)
+     FROM order_items oi
+     WHERE oi.order_id = o.id),
+    '[]'::json
+  ) as items
+FROM orders o
+WHERE o.id = $1
 `
 
-func (q *Queries) GetOrdersByUserID(ctx context.Context, ownerID pgtype.UUID) ([]Order, error) {
-	rows, err := q.db.Query(ctx, getOrdersByUserID, ownerID)
+type GetOrderByIDWithItemsRow struct {
+	ID                pgtype.UUID        `json:"id"`
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	ShopID            pgtype.UUID        `json:"shop_id"`
+	ShippingAddressID pgtype.UUID        `json:"shipping_address_id"`
+	PromotionID       pgtype.UUID        `json:"promotion_id"`
+	ShippingFee       pgtype.Numeric     `json:"shipping_fee"`
+	DiscountAmount    pgtype.Numeric     `json:"discount_amount"`
+	TotalAmount       pgtype.Numeric     `json:"total_amount"`
+	FinalAmount       pgtype.Numeric     `json:"final_amount"`
+	OrderStatus       OrderStatus        `json:"order_status"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	Items             interface{}        `json:"items"`
+}
+
+func (q *Queries) GetOrderByIDWithItems(ctx context.Context, id pgtype.UUID) (GetOrderByIDWithItemsRow, error) {
+	row := q.db.QueryRow(ctx, getOrderByIDWithItems, id)
+	var i GetOrderByIDWithItemsRow
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ShopID,
+		&i.ShippingAddressID,
+		&i.PromotionID,
+		&i.ShippingFee,
+		&i.DiscountAmount,
+		&i.TotalAmount,
+		&i.FinalAmount,
+		&i.OrderStatus,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Items,
+	)
+	return i, err
+}
+
+const getOrdersByUserIDWithItems = `-- name: GetOrdersByUserIDWithItems :many
+SELECT
+  o.id, o.owner_id, o.shop_id, o.shipping_address_id, o.promotion_id, o.shipping_fee, o.discount_amount, o.total_amount, o.final_amount, o.order_status, o.created_at, o.updated_at,
+  COALESCE(
+    (SELECT json_agg(oi.*)
+     FROM order_items oi
+     WHERE oi.order_id = o.id),
+    '[]'::json
+  ) as items
+FROM orders o
+WHERE o.owner_id = $1
+ORDER BY o.created_at DESC -- Sắp xếp theo đơn hàng mới nhất
+LIMIT $2 -- Giới hạn số lượng đơn hàng trên mỗi trang
+OFFSET $3
+`
+
+type GetOrdersByUserIDWithItemsParams struct {
+	OwnerID pgtype.UUID `json:"owner_id"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
+}
+
+type GetOrdersByUserIDWithItemsRow struct {
+	ID                pgtype.UUID        `json:"id"`
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	ShopID            pgtype.UUID        `json:"shop_id"`
+	ShippingAddressID pgtype.UUID        `json:"shipping_address_id"`
+	PromotionID       pgtype.UUID        `json:"promotion_id"`
+	ShippingFee       pgtype.Numeric     `json:"shipping_fee"`
+	DiscountAmount    pgtype.Numeric     `json:"discount_amount"`
+	TotalAmount       pgtype.Numeric     `json:"total_amount"`
+	FinalAmount       pgtype.Numeric     `json:"final_amount"`
+	OrderStatus       OrderStatus        `json:"order_status"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	Items             interface{}        `json:"items"`
+}
+
+func (q *Queries) GetOrdersByUserIDWithItems(ctx context.Context, arg GetOrdersByUserIDWithItemsParams) ([]GetOrdersByUserIDWithItemsRow, error) {
+	rows, err := q.db.Query(ctx, getOrdersByUserIDWithItems, arg.OwnerID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Order{}
+	items := []GetOrdersByUserIDWithItemsRow{}
 	for rows.Next() {
-		var i Order
+		var i GetOrdersByUserIDWithItemsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OwnerID,
@@ -128,6 +210,7 @@ func (q *Queries) GetOrdersByUserID(ctx context.Context, ownerID pgtype.UUID) ([
 			&i.OrderStatus,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Items,
 		); err != nil {
 			return nil, err
 		}
@@ -185,6 +268,7 @@ func (q *Queries) GetStaleOrders(ctx context.Context, arg GetStaleOrdersParams) 
 }
 
 const updateOrderStatus = `-- name: UpdateOrderStatus :one
+
 UPDATE orders
 SET order_status = $2, updated_at = NOW()
 WHERE id = $1
@@ -196,6 +280,7 @@ type UpdateOrderStatusParams struct {
 	OrderStatus OrderStatus `json:"order_status"`
 }
 
+// Bỏ qua bao nhiêu đơn hàng (để qua trang mới)
 func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (Order, error) {
 	row := q.db.QueryRow(ctx, updateOrderStatus, arg.ID, arg.OrderStatus)
 	var i Order

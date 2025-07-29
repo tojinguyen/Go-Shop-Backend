@@ -8,15 +8,12 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	App      AppConfig      `mapstructure:"app"`
-
-	ShopServiceAdapter    ExternalServiceConfig `mapstructure:"shop_service_adapter"`
-	ProductServiceAdapter ExternalServiceConfig `mapstructure:"product_service_adapter"`
-	UserServiceAdapter    ExternalServiceConfig `mapstructure:"user_service_adapter"`
-	GRPC                  GrpcConfig            `mapstructure:"grpc"`
+	Server          ServerConfig   `mapstructure:"server"`
+	Database        DatabaseConfig `mapstructure:"database"`
+	Redis           RedisConfig    `mapstructure:"redis"`
+	App             AppConfig      `mapstructure:"app"`
+	Momo            MomoConfig     `mapstructure:"momo"`
+	OrderGrpcConfig GrpcConfig     `mapstructure:"order_grpc"`
 }
 
 type ServerConfig struct {
@@ -48,18 +45,27 @@ type RedisConfig struct {
 }
 
 type AppConfig struct {
-	Name        string `mapstructure:"name"`
-	Environment string `mapstructure:"environment"`
+	Name          string `mapstructure:"name"`
+	Environment   string `mapstructure:"environment"`
+	ApiGatewayURL string `mapstructure:"api_gateway_url"`
+	FrontendURL   string `mapstructure:"frontend_url"`
 }
 
 type GrpcConfig struct {
-	ServiceHost string `mapstructure:"service_host"`
-	ServicePort int    `mapstructure:"service_port"`
+	OrderServiceHost string `mapstructure:"order_service_host"`
+	OrderServicePort int    `mapstructure:"order_service_port"`
 }
 
 type ExternalServiceConfig struct {
 	Host string `mapstructure:"host"`
 	Port string `mapstructure:"port"`
+}
+
+type MomoConfig struct {
+	PartnerCode string `mapstructure:"partner_code"`
+	AccessKey   string `mapstructure:"access_key"`
+	SecretKey   string `mapstructure:"secret_key"`
+	ApiEndpoint string `mapstructure:"api_endpoint"`
 }
 
 func (a *AppConfig) IsProduction() bool {
@@ -69,19 +75,21 @@ func (a *AppConfig) IsProduction() bool {
 func Load() (*Config, error) {
 	cfg := &Config{
 		App: AppConfig{
-			Name:        getEnv("APP_NAME", "order-service"),
-			Environment: getEnv("ENVIRONMENT", "development"),
+			Name:          getEnv("APP_NAME", "order-service"),
+			Environment:   getEnv("ENVIRONMENT", "development"),
+			ApiGatewayURL: getEnv("API_GATEWAY_URL", "http://localhost:80"),
+			FrontendURL:   getEnv("FRONTEND_URL", "http://localhost:3000"),
 		},
 		Server: ServerConfig{
 			Host: getEnv("SERVER_HOST", "0.0.0.0"),
-			Port: getEnv("ORDER_SERVICE_PORT", "8084"),
+			Port: getEnv("PAYMENT_SERVICE_PORT", "8085"),
 		},
 		Database: DatabaseConfig{
-			Host:         getEnv("ORDER_SERVICE_DB_HOST", "localhost"),
-			Port:         getEnv("ORDER_SERVICE_POSTGRES_PORT_INTERNAL", "5432"),
-			User:         getEnv("ORDER_SERVICE_DB_USER", "postgres"),
-			Password:     getEnv("ORDER_SERVICE_DB_PASSWORD", "toai20102002"),
-			DBName:       getEnv("ORDER_SERVICE_DB_NAME", "order_service_go_shop_db"),
+			Host:         getEnv("PAYMENT_SERVICE_DB_HOST", "localhost"),
+			Port:         getEnv("PAYMENT_SERVICE_POSTGRES_PORT_INTERNAL", "5432"),
+			User:         getEnv("PAYMENT_SERVICE_DB_USER", "postgres"),
+			Password:     getEnv("PAYMENT_SERVICE_DB_PASSWORD", "toai20102002"),
+			DBName:       getEnv("PAYMENT_SERVICE_DB_NAME", "payment_service_go_shop_db"),
 			SSLMode:      getEnv("DATABASE_SSLMODE", "disable"),
 			MaxOpenConns: getIntEnv("DATABASE_MAX_OPEN_CONNS", 10),
 			MaxIdleConns: getIntEnv("DATABASE_MAX_IDLE_CONNS", 5),
@@ -93,21 +101,15 @@ func Load() (*Config, error) {
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       getIntEnv("REDIS_DB", 1),
 		},
-		ShopServiceAdapter: ExternalServiceConfig{
-			Host: getEnv("SHOP_SERVICE_GRPC_HOST", "localhost"),
-			Port: getEnv("SHOP_SERVICE_GRPC_PORT", "8081"),
+		Momo: MomoConfig{
+			PartnerCode: getEnv("MOMO_PARTNER_CODE", ""),
+			AccessKey:   getEnv("MOMO_ACCESS_KEY", ""),
+			SecretKey:   getEnv("MOMO_SECRET_KEY", ""),
+			ApiEndpoint: getEnv("MOMO_API_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/create"),
 		},
-		ProductServiceAdapter: ExternalServiceConfig{
-			Host: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
-			Port: getEnv("PRODUCT_SERVICE_GRPC_PORT", "8082"),
-		},
-		UserServiceAdapter: ExternalServiceConfig{
-			Host: getEnv("USER_SERVICE_GRPC_HOST", "localhost"),
-			Port: getEnv("USER_SERVICE_GRPC_PORT", "8084"),
-		},
-		GRPC: GrpcConfig{
-			ServiceHost: getEnv("ORDER_SERVICE_GRPC_HOST", "localhost"),
-			ServicePort: getIntEnv("ORDER_SERVICE_GRPC_PORT", 50052),
+		OrderGrpcConfig: GrpcConfig{
+			OrderServiceHost: getEnv("ORDER_SERVICE_GRPC_HOST", "localhost"),
+			OrderServicePort: getIntEnv("ORDER_SERVICE_GRPC_PORT", 50054),
 		},
 	}
 	return cfg, nil
