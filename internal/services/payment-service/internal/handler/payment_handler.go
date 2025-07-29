@@ -46,7 +46,7 @@ func (h *paymentHandler) InitiatePayment(c *gin.Context) {
 func (h *paymentHandler) HandleIPN(c *gin.Context) {
 	providerName := c.Param("provider")
 	if providerName == "" {
-		c.Status(400)
+		response.BadRequest(c, "INVALID_PROVIDER", "Provider name is required", "")
 		return
 	}
 
@@ -56,8 +56,8 @@ func (h *paymentHandler) HandleIPN(c *gin.Context) {
 	err := h.paymentUseCase.HandleIPN(c.Request.Context(), provider, c.Request)
 	if err != nil {
 		log.Printf("Error handling IPN for %s: %v", providerName, err)
-		c.Status(500)
+		response.InternalServerError(c, "IPN_HANDLING_FAILED", err.Error())
 		return
 	}
-	c.Status(204)
+	response.NoContent(c)
 }

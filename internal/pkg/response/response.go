@@ -58,6 +58,11 @@ func Created(c *gin.Context, message string, data interface{}) {
 	})
 }
 
+// NoContent sends a 204 No Content response
+func NoContent(c *gin.Context) {
+	c.Status(http.StatusNoContent)
+}
+
 // BadRequest sends a 400 Bad Request response
 func BadRequest(c *gin.Context, code, message, details string) {
 	c.JSON(http.StatusBadRequest, APIResponse{
