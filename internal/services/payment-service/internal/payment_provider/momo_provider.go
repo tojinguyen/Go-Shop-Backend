@@ -91,8 +91,7 @@ func (p *momoProvider) CreatePayment(ctx context.Context, data PaymentData) (*Cr
 		Lang:        "vi",
 	}
 
-	// FIX: Thêm dấu & ở đầu raw signature string theo yêu cầu của MoMo API
-	rawSignature := fmt.Sprintf("&accessKey=%s&amount=%d&extraData=%s&ipnUrl=%s&orderId=%s&orderInfo=%s&partnerCode=%s&redirectUrl=%s&requestId=%s&requestType=%s",
+	rawSignature := fmt.Sprintf("accessKey=%s&amount=%d&extraData=%s&ipnUrl=%s&orderId=%s&orderInfo=%s&partnerCode=%s&redirectUrl=%s&requestId=%s&requestType=%s",
 		p.cfg.AccessKey,
 		req.Amount,
 		req.ExtraData,
