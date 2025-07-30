@@ -11,6 +11,7 @@ import (
 
 type OrderServiceAdapter interface {
 	GetOrderInfo(ctx context.Context, req *order_v1.GetOrderRequest) (*order_v1.GetOrderResponse, error)
+	UpdateOrderStatus(ctx context.Context, req *order_v1.UpdateOrderStatusRequest) (*order_v1.UpdateOrderStatusResponse, error)
 	Close() error
 }
 
@@ -39,6 +40,10 @@ func NewGrpcOrderAdapter(orderServiceAddr string) (OrderServiceAdapter, error) {
 
 func (a *grpcOrderAdapter) GetOrderInfo(ctx context.Context, req *order_v1.GetOrderRequest) (*order_v1.GetOrderResponse, error) {
 	return a.client.GetOrder(ctx, req)
+}
+
+func (a *grpcOrderAdapter) UpdateOrderStatus(ctx context.Context, req *order_v1.UpdateOrderStatusRequest) (*order_v1.UpdateOrderStatusResponse, error) {
+	return a.client.UpdateOrderStatus(ctx, req)
 }
 
 func (a *grpcOrderAdapter) Close() error {

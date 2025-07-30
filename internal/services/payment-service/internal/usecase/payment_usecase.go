@@ -157,11 +157,17 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 		return fmt.Errorf("failed to update payment status for order %s: %w", originalPayment.OrderID, err)
 	}
 
-	// 6. TODO: Gửi sự kiện hoặc gọi gRPC tới Order Service để cập nhật trạng thái đơn hàng
+	// 6. Gửi sự kiện hoặc gọi gRPC tới Order Service để cập nhật trạng thái đơn hàng
 	if paymentUpdate.Status == constant.PaymentStatusSuccess {
 		log.Printf("Payment for OrderID %s succeeded. Notifying Order Service...", originalPayment.OrderID)
+		orderUpdateReq := &order_v1.UpdateOrderStatusRequest{
+			OrderId:   originalPayment.OrderID,
+			NewStatus: "PROCESSING",
+		}
+		_, err = uc.orderAdapter.UpdateOrderStatus(ctx, orderUpdateReq)
 	} else {
 		log.Printf("Payment for OrderID %s failed. Notifying Order Service...", originalPayment.OrderID)
+		return fmt.Errorf("payment failed for order %s", originalPayment.OrderID)
 	}
 
 	return nil

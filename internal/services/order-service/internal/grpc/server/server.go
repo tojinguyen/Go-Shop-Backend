@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/repository"
 	order_v1 "github.com/toji-dev/go-shop/proto/gen/go/order/v1"
 )
@@ -42,5 +43,21 @@ func (s *Server) GetOrder(ctx context.Context, in *order_v1.GetOrderRequest) (*o
 
 	return &order_v1.GetOrderResponse{
 		Order: responseOrder,
+	}, nil
+}
+
+func (s *Server) UpdateOrderStatus(ctx context.Context, in *order_v1.UpdateOrderStatusRequest) (*order_v1.UpdateOrderStatusResponse, error) {
+	orderId := in.GetOrderId()
+	status := in.GetNewStatus()
+
+	_, err := s.orderRepo.UpdateOrderStatus(ctx, orderId, sqlc.OrderStatus(status))
+	if err != nil {
+		log.Printf("Error updating order status for ID %s: %v", orderId, err)
+		return nil, err
+	}
+
+	return &order_v1.UpdateOrderStatusResponse{
+		Success: true,
+		Message: "Order status updated successfully",
 	}, nil
 }
