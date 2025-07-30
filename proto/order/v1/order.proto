@@ -6,6 +6,7 @@ option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/order/v1;ord
 
 service OrderService {
     rpc GetOrder(GetOrderRequest) returns (GetOrderResponse) {}
+    rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse) {}
 }
 
 message GetOrderRequest {
@@ -28,4 +29,14 @@ message Order {
     string order_status = 8;
     string created_at = 9;
     string updated_at = 10;
+}
+
+message UpdateOrderStatusRequest {
+    string order_id = 1;
+    string new_status = 2;
+}
+
+message UpdateOrderStatusResponse {
+    bool success = 1;
+    string message = 2;
 }
