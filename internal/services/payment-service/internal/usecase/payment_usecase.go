@@ -162,11 +162,18 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 		log.Printf("Payment for OrderID %s succeeded. Notifying Order Service...", originalPayment.OrderID)
 		orderUpdateReq := &order_v1.UpdateOrderStatusRequest{
 			OrderId:   originalPayment.OrderID,
-			NewStatus: "PROCESSING",
+			NewStatus: order_v1.OrderStatus_ORDER_STATUS_PROCESSING,
 		}
 		_, err = uc.orderAdapter.UpdateOrderStatus(ctx, orderUpdateReq)
 	} else {
 		log.Printf("Payment for OrderID %s failed. Notifying Order Service...", originalPayment.OrderID)
+
+		orderUpdateReq := &order_v1.UpdateOrderStatusRequest{
+			OrderId:   originalPayment.OrderID,
+			NewStatus: order_v1.OrderStatus_ORDER_STATUS_PAYMENT_FAILED,
+		}
+		_, _ = uc.orderAdapter.UpdateOrderStatus(ctx, orderUpdateReq) // Có thể bỏ qua lỗi ở đây
+
 		return fmt.Errorf("payment failed for order %s", originalPayment.OrderID)
 	}
 

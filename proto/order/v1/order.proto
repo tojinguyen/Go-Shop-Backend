@@ -4,6 +4,19 @@ package goshop.order.v1;
 
 option go_package = "github.com/toji-dev/go-shop/proto/gen/go/proto/order/v1;order_v1";
 
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0; // Giá trị mặc định, không nên sử dụng
+  ORDER_STATUS_PENDING = 1;
+  ORDER_STATUS_PENDING_PAYMENT = 2;
+  ORDER_STATUS_PAYMENT_FAILED = 3;
+  ORDER_STATUS_PROCESSING = 4;
+  ORDER_STATUS_SHIPPED = 5;
+  ORDER_STATUS_DELIVERING = 6;
+  ORDER_STATUS_DELIVERED = 7;
+  ORDER_STATUS_CANCELED = 8;
+  ORDER_STATUS_FAILED = 9;
+}
+
 service OrderService {
     rpc GetOrder(GetOrderRequest) returns (GetOrderResponse) {}
     rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse) {}
@@ -26,14 +39,14 @@ message Order {
     float discount_amount = 5;
     float total_amount = 6;
     float final_amount = 7;
-    string order_status = 8;
+    OrderStatus order_status = 8;
     string created_at = 9;
     string updated_at = 10;
 }
 
 message UpdateOrderStatusRequest {
     string order_id = 1;
-    string new_status = 2;
+    OrderStatus new_status = 2;
 }
 
 message UpdateOrderStatusResponse {
