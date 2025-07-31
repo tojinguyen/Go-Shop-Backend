@@ -90,5 +90,6 @@ message GetOrderReservationStatusResponse {
 
     string order_id = 1;
     string shop_id = 2;
-    string status = 3; // "RESERVED", "UNRESERVED", "CANCELLED"
+    string status = 3; // "RESERVED", "UNRESERVED", "CANCELLED", or "NOTFOUND"
+
 }
