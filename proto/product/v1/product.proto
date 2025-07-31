@@ -85,11 +85,10 @@ message GetOrderReservationStatusResponse {
         RESERVED = 0;   // Order is reserved
         COMMITTED = 1; // Order is committed
         CANCELLED = 2;  // Order is cancelled
-        NOTFOUND = 3; // Order not found
     }
 
     string order_id = 1;
     string shop_id = 2;
     string status = 3; // "RESERVED", "UNRESERVED", "CANCELLED", or "NOTFOUND"
-
+    bool founded = 4; // true if the order was found, false otherwise
 }

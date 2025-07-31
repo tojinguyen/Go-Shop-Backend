@@ -6,6 +6,7 @@ import (
 	"time"
 
 	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/adapter"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/repository"
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
@@ -63,17 +64,24 @@ func (r *OrderReconciler) ReconcilePendingOrders() {
 		log.Printf("[OrderReconciler] Order ID: %s, Status: %s", order.ID, orderReservationStatus.Status)
 
 		// Xử lý trạng thái đặt hàng
-		status := orderReservationStatus.GetStatus()
 
-		switch status {
+		if !orderReservationStatus.Founded {
+			log.Printf("[OrderReconciler] Order ID: %s not found. Updating status to CANCELLED.", order.ID)
+			// Update the order status to CANCELLED
+			_, err := r.orderRepo.UpdateOrderStatus(ctx, order.ID, sqlc.OrderStatusCANCELED)
+			if err != nil {
+				log.Printf("[OrderReconciler] Error updating order status: %v", err)
+			}
+			continue
+		}
+
+		switch orderReservationStatus.GetStatus() {
 		case product_v1.GetOrderReservationStatusResponse_COMMITTED.String():
-			log.Printf("[OrderReconciler] Order ID: %s is still reserved. No action needed.", order.ID)
-		case product_v1.GetOrderReservationStatusResponse_NOTFOUND.String():
-			log.Printf("[OrderReconciler] Order ID: %s is unreserved. Updating status to CANCELLED.", order.ID)
+			log.Printf("[OrderReconciler] Order ID: %s is committed. No action needed.", order.ID)
 		case product_v1.GetOrderReservationStatusResponse_CANCELLED.String():
 			log.Printf("[OrderReconciler] Order ID: %s is cancelled. No action needed.", order.ID)
 		case product_v1.GetOrderReservationStatusResponse_RESERVED.String():
-			log.Printf("[OrderReconciler] Order ID: %s not found. Updating status to CANCELLED.", order.ID)
+			log.Printf("[OrderReconciler] Order ID: %s is still reserved. No action needed.", order.ID)
 		default:
 			log.Printf("[OrderReconciler] Unknown status for order ID: %s. No action taken.", order.ID)
 			continue
