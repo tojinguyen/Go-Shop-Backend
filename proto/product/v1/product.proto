@@ -84,7 +84,6 @@ message GetOrderReservationStatusResponse {
     enum ReservationStatus {
         RESERVED = 0;   // Order is reserved
         UNRESERVED = 1; // Order is committed
-        PAID = 2;  // Order is cancelled
     }
 
     string order_id = 1;

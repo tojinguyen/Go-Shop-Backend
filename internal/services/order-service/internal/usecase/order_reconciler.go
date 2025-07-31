@@ -76,12 +76,16 @@ func (r *OrderReconciler) ReconcilePendingOrders() {
 		}
 
 		switch orderReservationStatus.GetStatus() {
-		case product_v1.GetOrderReservationStatusResponse_PAID.String():
-			log.Printf("[OrderReconciler] Order ID: %s is paid. No action needed.", order.ID)
 		case product_v1.GetOrderReservationStatusResponse_UNRESERVED.String():
 			log.Printf("[OrderReconciler] Order ID: %s is unreserved. No action needed.", order.ID)
+			// Update the order status to CANCELED
+			_, err := r.orderRepo.UpdateOrderStatus(ctx, order.ID, sqlc.OrderStatusCANCELED)
+			if err != nil {
+				log.Printf("[OrderReconciler] Error updating order status to UNRESERVED: %v", err)
+			}
 		case product_v1.GetOrderReservationStatusResponse_RESERVED.String():
 			log.Printf("[OrderReconciler] Order ID: %s is still reserved. No action needed.", order.ID)
+			// TODO: Call grpc to unreserve products
 		default:
 			log.Printf("[OrderReconciler] Unknown status for order ID: %s. No action taken.", order.ID)
 			continue

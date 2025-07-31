@@ -3,7 +3,6 @@
 CREATE TYPE reservation_status AS ENUM (
     'RESERVED',   -- Hàng đã được đặt trước, đang chờ thanh toán
     'UNRESERVED', -- Đơn hàng đã được hoàn lại hàng vào kho 
-    'PAID'       -- Đơn hàng đã thanh toán, hàng đã được giao
 );
 
 CREATE TABLE order_reservations (
