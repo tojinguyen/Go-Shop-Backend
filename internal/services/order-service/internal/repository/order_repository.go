@@ -16,7 +16,7 @@ import (
 
 type OrderRepository interface {
 	CreateOrder(ctx *gin.Context, order *domain.Order) (*domain.Order, error)
-	UpdateOrderStatus(ctx *gin.Context, orderID string, status sqlc.OrderStatus) (*domain.Order, error)
+	UpdateOrderStatus(ctx context.Context, orderID string, status sqlc.OrderStatus) (*domain.Order, error)
 	GetStaleOrders(ctx context.Context, olderThan time.Time, limit int) ([]*domain.Order, error)
 	GetOrderByID(ctx context.Context, orderID string) (*domain.Order, error)
 }
@@ -97,7 +97,7 @@ func (r *orderRepository) CreateOrder(ctx *gin.Context, order *domain.Order) (*d
 	return finalOrder, nil
 }
 
-func (r *orderRepository) UpdateOrderStatus(ctx *gin.Context, orderID string, status sqlc.OrderStatus) (*domain.Order, error) {
+func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderID string, status sqlc.OrderStatus) (*domain.Order, error) {
 	updatedOrder, err := r.queries.UpdateOrderStatus(ctx, sqlc.UpdateOrderStatusParams{
 		ID:          converter.StringToPgUUID(orderID),
 		OrderStatus: status,
@@ -134,27 +134,6 @@ func (r *orderRepository) GetStaleOrders(ctx context.Context, olderThan time.Tim
 	return domainOrders, nil
 }
 
-func toDomainOrder(dbOrder *sqlc.Order) *domain.Order {
-	if dbOrder == nil {
-		return nil
-	}
-
-	promotionCode := converter.PgUUIDToString(dbOrder.PromotionID)
-
-	return &domain.Order{
-		ID:                converter.PgUUIDToString(dbOrder.ID),
-		OwnerID:           converter.PgUUIDToString(dbOrder.OwnerID),
-		ShopID:            converter.PgUUIDToString(dbOrder.ShopID),
-		ShippingAddressID: converter.PgUUIDToString(dbOrder.ShippingAddressID),
-		PromotionCode:     &promotionCode,
-		ShippingFee:       converter.PgNumericToFloat64(dbOrder.ShippingFee),
-		DiscountAmount:    converter.PgNumericToFloat64(dbOrder.DiscountAmount),
-		TotalAmount:       converter.PgNumericToFloat64(dbOrder.TotalAmount),
-		FinalPrice:        converter.PgNumericToFloat64(dbOrder.FinalAmount),
-		Status:            domain.OrderStatus(dbOrder.OrderStatus),
-	}
-}
-
 func (r *orderRepository) GetOrderByID(ctx context.Context, orderID string) (*domain.Order, error) {
 	order, err := r.queries.GetOrderByID(ctx, converter.StringToPgUUID(orderID))
 	if err != nil {
@@ -176,5 +155,26 @@ func toDomainOrderItem(dbItem *sqlc.OrderItem) domain.OrderItem {
 		ProductID: converter.PgUUIDToString(dbItem.ProductID),
 		Quantity:  int(dbItem.Quantity),
 		Price:     converter.PgNumericToFloat64(dbItem.Price),
+	}
+}
+
+func toDomainOrder(dbOrder *sqlc.Order) *domain.Order {
+	if dbOrder == nil {
+		return nil
+	}
+
+	promotionCode := converter.PgUUIDToString(dbOrder.PromotionID)
+
+	return &domain.Order{
+		ID:                converter.PgUUIDToString(dbOrder.ID),
+		OwnerID:           converter.PgUUIDToString(dbOrder.OwnerID),
+		ShopID:            converter.PgUUIDToString(dbOrder.ShopID),
+		ShippingAddressID: converter.PgUUIDToString(dbOrder.ShippingAddressID),
+		PromotionCode:     &promotionCode,
+		ShippingFee:       converter.PgNumericToFloat64(dbOrder.ShippingFee),
+		DiscountAmount:    converter.PgNumericToFloat64(dbOrder.DiscountAmount),
+		TotalAmount:       converter.PgNumericToFloat64(dbOrder.TotalAmount),
+		FinalPrice:        converter.PgNumericToFloat64(dbOrder.FinalAmount),
+		Status:            domain.OrderStatus(dbOrder.OrderStatus),
 	}
 }
