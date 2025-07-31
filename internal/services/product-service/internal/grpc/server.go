@@ -103,3 +103,20 @@ func (s *Server) UnreserveProducts(ctx context.Context, req *product_v1.Unreserv
 	log.Println("[ProductService] UnreserveProducts called, but not implemented yet.")
 	return nil, nil
 }
+
+func (s *Server) GetOrderReservationStatus(ctx context.Context, req *product_v1.GetOrderReservationStatusRequest) (*product_v1.GetOrderReservationStatusResponse, error) {
+	log.Printf("[ProductService] GetOrderReservationStatus called for order ID: %s", req.OrderId)
+	status, err := s.productRepo.GetReservationStatusOfOrder(ctx, req.OrderId)
+	if err != nil {
+		log.Printf("Error getting order reservation status: %v", err)
+		return nil, err
+	}
+
+	if status == nil {
+		log.Printf("No reservation found for order ID %s", req.OrderId)
+		return nil, nil
+	}
+
+	log.Printf("Reservation status for order ID %s: %s", req.OrderId, status.Status)
+	return status, nil
+}

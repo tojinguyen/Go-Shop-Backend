@@ -3,3 +3,7 @@ SELECT EXISTS (
     SELECT 1 FROM order_reservations
     WHERE order_id = $1 AND reservation_status = 'RESERVED'
 ) AS reserved;
+
+-- name: GetReservationStatusOfOrder :one
+SELECT * FROM order_reservations
+WHERE order_id = $1;

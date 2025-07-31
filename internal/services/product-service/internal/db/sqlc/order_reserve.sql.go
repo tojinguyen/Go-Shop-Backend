@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getReservationStatusOfOrder = `-- name: GetReservationStatusOfOrder :one
+SELECT id, order_id, shop_id, reservation_status, created_at, updated_at FROM order_reservations
+WHERE order_id = $1
+`
+
+func (q *Queries) GetReservationStatusOfOrder(ctx context.Context, orderID pgtype.UUID) (OrderReservation, error) {
+	row := q.db.QueryRow(ctx, getReservationStatusOfOrder, orderID)
+	var i OrderReservation
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.ShopID,
+		&i.ReservationStatus,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const isOrderReserved = `-- name: IsOrderReserved :one
 SELECT EXISTS (
     SELECT 1 FROM order_reservations

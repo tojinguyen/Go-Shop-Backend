@@ -330,17 +330,32 @@ func (r *pgProductRepository) ReserveStock(ctx context.Context, items []*product
 	return statuses, nil
 }
 
-func (r *pgProductRepository) IsOrderReserved(ctx context.Context, orderID string) (bool, error) {
-	pgOrderID := converter.StringToPgUUID(orderID)
-
-	// Sử dụng query để kiểm tra xem đơn hàng đã được đặt trước hay chưa
-	isReserved, err := r.queries.IsOrderReserved(ctx, pgOrderID)
+func (r *pgProductRepository) GetReservationStatusOfOrder(ctx context.Context, orderID string) (*product_v1.GetOrderReservationStatusResponse, error) {
+	orderUUID, err := uuid.Parse(orderID)
 	if err != nil {
+		return nil, fmt.Errorf("invalid order ID format: %w", err)
+	}
+	pgOrderUUID := converter.UUIDToPgUUID(orderUUID)
+
+	orderReservation, err := r.queries.GetReservationStatusOfOrder(ctx, pgOrderUUID)
+	if err != nil {
+		log.Printf("Error checking order reservation status: %v", err)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return false, nil
+			log.Printf("No reservation found for order ID %s", orderID)
+			return &product_v1.GetOrderReservationStatusResponse{
+				OrderId: orderID,
+				Status:  string(product.ProductReservationStatusUnreserved),
+				Founded: false,
+			}, nil
 		}
-		return false, fmt.Errorf("failed to check order reservation: %w", err)
+
+		return nil, fmt.Errorf("failed to check order reservation status: %w", err)
 	}
 
-	return isReserved, nil
+	return &product_v1.GetOrderReservationStatusResponse{
+		OrderId: orderID,
+		ShopId:  orderReservation.ShopID.String(),
+		Status:  string(orderReservation.ReservationStatus),
+		Founded: true,
+	}, nil
 }
