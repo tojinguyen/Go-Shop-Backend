@@ -83,12 +83,12 @@ message GetOrderReservationStatusRequest {
 message GetOrderReservationStatusResponse {
     enum ReservationStatus {
         RESERVED = 0;   // Order is reserved
-        COMMITTED = 1; // Order is committed
-        CANCELLED = 2;  // Order is cancelled
+        UNRESERVED = 1; // Order is committed
+        PAID = 2;  // Order is cancelled
     }
 
     string order_id = 1;
     string shop_id = 2;
-    string status = 3; // "RESERVED", "UNRESERVED", "CANCELLED", or "NOTFOUND"
+    string status = 3; // ReservationStatus
     bool founded = 4; // true if the order was found, false otherwise
 }

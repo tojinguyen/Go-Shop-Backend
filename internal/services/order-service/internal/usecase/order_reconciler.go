@@ -76,10 +76,10 @@ func (r *OrderReconciler) ReconcilePendingOrders() {
 		}
 
 		switch orderReservationStatus.GetStatus() {
-		case product_v1.GetOrderReservationStatusResponse_COMMITTED.String():
-			log.Printf("[OrderReconciler] Order ID: %s is committed. No action needed.", order.ID)
-		case product_v1.GetOrderReservationStatusResponse_CANCELLED.String():
-			log.Printf("[OrderReconciler] Order ID: %s is cancelled. No action needed.", order.ID)
+		case product_v1.GetOrderReservationStatusResponse_PAID.String():
+			log.Printf("[OrderReconciler] Order ID: %s is paid. No action needed.", order.ID)
+		case product_v1.GetOrderReservationStatusResponse_UNRESERVED.String():
+			log.Printf("[OrderReconciler] Order ID: %s is unreserved. No action needed.", order.ID)
 		case product_v1.GetOrderReservationStatusResponse_RESERVED.String():
 			log.Printf("[OrderReconciler] Order ID: %s is still reserved. No action needed.", order.ID)
 		default:
