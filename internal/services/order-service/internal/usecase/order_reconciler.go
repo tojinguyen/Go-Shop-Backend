@@ -8,6 +8,7 @@ import (
 	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/adapter"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/repository"
+	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
 )
 
 const (
@@ -49,6 +50,33 @@ func (r *OrderReconciler) ReconcilePendingOrders() {
 
 	for _, order := range orders {
 		log.Printf("[Worker] Processing order ID: %s", order.ID)
+		orderReservationCheckingReq := &product_v1.GetOrderReservationStatusRequest{
+			OrderId: order.ID,
+		}
 
+		orderReservationStatus, err := r.productAdapter.GetOrderReservationStatus(ctx, orderReservationCheckingReq)
+		if err != nil {
+			log.Printf("[OrderReconciler] Error checking order reservation status: %v", err)
+			continue
+		}
+
+		log.Printf("[OrderReconciler] Order ID: %s, Status: %s", order.ID, orderReservationStatus.Status)
+
+		// Xử lý trạng thái đặt hàng
+		status := orderReservationStatus.GetStatus()
+
+		switch status {
+		case product_v1.GetOrderReservationStatusResponse_COMMITTED.String():
+			log.Printf("[OrderReconciler] Order ID: %s is still reserved. No action needed.", order.ID)
+		case product_v1.GetOrderReservationStatusResponse_NOTFOUND.String():
+			log.Printf("[OrderReconciler] Order ID: %s is unreserved. Updating status to CANCELLED.", order.ID)
+		case product_v1.GetOrderReservationStatusResponse_CANCELLED.String():
+			log.Printf("[OrderReconciler] Order ID: %s is cancelled. No action needed.", order.ID)
+		case product_v1.GetOrderReservationStatusResponse_RESERVED.String():
+			log.Printf("[OrderReconciler] Order ID: %s not found. Updating status to CANCELLED.", order.ID)
+		default:
+			log.Printf("[OrderReconciler] Unknown status for order ID: %s. No action taken.", order.ID)
+			continue
+		}
 	}
 }
