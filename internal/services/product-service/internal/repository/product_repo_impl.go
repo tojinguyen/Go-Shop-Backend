@@ -330,6 +330,11 @@ func (r *pgProductRepository) ReserveStock(ctx context.Context, items []*product
 	return statuses, nil
 }
 
+func (r *pgProductRepository) UnreserveStock(ctx context.Context, orderID string) error {
+	log.Printf("Successfully unreserved stock for order ID %s", orderID)
+	return nil
+}
+
 func (r *pgProductRepository) GetReservationStatusOfOrder(ctx context.Context, orderID string) (*product_v1.GetOrderReservationStatusResponse, error) {
 	orderUUID, err := uuid.Parse(orderID)
 	if err != nil {

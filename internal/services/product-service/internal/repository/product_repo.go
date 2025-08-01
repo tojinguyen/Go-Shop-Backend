@@ -16,5 +16,6 @@ type ProductRepository interface {
 	Delete(ctx context.Context, id string) error
 	GetByIDs(ctx context.Context, ids []string) ([]*product.Product, error)
 	ReserveStock(ctx context.Context, items []*product_v1.ReserveProduct) ([]*product_v1.ProductReservationStatus, error)
+	UnreserveStock(ctx context.Context, orderID string) error
 	GetReservationStatusOfOrder(ctx context.Context, orderID string) (*product_v1.GetOrderReservationStatusResponse, error)
 }
