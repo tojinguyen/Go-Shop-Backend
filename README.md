@@ -180,155 +180,40 @@ POST   /api/v1/orders/calculate-preview
 ### Payment APIs
 ```
 # Payment Processing
-POST   /api/v1/payments
-GET    /api/v1/payments/{id}
-PUT    /api/v1/payments/{id}/status
-POST   /api/v1/payments/{id}/capture
-
-# Payment Methods
-GET    /api/v1/payments/methods
-POST   /api/v1/payments/methods
-DELETE /api/v1/payments/methods/{id}
-PUT    /api/v1/payments/methods/{id}/default
+POST   /api/v1/payments/initiate
 
 # Payment Gateway Integration
-POST   /api/v1/payments/stripe/webhook
-POST   /api/v1/payments/paypal/webhook
-POST   /api/v1/payments/vnpay/webhook
-POST   /api/v1/payments/momo/webhook
-
-# Refunds & Chargebacks
-POST   /api/v1/payments/{id}/refund
-GET    /api/v1/payments/{id}/refund-status
-GET    /api/v1/payments/chargebacks
-POST   /api/v1/payments/{id}/dispute
-
-# Escrow Service
-POST   /api/v1/payments/escrow/hold
-POST   /api/v1/payments/escrow/release
-GET    /api/v1/payments/escrow/{id}/status
+POST   /api/v1/payments/ipn/:provider
 
 # Transaction History
 GET    /api/v1/payments/history
-GET    /api/v1/payments/transactions
 GET    /api/v1/payments/receipts/{id}
-```
-
-### Shipping & Delivery APIs
-```
-# Shipping Methods & Calculation
-GET    /api/v1/shipping/methods
-POST   /api/v1/shipping/calculate
-GET    /api/v1/shipping/providers
-POST   /api/v1/shipping/labels
-
-# Shipper Management
-GET    /api/v1/shipping/shippers
-POST   /api/v1/shipping/shippers/register
-GET    /api/v1/shipping/shippers/{id}
-PUT    /api/v1/shipping/shippers/{id}/status
-GET    /api/v1/shipping/shippers/available
-
-# Order Assignment & Tracking
-POST   /api/v1/shipping/assign/{order_id}
-GET    /api/v1/shipping/{order_id}/tracking
-PUT    /api/v1/shipping/{order_id}/status
-POST   /api/v1/shipping/{order_id}/location
-
-# Real-time Tracking
-GET    /api/v1/shipping/{order_id}/live-tracking
-POST   /api/v1/shipping/{order_id}/update-location
-GET    /api/v1/shipping/shipper/{shipper_id}/location
-
-# Address & Geocoding
-POST   /api/v1/shipping/validate-address
-POST   /api/v1/shipping/geocode
-GET    /api/v1/shipping/distance-matrix
-
-# Shipping Costs & Fees
-GET    /api/v1/shipping/cost-calculator
-POST   /api/v1/shipping/calculate-fees
-GET    /api/v1/shipping/weight-pricing
 ```
 
 ### Search & Recommendation APIs
 ```
 # Search
-GET    /api/v1/search?q={query}&filters={filters}&location={location}&sort={sort}
-GET    /api/v1/search/suggestions?q={partial_query}
-GET    /api/v1/search/autocomplete?q={query}
-POST   /api/v1/search/advanced
-GET    /api/v1/search/filters/available
+GET    /api/v1/search?q={query}                   // Tìm kiếm cơ bản
+GET    /api/v1/search/suggestions?q={query}       // Gợi ý khi người dùng gõ
 
 # Personalized Recommendations
-GET    /api/v1/recommendations/products
-GET    /api/v1/recommendations/shops
-GET    /api/v1/recommendations/based-on-behavior
-GET    /api/v1/recommendations/similar-users
+GET    /api/v1/recommendations/products           // Gợi ý sản phẩm (theo hành vi đơn giản)
 
 # Trending & Popular
-GET    /api/v1/trending/products
-GET    /api/v1/trending/shops
-GET    /api/v1/trending/categories
-GET    /api/v1/popular/searches
-
-# User Behavior Tracking
-GET    /api/v1/recent/products
-GET    /api/v1/recent/searches
-POST   /api/v1/behavior/view-product
-POST   /api/v1/behavior/search
-POST   /api/v1/behavior/click
-
-# Price Comparison
-GET    /api/v1/products/{id}/price-comparison
-GET    /api/v1/products/similar-price?product_id={id}
-GET    /api/v1/price-alerts
-POST   /api/v1/price-alerts
-DELETE /api/v1/price-alerts/{id}
+GET    /api/v1/trending/products                  // Sản phẩm đang hot
 ```
 
 ### Review & Rating APIs
 ```
 # Product Reviews
-GET    /api/v1/products/{id}/reviews
-POST   /api/v1/products/{id}/reviews
-PUT    /api/v1/reviews/{id}
-DELETE /api/v1/reviews/{id}
-GET    /api/v1/reviews/{id}
+GET    /api/v1/products/{id}/reviews      // Lấy danh sách review theo sản phẩm
+POST   /api/v1/products/{id}/reviews      // Gửi đánh giá mới
 
 # Shop Reviews
-GET    /api/v1/shops/{id}/reviews
-POST   /api/v1/shops/{id}/reviews
-GET    /api/v1/shops/{id}/rating-summary
-
-# Delivery Reviews
-POST   /api/v1/delivery/{order_id}/review
-GET    /api/v1/delivery/reviews
-GET    /api/v1/shippers/{id}/reviews
-
-# Media Upload for Reviews
-POST   /api/v1/reviews/{id}/media
-DELETE /api/v1/reviews/{id}/media/{media_id}
-GET    /api/v1/reviews/{id}/media
-
-# Review Management
-GET    /api/v1/reviews/moderation/pending
-PUT    /api/v1/reviews/{id}/approve
-PUT    /api/v1/reviews/{id}/reject
-POST   /api/v1/reviews/{id}/report
-
-# Review Analytics
-GET    /api/v1/reviews/verified-purchases
-GET    /api/v1/reviews/sentiment-analysis
-GET    /api/v1/reviews/rating-distribution
+GET    /api/v1/shops/{id}/reviews         // Lấy danh sách review theo shop
+POST   /api/v1/shops/{id}/reviews         // Gửi đánh giá mới cho shop
+GET    /api/v1/shops/{id}/rating-summary  // Tóm tắt đánh giá (số sao trung bình)
 ```
-
-### Notification APIs
-```
-# Email & SMS
-POST   /api/v1/notifications/email/send
-```
-
 
 ## 🛠️ Tech Stack
 
