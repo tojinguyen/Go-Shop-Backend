@@ -87,9 +87,7 @@ POST   /api/v1/auth/register
 POST   /api/v1/auth/login
 POST   /api/v1/auth/logout
 POST   /api/v1/auth/refresh
-POST   /api/v1/auth/reset-password
 POST   /api/v1/auth/change-password
-POST   /api/v1/auth/validate-access-token
 ```
 
 ### User Management APIs
@@ -122,22 +120,18 @@ GET    /api/v1/shops
 POST   /api/v1/shops
 GET    /api/v1/shops/{id}
 PUT    /api/v1/shops/{id}
-DELETE /api/v1/shops/{id}
-
+DELETE /api/v1/shops/{id} - SHOP_OWNER_ONLY
 
 # Shop Orders & Fulfillment
 GET    /api/v1/shops/{id}/orders
 PUT    /api/v1/shops/{id}/orders/{order_id}/status
 POST   /api/v1/shops/{id}/orders/{order_id}/fulfill
 GET    /api/v1/shops/{id}/orders/pending
-GET    /api/v1/shops/{id}/orders/history
 
 # Shop Analytics & Reports
 GET    /api/v1/shops/{id}/analytics/revenue
 GET    /api/v1/shops/{id}/analytics/orders
 GET    /api/v1/shops/{id}/analytics/products
-GET    /api/v1/shops/{id}/reports/sales
-GET    /api/v1/shops/{id}/reports/performance
 
 # Promotions & Campaigns
 GET    /api/v1/shops/{id}/promotions
@@ -155,44 +149,6 @@ POST   /api/v1/products
 GET    /api/v1/products/{id}
 PUT    /api/v1/products/{id}
 DELETE /api/v1/products/{id}
-
-# Product Catalog Management
-PUT    /api/v1/products/{id}/catalog
-POST   /api/v1/products/{id}/media
-DELETE /api/v1/products/{id}/media/{media_id}
-PUT    /api/v1/products/{id}/brand
-PUT    /api/v1/products/{id}/model
-
-# Price Management
-PUT    /api/v1/products/{id}/price
-GET    /api/v1/products/{id}/price-history
-POST   /api/v1/products/{id}/discount
-DELETE /api/v1/products/{id}/discount
-
-# Stock & Inventory
-GET    /api/v1/products/{id}/inventory
-PUT    /api/v1/products/{id}/inventory
-POST   /api/v1/products/{id}/inventory/adjustment
-GET    /api/v1/products/low-stock
-
-# Categories & Classification
-GET    /api/v1/products/categories
-POST   /api/v1/products/categories
-GET    /api/v1/products/categories/{id}
-PUT    /api/v1/products/categories/{id}
-DELETE /api/v1/products/categories/{id}
-GET    /api/v1/products/categories/{id}/subcategories
-POST   /api/v1/products/categories/{id}/subcategories
-
-# Search & Filtering
-GET    /api/v1/products/search?q={query}&category={category}&price_min={min}&price_max={max}&rating={rating}&location={location}
-GET    /api/v1/products/filter?brand={brand}&model={model}&attributes={attributes}
-
-# Product Relations
-GET    /api/v1/products/{id}/related
-GET    /api/v1/products/{id}/reviews
-GET    /api/v1/products/{id}/variants
-POST   /api/v1/products/{id}/variants
 ```
 
 ### Shopping Cart APIs
@@ -200,8 +156,6 @@ POST   /api/v1/products/{id}/variants
 GET    /api/v1/cart
 DELETE /api/v1/cart
 POST   /api/v1/cart/items
-PUT    /api/v1/cart/items/{id}
-DELETE /api/v1/cart/items/{id}
 POST   /api/v1/cart/apply-promotion
 DELETE /api/v1/cart/remove-promotion
 ```
@@ -212,8 +166,6 @@ DELETE /api/v1/cart/remove-promotion
 POST   /api/v1/orders
 GET    /api/v1/orders
 GET    /api/v1/orders/{id}
-PUT    /api/v1/orders/{id}/status
-DELETE /api/v1/orders/{id}
 
 # Order Status Management
 GET    /api/v1/orders/{id}/status-history
@@ -223,26 +175,7 @@ PUT    /api/v1/orders/{id}/deliver
 PUT    /api/v1/orders/{id}/cancel
 
 # Order Calculations
-GET    /api/v1/orders/{id}/calculation
 POST   /api/v1/orders/calculate-preview
-GET    /api/v1/orders/{id}/fees/breakdown
-
-# Returns & Refunds
-POST   /api/v1/orders/{id}/return
-GET    /api/v1/orders/{id}/return-status
-POST   /api/v1/orders/{id}/refund/request
-GET    /api/v1/orders/returns
-GET    /api/v1/orders/refunds
-
-# Order Tracking
-GET    /api/v1/orders/{id}/tracking
-GET    /api/v1/orders/{id}/timeline
-
-# Purchase History
-GET    /api/v1/orders/history
-GET    /api/v1/orders/history/summary
-GET    /api/v1/orders/repeat/{id}
-```
 
 ### Payment APIs
 ```
