@@ -7,3 +7,7 @@ SELECT EXISTS (
 -- name: GetReservationStatusOfOrder :one
 SELECT * FROM order_reservations
 WHERE order_id = $1;
+
+-- name: GetReservationStatusOfOrders :many
+SELECT * FROM order_reservations
+WHERE order_id = ANY($1);

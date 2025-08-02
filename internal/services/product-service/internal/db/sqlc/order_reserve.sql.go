@@ -30,6 +30,38 @@ func (q *Queries) GetReservationStatusOfOrder(ctx context.Context, orderID pgtyp
 	return i, err
 }
 
+const getReservationStatusOfOrders = `-- name: GetReservationStatusOfOrders :many
+SELECT id, order_id, shop_id, reservation_status, created_at, updated_at FROM order_reservations
+WHERE order_id = ANY($1)
+`
+
+func (q *Queries) GetReservationStatusOfOrders(ctx context.Context, orderID pgtype.UUID) ([]OrderReservation, error) {
+	rows, err := q.db.Query(ctx, getReservationStatusOfOrders, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []OrderReservation{}
+	for rows.Next() {
+		var i OrderReservation
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrderID,
+			&i.ShopID,
+			&i.ReservationStatus,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const isOrderReserved = `-- name: IsOrderReserved :one
 SELECT EXISTS (
     SELECT 1 FROM order_reservations

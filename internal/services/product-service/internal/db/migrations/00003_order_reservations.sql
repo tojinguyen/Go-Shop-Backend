@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TYPE reservation_status AS ENUM (
     'RESERVED',   -- Hàng đã được đặt trước, đang chờ thanh toán
-    'UNRESERVED', -- Đơn hàng đã được hoàn lại hàng vào kho 
+    'UNRESERVED' -- Đơn hàng đã được hoàn lại hàng vào kho 
 );
 
 CREATE TABLE order_reservations (

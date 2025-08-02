@@ -61,7 +61,6 @@ type ReservationStatus string
 const (
 	ReservationStatusRESERVED   ReservationStatus = "RESERVED"
 	ReservationStatusUNRESERVED ReservationStatus = "UNRESERVED"
-	ReservationStatusPAID       ReservationStatus = "PAID"
 )
 
 func (e *ReservationStatus) Scan(src interface{}) error {

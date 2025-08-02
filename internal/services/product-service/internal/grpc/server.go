@@ -120,3 +120,24 @@ func (s *Server) GetOrderReservationStatus(ctx context.Context, req *product_v1.
 	log.Printf("Reservation status for order ID %s: %s", req.OrderId, status.Status)
 	return status, nil
 }
+
+func (s *Server) GetOrdersReservationStatus(ctx context.Context, req *product_v1.GetOrdersReservationStatusRequest) (*product_v1.GetOrdersReservationStatusResponse, error) {
+	log.Printf("[ProductService] GetOrdersReservationStatus called for %d orders", len(req.OrderIds))
+
+	if len(req.OrderIds) == 0 {
+		return &product_v1.GetOrdersReservationStatusResponse{
+			Orders: []*product_v1.GetOrderReservationStatusResponse{},
+		}, nil
+	}
+
+	orderStatuses, err := s.productRepo.GetReservationStatusOfOrders(ctx, req.OrderIds)
+	if err != nil {
+		log.Printf("Error getting reservation statuses for orders: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Retrieved reservation statuses for %d orders", len(orderStatuses))
+	return &product_v1.GetOrdersReservationStatusResponse{
+		Orders: orderStatuses,
+	}, nil
+}
