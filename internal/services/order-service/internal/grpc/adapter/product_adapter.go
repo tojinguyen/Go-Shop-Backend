@@ -14,6 +14,7 @@ type ProductServiceAdapter interface {
 	ReserveProducts(ctx context.Context, req *product_v1.ReserveProductsRequest) (*product_v1.ReserveProductsResponse, error)
 	UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error)
 	GetOrderReservationStatus(ctx context.Context, req *product_v1.GetOrderReservationStatusRequest) (*product_v1.GetOrderReservationStatusResponse, error)
+	GetOrdersReservationStatus(ctx context.Context, req *product_v1.GetOrdersReservationStatusRequest) (*product_v1.GetOrdersReservationStatusResponse, error)
 	Close() error
 }
 
@@ -54,6 +55,10 @@ func (a *grpcProductAdapter) UnreserveProducts(ctx context.Context, req *product
 
 func (a *grpcProductAdapter) GetOrderReservationStatus(ctx context.Context, req *product_v1.GetOrderReservationStatusRequest) (*product_v1.GetOrderReservationStatusResponse, error) {
 	return a.client.GetOrderReservationStatus(ctx, req)
+}
+
+func (a *grpcProductAdapter) GetOrdersReservationStatus(ctx context.Context, req *product_v1.GetOrdersReservationStatusRequest) (*product_v1.GetOrdersReservationStatusResponse, error) {
+	return a.client.GetOrdersReservationStatus(ctx, req)
 }
 
 func (a *grpcProductAdapter) Close() error {
