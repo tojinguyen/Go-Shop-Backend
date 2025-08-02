@@ -31,26 +31,43 @@ func (q *Queries) GetReservationStatusOfOrder(ctx context.Context, orderID pgtyp
 }
 
 const getReservationStatusOfOrders = `-- name: GetReservationStatusOfOrders :many
-SELECT id, order_id, shop_id, reservation_status, created_at, updated_at FROM order_reservations
-WHERE order_id = ANY($1)
+SELECT DISTINCT ON (r.order_id)
+			r.order_id,
+			r.shop_id,
+			r.reservation_status as status,
+			r.created_at,
+			r.updated_at,
+			true as founded
+		FROM order_reservations r
+		WHERE r.order_id = ANY($1::uuid[])
+		ORDER BY r.order_id, r.created_at DESC
 `
 
-func (q *Queries) GetReservationStatusOfOrders(ctx context.Context, orderID pgtype.UUID) ([]OrderReservation, error) {
-	rows, err := q.db.Query(ctx, getReservationStatusOfOrders, orderID)
+type GetReservationStatusOfOrdersRow struct {
+	OrderID   pgtype.UUID        `json:"order_id"`
+	ShopID    pgtype.UUID        `json:"shop_id"`
+	Status    ReservationStatus  `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Founded   bool               `json:"founded"`
+}
+
+func (q *Queries) GetReservationStatusOfOrders(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetReservationStatusOfOrdersRow, error) {
+	rows, err := q.db.Query(ctx, getReservationStatusOfOrders, dollar_1)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []OrderReservation{}
+	items := []GetReservationStatusOfOrdersRow{}
 	for rows.Next() {
-		var i OrderReservation
+		var i GetReservationStatusOfOrdersRow
 		if err := rows.Scan(
-			&i.ID,
 			&i.OrderID,
 			&i.ShopID,
-			&i.ReservationStatus,
+			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Founded,
 		); err != nil {
 			return nil, err
 		}

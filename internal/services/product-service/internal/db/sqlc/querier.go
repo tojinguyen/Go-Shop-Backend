@@ -18,7 +18,7 @@ type Querier interface {
 	GetProductsByIDs(ctx context.Context, productIds []pgtype.UUID) ([]Product, error)
 	GetProductsByIDsForUpdate(ctx context.Context, productIds []pgtype.UUID) ([]Product, error)
 	GetReservationStatusOfOrder(ctx context.Context, orderID pgtype.UUID) (OrderReservation, error)
-	GetReservationStatusOfOrders(ctx context.Context, orderID pgtype.UUID) ([]OrderReservation, error)
+	GetReservationStatusOfOrders(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetReservationStatusOfOrdersRow, error)
 	IsOrderReserved(ctx context.Context, orderID pgtype.UUID) (bool, error)
 	SoftDeleteProduct(ctx context.Context, id pgtype.UUID) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)

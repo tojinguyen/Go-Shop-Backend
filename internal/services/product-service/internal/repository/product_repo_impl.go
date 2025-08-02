@@ -364,3 +364,63 @@ func (r *pgProductRepository) GetReservationStatusOfOrder(ctx context.Context, o
 		Founded: true,
 	}, nil
 }
+
+func (r *pgProductRepository) GetReservationStatusOfOrders(ctx context.Context, orderIDs []string) ([]*product_v1.GetOrderReservationStatusResponse, error) {
+	if len(orderIDs) == 0 {
+		return []*product_v1.GetOrderReservationStatusResponse{}, nil
+	}
+
+	// Create a slice to store UUIDs and a slice for missing orders
+	var foundOrders = make(map[string]bool)
+	for _, id := range orderIDs {
+		foundOrders[id] = false
+	}
+
+	// Convert string IDs to UUIDs
+	uuids := make([]uuid.UUID, 0, len(orderIDs))
+	for _, id := range orderIDs {
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			return nil, fmt.Errorf("invalid order ID format: %w", err)
+		}
+		uuids = append(uuids, uid)
+	}
+
+	pgOrderUUIDs := make([]pgtype.UUID, len(uuids))
+	for i, uid := range uuids {
+		pgOrderUUIDs[i] = converter.UUIDToPgUUID(uid)
+	}
+
+	orderReservations, err := r.queries.GetReservationStatusOfOrders(ctx, pgOrderUUIDs)
+	if err != nil {
+		log.Printf("Error getting reservation statuses for orders: %v", err)
+		return nil, fmt.Errorf("failed to get reservation statuses of orders: %w", err)
+	}
+
+	orderStatuses := make([]*product_v1.GetOrderReservationStatusResponse, 0, len(orderIDs))
+	for _, orderReservation := range orderReservations {
+		if _, ok := foundOrders[orderReservation.OrderID.String()]; ok {
+			foundOrders[orderReservation.OrderID.String()] = true
+			orderStatuses = append(orderStatuses, &product_v1.GetOrderReservationStatusResponse{
+				OrderId: orderReservation.OrderID.String(),
+				ShopId:  orderReservation.ShopID.String(),
+				Status:  string(orderReservation.Status),
+				Founded: true,
+			})
+		}
+	}
+
+	// Add missing orders with status UNRESERVED
+	for id, found := range foundOrders {
+		if !found {
+			orderStatuses = append(orderStatuses, &product_v1.GetOrderReservationStatusResponse{
+				OrderId: id,
+				Status:  string(product.ProductReservationStatusUnreserved),
+				Founded: false,
+			})
+		}
+	}
+
+	log.Printf("Retrieved reservation statuses for %d orders", len(orderStatuses))
+	return orderStatuses, nil
+}
