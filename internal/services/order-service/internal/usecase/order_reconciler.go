@@ -15,6 +15,7 @@ import (
 const (
 	STALE_ORDER_THRESHOLD = 10 * time.Minute
 	BATCH_SIZE            = 100
+	ORDER_IN_ONE_CALL     = 10
 )
 
 type OrderReconciler struct {
@@ -49,46 +50,64 @@ func (r *OrderReconciler) ReconcilePendingOrders() {
 
 	log.Printf("[OrderReconciler] Found %d stale orders to process.", len(orders))
 
-	for _, order := range orders {
-		log.Printf("[Worker] Processing order ID: %s", order.ID)
-		orderReservationCheckingReq := &product_v1.GetOrderReservationStatusRequest{
-			OrderId: order.ID,
+	// Process orders in batches of ORDER_IN_ONE_CALL
+	for i := 0; i < len(orders); i += ORDER_IN_ONE_CALL {
+		end := i + ORDER_IN_ONE_CALL
+		if end > len(orders) {
+			end = len(orders)
 		}
 
-		orderReservationStatus, err := r.productAdapter.GetOrderReservationStatus(ctx, orderReservationCheckingReq)
-		if err != nil {
-			log.Printf("[OrderReconciler] Error checking order reservation status: %v", err)
-			continue
+		// Get batch of orders
+		batch := orders[i:end]
+		orderIDs := make([]string, 0, len(batch))
+		for _, order := range batch {
+			orderIDs = append(orderIDs, order.ID)
 		}
 
-		log.Printf("[OrderReconciler] Order ID: %s, Status: %s", order.ID, orderReservationStatus.Status)
+		log.Printf("[OrderReconciler] Processing batch of %d orders: %v", len(orderIDs), orderIDs)
+		orderReservationCheckingReq := &product_v1.GetOrdersReservationStatusRequest{
+			OrderIds: orderIDs,
+		}
 
-		// Xử lý trạng thái đặt hàng
+		go func(req *product_v1.GetOrdersReservationStatusRequest) {
+			r.HandleUnreservationOrders(ctx, req)
+		}(orderReservationCheckingReq)
+	}
+}
 
-		if !orderReservationStatus.Founded {
-			log.Printf("[OrderReconciler] Order ID: %s not found. Updating status to CANCELLED.", order.ID)
+func (r *OrderReconciler) HandleUnreservationOrders(ctx context.Context, getStatusReq *product_v1.GetOrdersReservationStatusRequest) {
+	ordersReservationStatus, err := r.productAdapter.GetOrdersReservationStatus(ctx, getStatusReq)
+	if err != nil {
+		log.Printf("[OrderReconciler] Error checking order reservation status: %v", err)
+		return
+	}
+
+	for _, status := range ordersReservationStatus.Orders {
+		log.Printf("[OrderReconciler] Order ID: %s, Status: %s", status.OrderId, status.Status)
+		// Handle each order status
+		if !status.Founded {
+			log.Printf("[OrderReconciler] Order ID: %s not found. Updating status to CANCELLED.", status.OrderId)
 			// Update the order status to CANCELLED
-			_, err := r.orderRepo.UpdateOrderStatus(ctx, order.ID, sqlc.OrderStatusCANCELED)
+			_, err := r.orderRepo.UpdateOrderStatus(ctx, status.OrderId, sqlc.OrderStatusCANCELED)
 			if err != nil {
 				log.Printf("[OrderReconciler] Error updating order status: %v", err)
 			}
 			continue
 		}
 
-		switch orderReservationStatus.GetStatus() {
+		switch status.GetStatus() {
 		case product_v1.GetOrderReservationStatusResponse_UNRESERVED.String():
-			log.Printf("[OrderReconciler] Order ID: %s is unreserved. No action needed.", order.ID)
+			log.Printf("[OrderReconciler] Order ID: %s is unreserved. No action needed.", status.OrderId)
 			// Update the order status to CANCELED
-			_, err := r.orderRepo.UpdateOrderStatus(ctx, order.ID, sqlc.OrderStatusCANCELED)
+			_, err := r.orderRepo.UpdateOrderStatus(ctx, status.OrderId, sqlc.OrderStatusCANCELED)
 			if err != nil {
 				log.Printf("[OrderReconciler] Error updating order status to UNRESERVED: %v", err)
 			}
 		case product_v1.GetOrderReservationStatusResponse_RESERVED.String():
-			log.Printf("[OrderReconciler] Order ID: %s is still reserved. No action needed.", order.ID)
+			log.Printf("[OrderReconciler] Order ID: %s is still reserved. No action needed.", status.OrderId)
 			// TODO: Call grpc to unreserve products
 		default:
-			log.Printf("[OrderReconciler] Unknown status for order ID: %s. No action taken.", order.ID)
-			continue
+			log.Printf("[OrderReconciler] Unknown status for order ID: %s. No action needed.", status.OrderId)
 		}
 	}
 }
