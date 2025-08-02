@@ -8,9 +8,9 @@ service ProductService {
     rpc GetProductInfo(GetProductInfoRequest) returns (GetProductInfoResponse) {}
     rpc GetProductsInfo(GetProductsInfoRequest) returns (GetProductsInfoResponse) {}
     rpc ReserveProducts(ReserveProductsRequest) returns (ReserveProductsResponse) {}
-    rpc UnreserveProducts(UnreserveProductsRequest) returns (UnreserveProductsResponse) {}
     rpc GetOrderReservationStatus(GetOrderReservationStatusRequest) returns (GetOrderReservationStatusResponse) {}
     rpc GetOrdersReservationStatus(GetOrdersReservationStatusRequest) returns (GetOrdersReservationStatusResponse) {}
+    rpc UnreserveOrders(UnreserveOrdersRequest) returns (UnreserveOrdersResponse) {}
 }
 
 message GetProductInfoRequest {
@@ -61,22 +61,6 @@ message ProductReservationStatus {
     string message = 3;
 }
 
-message UnreserveProductsRequest {
-    string order_id = 1;
-    string shop_id = 2;
-    repeated UnreserveProduct products = 3;
-}
-
-message UnreserveProduct {
-    string product_id = 1;
-    int32 quantity = 2;
-}
-
-message UnreserveProductsResponse {
-    bool success = 1;
-    repeated ProductReservationStatus reservations = 2;
-}
-
 message GetOrderReservationStatusRequest {
     string order_id = 1;
 }
@@ -99,4 +83,29 @@ message GetOrdersReservationStatusRequest {
 
 message GetOrdersReservationStatusResponse {
     repeated GetOrderReservationStatusResponse orders = 1;
+}
+
+message UnreserveOrdersRequest {
+    repeated UnreserveOrder products = 3;
+}
+
+message UnreserveOrder {
+    string order_id = 1;
+    string shop_id = 2;
+    repeated UnreserveProduct products = 3;
+}
+
+message UnreserveProduct {
+    string product_id = 1;
+    int32 quantity = 2;
+}
+
+message UnreserveOrdersResponse {
+    repeated UnreserveOrderResult results = 2;
+}
+
+message UnreserveOrderResult {
+    string order_id = 1;
+    string shop_id = 2;
+    bool success = 3;
 }

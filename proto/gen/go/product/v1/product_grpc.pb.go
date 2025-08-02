@@ -25,9 +25,9 @@ type ProductServiceClient interface {
 	GetProductInfo(ctx context.Context, in *GetProductInfoRequest, opts ...grpc.CallOption) (*GetProductInfoResponse, error)
 	GetProductsInfo(ctx context.Context, in *GetProductsInfoRequest, opts ...grpc.CallOption) (*GetProductsInfoResponse, error)
 	ReserveProducts(ctx context.Context, in *ReserveProductsRequest, opts ...grpc.CallOption) (*ReserveProductsResponse, error)
-	UnreserveProducts(ctx context.Context, in *UnreserveProductsRequest, opts ...grpc.CallOption) (*UnreserveProductsResponse, error)
 	GetOrderReservationStatus(ctx context.Context, in *GetOrderReservationStatusRequest, opts ...grpc.CallOption) (*GetOrderReservationStatusResponse, error)
 	GetOrdersReservationStatus(ctx context.Context, in *GetOrdersReservationStatusRequest, opts ...grpc.CallOption) (*GetOrdersReservationStatusResponse, error)
+	UnreserveOrders(ctx context.Context, in *UnreserveOrdersRequest, opts ...grpc.CallOption) (*UnreserveOrdersResponse, error)
 }
 
 type productServiceClient struct {
@@ -65,15 +65,6 @@ func (c *productServiceClient) ReserveProducts(ctx context.Context, in *ReserveP
 	return out, nil
 }
 
-func (c *productServiceClient) UnreserveProducts(ctx context.Context, in *UnreserveProductsRequest, opts ...grpc.CallOption) (*UnreserveProductsResponse, error) {
-	out := new(UnreserveProductsResponse)
-	err := c.cc.Invoke(ctx, "/goshop.product.v1.ProductService/UnreserveProducts", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *productServiceClient) GetOrderReservationStatus(ctx context.Context, in *GetOrderReservationStatusRequest, opts ...grpc.CallOption) (*GetOrderReservationStatusResponse, error) {
 	out := new(GetOrderReservationStatusResponse)
 	err := c.cc.Invoke(ctx, "/goshop.product.v1.ProductService/GetOrderReservationStatus", in, out, opts...)
@@ -92,6 +83,15 @@ func (c *productServiceClient) GetOrdersReservationStatus(ctx context.Context, i
 	return out, nil
 }
 
+func (c *productServiceClient) UnreserveOrders(ctx context.Context, in *UnreserveOrdersRequest, opts ...grpc.CallOption) (*UnreserveOrdersResponse, error) {
+	out := new(UnreserveOrdersResponse)
+	err := c.cc.Invoke(ctx, "/goshop.product.v1.ProductService/UnreserveOrders", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProductServiceServer is the server API for ProductService service.
 // All implementations must embed UnimplementedProductServiceServer
 // for forward compatibility
@@ -99,9 +99,9 @@ type ProductServiceServer interface {
 	GetProductInfo(context.Context, *GetProductInfoRequest) (*GetProductInfoResponse, error)
 	GetProductsInfo(context.Context, *GetProductsInfoRequest) (*GetProductsInfoResponse, error)
 	ReserveProducts(context.Context, *ReserveProductsRequest) (*ReserveProductsResponse, error)
-	UnreserveProducts(context.Context, *UnreserveProductsRequest) (*UnreserveProductsResponse, error)
 	GetOrderReservationStatus(context.Context, *GetOrderReservationStatusRequest) (*GetOrderReservationStatusResponse, error)
 	GetOrdersReservationStatus(context.Context, *GetOrdersReservationStatusRequest) (*GetOrdersReservationStatusResponse, error)
+	UnreserveOrders(context.Context, *UnreserveOrdersRequest) (*UnreserveOrdersResponse, error)
 	mustEmbedUnimplementedProductServiceServer()
 }
 
@@ -118,14 +118,14 @@ func (UnimplementedProductServiceServer) GetProductsInfo(context.Context, *GetPr
 func (UnimplementedProductServiceServer) ReserveProducts(context.Context, *ReserveProductsRequest) (*ReserveProductsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReserveProducts not implemented")
 }
-func (UnimplementedProductServiceServer) UnreserveProducts(context.Context, *UnreserveProductsRequest) (*UnreserveProductsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnreserveProducts not implemented")
-}
 func (UnimplementedProductServiceServer) GetOrderReservationStatus(context.Context, *GetOrderReservationStatusRequest) (*GetOrderReservationStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrderReservationStatus not implemented")
 }
 func (UnimplementedProductServiceServer) GetOrdersReservationStatus(context.Context, *GetOrdersReservationStatusRequest) (*GetOrdersReservationStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrdersReservationStatus not implemented")
+}
+func (UnimplementedProductServiceServer) UnreserveOrders(context.Context, *UnreserveOrdersRequest) (*UnreserveOrdersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnreserveOrders not implemented")
 }
 func (UnimplementedProductServiceServer) mustEmbedUnimplementedProductServiceServer() {}
 
@@ -194,24 +194,6 @@ func _ProductService_ReserveProducts_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProductService_UnreserveProducts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnreserveProductsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProductServiceServer).UnreserveProducts(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/goshop.product.v1.ProductService/UnreserveProducts",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProductServiceServer).UnreserveProducts(ctx, req.(*UnreserveProductsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ProductService_GetOrderReservationStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetOrderReservationStatusRequest)
 	if err := dec(in); err != nil {
@@ -248,6 +230,24 @@ func _ProductService_GetOrdersReservationStatus_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProductService_UnreserveOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnreserveOrdersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).UnreserveOrders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/goshop.product.v1.ProductService/UnreserveOrders",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).UnreserveOrders(ctx, req.(*UnreserveOrdersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProductService_ServiceDesc is the grpc.ServiceDesc for ProductService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -268,16 +268,16 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProductService_ReserveProducts_Handler,
 		},
 		{
-			MethodName: "UnreserveProducts",
-			Handler:    _ProductService_UnreserveProducts_Handler,
-		},
-		{
 			MethodName: "GetOrderReservationStatus",
 			Handler:    _ProductService_GetOrderReservationStatus_Handler,
 		},
 		{
 			MethodName: "GetOrdersReservationStatus",
 			Handler:    _ProductService_GetOrdersReservationStatus_Handler,
+		},
+		{
+			MethodName: "UnreserveOrders",
+			Handler:    _ProductService_UnreserveOrders_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -99,11 +99,6 @@ func (s *Server) ReserveProducts(ctx context.Context, req *product_v1.ReservePro
 	}, nil
 }
 
-func (s *Server) UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error) {
-	log.Println("[ProductService] UnreserveProducts called, but not implemented yet.")
-	return nil, nil
-}
-
 func (s *Server) GetOrderReservationStatus(ctx context.Context, req *product_v1.GetOrderReservationStatusRequest) (*product_v1.GetOrderReservationStatusResponse, error) {
 	log.Printf("[ProductService] GetOrderReservationStatus called for order ID: %s", req.OrderId)
 	status, err := s.productRepo.GetReservationStatusOfOrder(ctx, req.OrderId)
@@ -140,4 +135,8 @@ func (s *Server) GetOrdersReservationStatus(ctx context.Context, req *product_v1
 	return &product_v1.GetOrdersReservationStatusResponse{
 		Orders: orderStatuses,
 	}, nil
+}
+
+func (s *Server) UnReserveOrders(ctx context.Context, req *product_v1.UnreserveOrdersRequest) (*product_v1.UnreserveOrdersResponse, error) {
+	return nil, nil
 }
