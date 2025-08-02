@@ -10,6 +10,7 @@ service ProductService {
     rpc ReserveProducts(ReserveProductsRequest) returns (ReserveProductsResponse) {}
     rpc UnreserveProducts(UnreserveProductsRequest) returns (UnreserveProductsResponse) {}
     rpc GetOrderReservationStatus(GetOrderReservationStatusRequest) returns (GetOrderReservationStatusResponse) {}
+    rpc GetOrdersReservationStatus(GetOrdersReservationStatusRequest) returns (GetOrdersReservationStatusResponse) {}
 }
 
 message GetProductInfoRequest {
@@ -90,4 +91,12 @@ message GetOrderReservationStatusResponse {
     string shop_id = 2;
     string status = 3; // ReservationStatus
     bool founded = 4; // true if the order was found, false otherwise
+}
+
+message GetOrdersReservationStatusRequest {
+    repeated string order_ids = 1;
+}
+
+message GetOrdersReservationStatusResponse {
+    repeated GetOrderReservationStatusResponse orders = 1;
 }
