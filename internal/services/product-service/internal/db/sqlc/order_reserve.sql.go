@@ -92,3 +92,19 @@ func (q *Queries) IsOrderReserved(ctx context.Context, orderID pgtype.UUID) (boo
 	err := row.Scan(&reserved)
 	return reserved, err
 }
+
+const updateReservationStatusOfOrder = `-- name: UpdateReservationStatusOfOrder :exec
+UPDATE order_reservations
+SET reservation_status = $2, updated_at = NOW()
+WHERE order_id = $1
+`
+
+type UpdateReservationStatusOfOrderParams struct {
+	OrderID           pgtype.UUID       `json:"order_id"`
+	ReservationStatus ReservationStatus `json:"reservation_status"`
+}
+
+func (q *Queries) UpdateReservationStatusOfOrder(ctx context.Context, arg UpdateReservationStatusOfOrderParams) error {
+	_, err := q.db.Exec(ctx, updateReservationStatusOfOrder, arg.OrderID, arg.ReservationStatus)
+	return err
+}

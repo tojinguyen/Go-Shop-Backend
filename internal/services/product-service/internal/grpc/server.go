@@ -138,5 +138,27 @@ func (s *Server) GetOrdersReservationStatus(ctx context.Context, req *product_v1
 }
 
 func (s *Server) UnReserveOrders(ctx context.Context, req *product_v1.UnreserveOrdersRequest) (*product_v1.UnreserveOrdersResponse, error) {
-	return nil, nil
+	log.Printf("[ProductService] Unreserving orders: %+v", req)
+
+	var results []*product_v1.UnreserveOrderResult
+	for _, order := range req.Orders {
+		result := &product_v1.UnreserveOrderResult{
+			OrderId: order.OrderId,
+			ShopId:  order.ShopId,
+			Success: true,
+		}
+
+		// Unreserve each order
+		err := s.productRepo.UnreserveStock(ctx, order.OrderId, order.Products)
+		if err != nil {
+			log.Printf("[ProductService] Error unreserving stock for order %s: %v", order.OrderId, err)
+			result.Success = false
+		}
+
+		results = append(results, result)
+	}
+
+	return &product_v1.UnreserveOrdersResponse{
+		Results: results,
+	}, nil
 }

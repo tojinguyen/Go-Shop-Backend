@@ -273,6 +273,31 @@ func (q *Queries) SoftDeleteProduct(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const unreserveProducts = `-- name: UnreserveProducts :exec
+UPDATE products
+SET
+    reserve_quantity = CASE 
+        WHEN p.reserve_quantity >= p.quantity THEN p.reserve_quantity - p.quantity
+        ELSE p.reserve_quantity
+    END
+FROM (
+    SELECT 
+        CAST(unnest($1::uuid[]) as uuid) as id,
+        CAST(unnest($2::int[]) as integer) as quantity
+) AS p
+WHERE products.id = p.id AND products.delete_at IS NULL
+`
+
+type UnreserveProductsParams struct {
+	ProductIds []pgtype.UUID `json:"product_ids"`
+	Quantities []int32       `json:"quantities"`
+}
+
+func (q *Queries) UnreserveProducts(ctx context.Context, arg UnreserveProductsParams) error {
+	_, err := q.db.Exec(ctx, unreserveProducts, arg.ProductIds, arg.Quantities)
+	return err
+}
+
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
 SET

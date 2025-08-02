@@ -19,3 +19,8 @@ SELECT DISTINCT ON (r.order_id)
 		FROM order_reservations r
 		WHERE r.order_id = ANY($1::uuid[])
 		ORDER BY r.order_id, r.created_at DESC;
+
+-- name: UpdateReservationStatusOfOrder :exec
+UPDATE order_reservations
+SET reservation_status = $2, updated_at = NOW()
+WHERE order_id = $1;
