@@ -24,7 +24,7 @@ type ProductRepository interface {
 	Update(ctx context.Context, product *product.Product) error
 	Delete(ctx context.Context, id string) error
 	GetByIDs(ctx context.Context, ids []string) ([]*product.Product, error)
-	ReserveStock(ctx context.Context, items []*product_v1.ReserveProduct) ([]*product_v1.ProductReservationStatus, error)
+	ReserveStock(ctx context.Context, orderID, shopID string, items []*product_v1.ReserveProduct) ([]*product_v1.ProductReservationStatus, error)
 	GetReservationStatusOfOrder(ctx context.Context, orderID string) (*product_v1.GetOrderReservationStatusResponse, error)
 	GetReservationStatusOfOrders(ctx context.Context, orderIDs []string) ([]*product_v1.GetOrderReservationStatusResponse, error)
 	UnreserveStock(ctx context.Context, orderId string, items []*product_v1.UnreserveProduct) error
@@ -245,7 +245,7 @@ func (r *pgProductRepository) GetByIDs(ctx context.Context, ids []string) ([]*pr
 	return domainProducts, nil
 }
 
-func (r *pgProductRepository) ReserveStock(ctx context.Context, items []*product_v1.ReserveProduct) ([]*product_v1.ProductReservationStatus, error) {
+func (r *pgProductRepository) ReserveStock(ctx context.Context, orderID, shopID string, items []*product_v1.ReserveProduct) ([]*product_v1.ProductReservationStatus, error) {
 	// Bắt đầu một giao dịch CSDL.
 	tx, err := r.db.BeginTransaction(ctx)
 	if err != nil {
@@ -337,6 +337,24 @@ func (r *pgProductRepository) ReserveStock(ctx context.Context, items []*product
 	// Nếu mọi thứ thành công, commit để lưu lại tất cả các thay đổi.
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("failed to commit stock reservation transaction: %w", err)
+	}
+
+	// Bước 6: Ghi lại thông tin order vào bảng reservation
+	orderUUID, err := uuid.Parse(orderID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid order ID format: %w", err)
+	}
+
+	shopUUID, err := uuid.Parse(shopID)
+
+	err = r.queries.ReserveOrder(ctx, sqlc.ReserveOrderParams{
+		OrderID:           converter.UUIDToPgUUID(orderUUID),
+		ShopID:            converter.UUIDToPgUUID(shopUUID),
+		ReservationStatus: sqlc.ReservationStatus(product.ProductReservationStatusReserved),
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to add reservation for order %s: %w", orderID, err)
 	}
 
 	log.Println("Stock reservation transaction committed successfully.")

@@ -24,3 +24,11 @@ SELECT DISTINCT ON (r.order_id)
 UPDATE order_reservations
 SET reservation_status = $2, updated_at = NOW()
 WHERE order_id = $1;
+
+-- name: ReserveOrder :exec
+INSERT INTO order_reservations (
+	order_id,
+	shop_id,
+	reservation_status
+)
+VALUES ($1, $2, $3);
