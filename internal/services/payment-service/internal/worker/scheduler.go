@@ -5,7 +5,6 @@ import (
 
 	"github.com/robfig/cron/v3"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/payment-service/internal/dependency-container"
-	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/usecase"
 )
 
 // Scheduler quản lý tất cả các cron job trong service.
@@ -29,7 +28,7 @@ func (s *Scheduler) RegisterJobs() {
 	log.Println("[Scheduler] Registering cron jobs...")
 	log.Println("[Scheduler] 'ReconcilePendingOrders' job registered to run every 5 minutes.")
 
-	paymentEventUseCase := usecase.NewPaymentEventUseCase()
+	paymentEventUseCase := s.container.GetPaymentEventUseCase()
 
 	_, err := s.cron.AddFunc("@every 10m", paymentEventUseCase.HandlePaymentEvent)
 
