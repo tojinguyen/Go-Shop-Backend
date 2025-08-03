@@ -86,7 +86,7 @@ message GetOrdersReservationStatusResponse {
 }
 
 message UnreserveOrdersRequest {
-    repeated UnreserveOrder products = 3;
+    repeated UnreserveOrder orders = 3;
 }
 
 message UnreserveOrder {

@@ -104,8 +104,52 @@ func (r *OrderReconciler) HandleUnreservationOrders(ctx context.Context, getStat
 				log.Printf("[OrderReconciler] Error updating order status to UNRESERVED: %v", err)
 			}
 		case product_v1.GetOrderReservationStatusResponse_RESERVED.String():
-			log.Printf("[OrderReconciler] Order ID: %s is still reserved. No action needed.", status.OrderId)
-			// TODO: Call grpc to unreserve products
+			log.Printf("[OrderReconciler] Order ID: %s is still reserved. Unreserving...", status.OrderId)
+
+			// Prepare unreserve request
+			unreserveReq := &product_v1.UnreserveOrdersRequest{
+				Orders: []*product_v1.UnreserveOrder{
+					{
+						OrderId:  status.OrderId,
+						ShopId:   status.ShopId,
+						Products: []*product_v1.UnreserveProduct{},
+					},
+				},
+			}
+
+			order, err := r.orderRepo.GetOrderByID(ctx, status.OrderId)
+
+			if err != nil {
+				log.Printf("[OrderReconciler] Error fetching order details for unreservation: %v", err)
+				continue
+			}
+
+			// Populate products to unreserve
+			for _, item := range order.Items {
+				unreserveReq.Orders[0].Products = append(unreserveReq.Orders[0].Products, &product_v1.UnreserveProduct{
+					ProductId: item.ProductID,
+					Quantity:  int32(item.Quantity),
+				})
+			}
+
+			// Call product service to unreserve
+			resp, err := r.productAdapter.UnreserveOrders(ctx, unreserveReq)
+			if err != nil {
+				log.Printf("[OrderReconciler] Error calling UnreserveOrders for order %s: %v", status.OrderId, err)
+				continue
+			}
+
+			// Check result and update order status
+			if len(resp.Results) > 0 && resp.Results[0].Success {
+				log.Printf("[OrderReconciler] Successfully unreserved order %s", status.OrderId)
+				_, err := r.orderRepo.UpdateOrderStatus(ctx, status.OrderId, sqlc.OrderStatusCANCELED)
+				if err != nil {
+					log.Printf("[OrderReconciler] Error updating order status to CANCELED: %v", err)
+				}
+			} else {
+				log.Printf("[OrderReconciler] Failed to unreserve order %s", status.OrderId)
+			}
+
 		default:
 			log.Printf("[OrderReconciler] Unknown status for order ID: %s. No action needed.", status.OrderId)
 		}
