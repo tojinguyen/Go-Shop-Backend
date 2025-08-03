@@ -25,10 +25,3 @@ SET
 WHERE id = $1
 RETURNING *;
 
--- name: UpdatePaymentEventStatus :one
-UPDATE payment_outbox_events
-SET
-    event_status = $2,
-    updated_at = NOW()
-WHERE id = $1
-RETURNING *;

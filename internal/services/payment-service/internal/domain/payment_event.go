@@ -10,9 +10,16 @@ const (
 	PaymentEventStatusFailed  PaymentEventStatus = "FAILED"
 )
 
+type PaymentEventType string
+
+const (
+	PaymentEventTypePaymentSuccess PaymentEventType = "PAYMENT_SUCCESS"
+)
+
 type PaymentEvent struct {
 	ID          string             `json:"id"`
 	PaymentID   string             `json:"payment_id"`
+	OrderID     string             `json:"order_id"`
 	EventType   string             `json:"event_type"`
 	Payload     string             `json:"payload"`
 	EventStatus PaymentEventStatus `json:"event_status"`

@@ -136,34 +136,3 @@ func (q *Queries) UpdatePaymentEvent(ctx context.Context, arg UpdatePaymentEvent
 	)
 	return i, err
 }
-
-const updatePaymentEventStatus = `-- name: UpdatePaymentEventStatus :one
-UPDATE payment_outbox_events
-SET
-    event_status = $2,
-    updated_at = NOW()
-WHERE id = $1
-RETURNING id, payment_id, order_id, event_type, payload, event_status, retry_count, created_at, updated_at
-`
-
-type UpdatePaymentEventStatusParams struct {
-	ID          pgtype.UUID       `json:"id"`
-	EventStatus OutboxEventStatus `json:"event_status"`
-}
-
-func (q *Queries) UpdatePaymentEventStatus(ctx context.Context, arg UpdatePaymentEventStatusParams) (PaymentOutboxEvent, error) {
-	row := q.db.QueryRow(ctx, updatePaymentEventStatus, arg.ID, arg.EventStatus)
-	var i PaymentOutboxEvent
-	err := row.Scan(
-		&i.ID,
-		&i.PaymentID,
-		&i.OrderID,
-		&i.EventType,
-		&i.Payload,
-		&i.EventStatus,
-		&i.RetryCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
