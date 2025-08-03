@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	time_utils "github.com/toji-dev/go-shop/internal/pkg/time"
@@ -32,7 +33,6 @@ func NewOrderReconciler(orderRepo repository.OrderRepository, productAdapter ada
 
 func (r *OrderReconciler) ReconcilePendingOrders() {
 	ctx := context.Background()
-
 	log.Println("[OrderReconciler] Starting reconciliation of pending orders...")
 
 	olderThan := time_utils.GetUtcTime().Add(-STALE_ORDER_THRESHOLD)
@@ -49,6 +49,8 @@ func (r *OrderReconciler) ReconcilePendingOrders() {
 	}
 
 	log.Printf("[OrderReconciler] Found %d stale orders to process.", len(orders))
+
+	var wg sync.WaitGroup
 
 	// Process orders in batches of ORDER_IN_ONE_CALL
 	for i := 0; i < len(orders); i += ORDER_IN_ONE_CALL {
@@ -69,10 +71,19 @@ func (r *OrderReconciler) ReconcilePendingOrders() {
 			OrderIds: orderIDs,
 		}
 
+		wg.Add(1)
+
 		go func(req *product_v1.GetOrdersReservationStatusRequest) {
-			r.HandleUnreservationOrders(ctx, req)
+			defer wg.Done()
+			ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			r.HandleUnreservationOrders(ctxWithTimeout, req)
 		}(orderReservationCheckingReq)
 	}
+
+	wg.Wait()
+	log.Println("[OrderReconciler] All orders processed.")
 }
 
 func (r *OrderReconciler) HandleUnreservationOrders(ctx context.Context, getStatusReq *product_v1.GetOrdersReservationStatusRequest) {

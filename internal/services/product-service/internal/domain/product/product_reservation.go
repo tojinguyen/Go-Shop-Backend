@@ -7,7 +7,6 @@ type ProductReservationStatus string
 const (
 	ProductReservationStatusReserved   ProductReservationStatus = "RESERVED"
 	ProductReservationStatusUnreserved ProductReservationStatus = "UNRESERVED"
-	ProductReservationStatusPaid       ProductReservationStatus = "PAID"
 )
 
 type ProductReservation struct {

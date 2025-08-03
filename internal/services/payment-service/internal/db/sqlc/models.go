@@ -11,6 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type OutboxEventStatus string
+
+const (
+	OutboxEventStatusPENDING OutboxEventStatus = "PENDING"
+	OutboxEventStatusSENT    OutboxEventStatus = "SENT"
+	OutboxEventStatusFAILED  OutboxEventStatus = "FAILED"
+)
+
+func (e *OutboxEventStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = OutboxEventStatus(s)
+	case string:
+		*e = OutboxEventStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for OutboxEventStatus: %T", src)
+	}
+	return nil
+}
+
+type NullOutboxEventStatus struct {
+	OutboxEventStatus OutboxEventStatus `json:"outbox_event_status"`
+	Valid             bool              `json:"valid"` // Valid is true if OutboxEventStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullOutboxEventStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.OutboxEventStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.OutboxEventStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullOutboxEventStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.OutboxEventStatus), nil
+}
+
 type PaymentMethod string
 
 const (
@@ -112,4 +155,16 @@ type Payment struct {
 	PaymentStatus         PaymentStatus      `json:"payment_status"`
 	CreatedAt             pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PaymentOutboxEvent struct {
+	ID          pgtype.UUID        `json:"id"`
+	PaymentID   pgtype.UUID        `json:"payment_id"`
+	OrderID     pgtype.UUID        `json:"order_id"`
+	EventType   string             `json:"event_type"`
+	Payload     []byte             `json:"payload"`
+	EventStatus OutboxEventStatus  `json:"event_status"`
+	RetryCount  int32              `json:"retry_count"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -98,6 +99,18 @@ func (r *orderRepository) CreateOrder(ctx *gin.Context, order *domain.Order) (*d
 }
 
 func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderID string, status sqlc.OrderStatus) (*domain.Order, error) {
+	currentOrder, err := r.queries.GetOrderByID(ctx, converter.StringToPgUUID(orderID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order: %w", err)
+	}
+
+	// IDEMPOTENCY CHECK
+	if currentOrder.OrderStatus == status {
+		log.Printf("Order %s is already in status %s. Idempotency check passed.", orderID, status)
+		return toDomainOrder(&currentOrder), nil
+	}
+
+	// If status is not the same, update the order status
 	updatedOrder, err := r.queries.UpdateOrderStatus(ctx, sqlc.UpdateOrderStatusParams{
 		ID:          converter.StringToPgUUID(orderID),
 		OrderStatus: status,

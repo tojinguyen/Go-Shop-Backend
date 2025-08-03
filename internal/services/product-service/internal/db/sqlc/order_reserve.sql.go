@@ -93,6 +93,26 @@ func (q *Queries) IsOrderReserved(ctx context.Context, orderID pgtype.UUID) (boo
 	return reserved, err
 }
 
+const reserveOrder = `-- name: ReserveOrder :exec
+INSERT INTO order_reservations (
+	order_id,
+	shop_id,
+	reservation_status
+)
+VALUES ($1, $2, $3)
+`
+
+type ReserveOrderParams struct {
+	OrderID           pgtype.UUID       `json:"order_id"`
+	ShopID            pgtype.UUID       `json:"shop_id"`
+	ReservationStatus ReservationStatus `json:"reservation_status"`
+}
+
+func (q *Queries) ReserveOrder(ctx context.Context, arg ReserveOrderParams) error {
+	_, err := q.db.Exec(ctx, reserveOrder, arg.OrderID, arg.ShopID, arg.ReservationStatus)
+	return err
+}
+
 const updateReservationStatusOfOrder = `-- name: UpdateReservationStatusOfOrder :exec
 UPDATE order_reservations
 SET reservation_status = $2, updated_at = NOW()

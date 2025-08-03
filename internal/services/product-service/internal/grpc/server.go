@@ -78,7 +78,9 @@ func (s *Server) GetProductsInfo(ctx context.Context, req *product_v1.GetProduct
 }
 
 func (s *Server) ReserveProducts(ctx context.Context, req *product_v1.ReserveProductsRequest) (*product_v1.ReserveProductsResponse, error) {
-	statuses, err := s.productRepo.ReserveStock(ctx, req.GetProducts())
+	log.Printf("[ProductService] ReserveProducts called for order ID: %s", req.OrderId)
+
+	statuses, err := s.productRepo.ReserveStock(ctx, req.OrderId, req.ShopId, req.GetProducts())
 	if err != nil {
 		log.Printf("Error during stock reservation for order %s: %v", req.OrderId, err)
 		return &product_v1.ReserveProductsResponse{Success: false}, err

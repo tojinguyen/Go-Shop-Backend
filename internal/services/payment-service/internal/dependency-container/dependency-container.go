@@ -14,10 +14,14 @@ import (
 )
 
 type DependencyContainer struct {
-	config         *config.Config
-	postgreSQL     *postgresql_infra.PostgreSQLService
-	paymentRepo    repository.PaymentRepository
-	paymentUseCase usecase.PaymentUseCase
+	config           *config.Config
+	postgreSQL       *postgresql_infra.PostgreSQLService
+	paymentRepo      repository.PaymentRepository
+	paymentEventRepo repository.PaymentEventRepository
+
+	paymentEventUseCase usecase.PaymentEventUseCase
+	paymentUseCase      usecase.PaymentUseCase
+
 	paymentHandler handler.PaymentHandler
 
 	paymentMethodFactory *paymentprovider.PaymentProviderFactory
@@ -73,6 +77,7 @@ func (sc *DependencyContainer) initPostgreSQL() error {
 
 func (sc *DependencyContainer) initRepositories() {
 	sc.paymentRepo = repository.NewPaymentRepository(sc.postgreSQL)
+	sc.paymentEventRepo = repository.NewPaymentEventRepository(sc.postgreSQL)
 	log.Println("Payment repository initialized")
 }
 
@@ -101,6 +106,8 @@ func (sc *DependencyContainer) initUseCases() {
 		sc.paymentMethodFactory,
 		sc.orderServiceAdapter,
 	)
+
+	sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(sc.paymentEventRepo, sc.orderServiceAdapter)
 	log.Println("Payment use case initialized")
 }
 
@@ -119,4 +126,19 @@ func (sc *DependencyContainer) GetConfig() *config.Config {
 
 func (sc *DependencyContainer) GetPaymentRepository() repository.PaymentRepository {
 	return sc.paymentRepo
+}
+
+func (sc *DependencyContainer) GetPaymentEventRepository() repository.PaymentEventRepository {
+	return sc.paymentEventRepo
+}
+
+func (sc *DependencyContainer) GetPaymentUseCase() usecase.PaymentUseCase {
+	return sc.paymentUseCase
+}
+
+func (sc *DependencyContainer) GetPaymentEventUseCase() usecase.PaymentEventUseCase {
+	if sc.paymentEventUseCase == nil {
+		sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(sc.paymentEventRepo, sc.orderServiceAdapter)
+	}
+	return sc.paymentEventUseCase
 }
