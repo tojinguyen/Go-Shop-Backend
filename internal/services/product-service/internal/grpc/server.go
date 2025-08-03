@@ -99,7 +99,66 @@ func (s *Server) ReserveProducts(ctx context.Context, req *product_v1.ReservePro
 	}, nil
 }
 
-func (s *Server) UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error) {
-	log.Println("[ProductService] UnreserveProducts called, but not implemented yet.")
-	return nil, nil
+func (s *Server) GetOrderReservationStatus(ctx context.Context, req *product_v1.GetOrderReservationStatusRequest) (*product_v1.GetOrderReservationStatusResponse, error) {
+	log.Printf("[ProductService] GetOrderReservationStatus called for order ID: %s", req.OrderId)
+	status, err := s.productRepo.GetReservationStatusOfOrder(ctx, req.OrderId)
+	if err != nil {
+		log.Printf("Error getting order reservation status: %v", err)
+		return nil, err
+	}
+
+	if status == nil {
+		log.Printf("No reservation found for order ID %s", req.OrderId)
+		return nil, nil
+	}
+
+	log.Printf("Reservation status for order ID %s: %s", req.OrderId, status.Status)
+	return status, nil
+}
+
+func (s *Server) GetOrdersReservationStatus(ctx context.Context, req *product_v1.GetOrdersReservationStatusRequest) (*product_v1.GetOrdersReservationStatusResponse, error) {
+	log.Printf("[ProductService] GetOrdersReservationStatus called for %d orders", len(req.OrderIds))
+
+	if len(req.OrderIds) == 0 {
+		return &product_v1.GetOrdersReservationStatusResponse{
+			Orders: []*product_v1.GetOrderReservationStatusResponse{},
+		}, nil
+	}
+
+	orderStatuses, err := s.productRepo.GetReservationStatusOfOrders(ctx, req.OrderIds)
+	if err != nil {
+		log.Printf("Error getting reservation statuses for orders: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Retrieved reservation statuses for %d orders", len(orderStatuses))
+	return &product_v1.GetOrdersReservationStatusResponse{
+		Orders: orderStatuses,
+	}, nil
+}
+
+func (s *Server) UnReserveOrders(ctx context.Context, req *product_v1.UnreserveOrdersRequest) (*product_v1.UnreserveOrdersResponse, error) {
+	log.Printf("[ProductService] Unreserving orders: %+v", req)
+
+	var results []*product_v1.UnreserveOrderResult
+	for _, order := range req.Orders {
+		result := &product_v1.UnreserveOrderResult{
+			OrderId: order.OrderId,
+			ShopId:  order.ShopId,
+			Success: true,
+		}
+
+		// Unreserve each order
+		err := s.productRepo.UnreserveStock(ctx, order.OrderId, order.Products)
+		if err != nil {
+			log.Printf("[ProductService] Error unreserving stock for order %s: %v", order.OrderId, err)
+			result.Success = false
+		}
+
+		results = append(results, result)
+	}
+
+	return &product_v1.UnreserveOrdersResponse{
+		Results: results,
+	}, nil
 }

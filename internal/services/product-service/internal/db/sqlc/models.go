@@ -59,9 +59,8 @@ func (ns NullProductStatus) Value() (driver.Value, error) {
 type ReservationStatus string
 
 const (
-	ReservationStatusRESERVED  ReservationStatus = "RESERVED"
-	ReservationStatusCOMMITTED ReservationStatus = "COMMITTED"
-	ReservationStatusCANCELLED ReservationStatus = "CANCELLED"
+	ReservationStatusRESERVED   ReservationStatus = "RESERVED"
+	ReservationStatusUNRESERVED ReservationStatus = "UNRESERVED"
 )
 
 func (e *ReservationStatus) Scan(src interface{}) error {

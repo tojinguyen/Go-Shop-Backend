@@ -63,7 +63,7 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 		return nil, apperror.NewBadRequest("One or more products are invalid or unavailable", err)
 	}
 
-	// --- STAGE 2: CALCULATION & ORDER CREATION (PENDING) ---
+	// --- STAGE 2: CALCULATION & ORDER CREATION (order_status: PENDING) ---
 	orderID := uuid.New().String()
 	totalAmount := 0.0
 	orderItems := make([]domain.OrderItem, len(productsInfo.Products))
@@ -181,6 +181,7 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 	return finalOrder, nil
 }
 
+// Validate data with business rules before creating an order
 func (u *orderUsecase) validatePrerequisites(ctx *gin.Context, req *dto.CreateOrderRequest) error {
 	// Validate shop existence
 	isShopExists, err := u.shopServiceAdapter.CheckShopExists(ctx, req.ShopID)

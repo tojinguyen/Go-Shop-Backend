@@ -8,8 +8,9 @@ service ProductService {
     rpc GetProductInfo(GetProductInfoRequest) returns (GetProductInfoResponse) {}
     rpc GetProductsInfo(GetProductsInfoRequest) returns (GetProductsInfoResponse) {}
     rpc ReserveProducts(ReserveProductsRequest) returns (ReserveProductsResponse) {}
-    rpc UnreserveProducts(UnreserveProductsRequest) returns (UnreserveProductsResponse) {}
     rpc GetOrderReservationStatus(GetOrderReservationStatusRequest) returns (GetOrderReservationStatusResponse) {}
+    rpc GetOrdersReservationStatus(GetOrdersReservationStatusRequest) returns (GetOrdersReservationStatusResponse) {}
+    rpc UnreserveOrders(UnreserveOrdersRequest) returns (UnreserveOrdersResponse) {}
 }
 
 message GetProductInfoRequest {
@@ -60,7 +61,35 @@ message ProductReservationStatus {
     string message = 3;
 }
 
-message UnreserveProductsRequest {
+message GetOrderReservationStatusRequest {
+    string order_id = 1;
+}
+
+message GetOrderReservationStatusResponse {
+    enum ReservationStatus {
+        RESERVED = 0;   // Order is reserved
+        UNRESERVED = 1; // Order is committed
+    }
+
+    string order_id = 1;
+    string shop_id = 2;
+    string status = 3; // ReservationStatus
+    bool founded = 4; // true if the order was found, false otherwise
+}
+
+message GetOrdersReservationStatusRequest {
+    repeated string order_ids = 1;
+}
+
+message GetOrdersReservationStatusResponse {
+    repeated GetOrderReservationStatusResponse orders = 1;
+}
+
+message UnreserveOrdersRequest {
+    repeated UnreserveOrder orders = 3;
+}
+
+message UnreserveOrder {
     string order_id = 1;
     string shop_id = 2;
     repeated UnreserveProduct products = 3;
@@ -71,24 +100,12 @@ message UnreserveProduct {
     int32 quantity = 2;
 }
 
-message UnreserveProductsResponse {
-    bool success = 1;
-    repeated ProductReservationStatus reservations = 2;
+message UnreserveOrdersResponse {
+    repeated UnreserveOrderResult results = 2;
 }
 
-message GetOrderReservationStatusRequest {
-    string order_id = 1;
-}
-
-message GetOrderReservationStatusResponse {
-    enum ReservationStatus {
-        RESERVED = 0;   // Order is reserved
-        COMMITTED = 1; // Order is committed
-        CANCELLED = 2;  // Order is cancelled
-    }
-
+message UnreserveOrderResult {
     string order_id = 1;
     string shop_id = 2;
-    string status = 3; // "RESERVED", "UNRESERVED", "CANCELLED"
-
+    bool success = 3;
 }

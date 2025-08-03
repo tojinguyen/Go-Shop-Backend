@@ -11,6 +11,74 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getReservationStatusOfOrder = `-- name: GetReservationStatusOfOrder :one
+SELECT id, order_id, shop_id, reservation_status, created_at, updated_at FROM order_reservations
+WHERE order_id = $1
+`
+
+func (q *Queries) GetReservationStatusOfOrder(ctx context.Context, orderID pgtype.UUID) (OrderReservation, error) {
+	row := q.db.QueryRow(ctx, getReservationStatusOfOrder, orderID)
+	var i OrderReservation
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.ShopID,
+		&i.ReservationStatus,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getReservationStatusOfOrders = `-- name: GetReservationStatusOfOrders :many
+SELECT DISTINCT ON (r.order_id)
+			r.order_id,
+			r.shop_id,
+			r.reservation_status as status,
+			r.created_at,
+			r.updated_at,
+			true as founded
+		FROM order_reservations r
+		WHERE r.order_id = ANY($1::uuid[])
+		ORDER BY r.order_id, r.created_at DESC
+`
+
+type GetReservationStatusOfOrdersRow struct {
+	OrderID   pgtype.UUID        `json:"order_id"`
+	ShopID    pgtype.UUID        `json:"shop_id"`
+	Status    ReservationStatus  `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Founded   bool               `json:"founded"`
+}
+
+func (q *Queries) GetReservationStatusOfOrders(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetReservationStatusOfOrdersRow, error) {
+	rows, err := q.db.Query(ctx, getReservationStatusOfOrders, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetReservationStatusOfOrdersRow{}
+	for rows.Next() {
+		var i GetReservationStatusOfOrdersRow
+		if err := rows.Scan(
+			&i.OrderID,
+			&i.ShopID,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Founded,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const isOrderReserved = `-- name: IsOrderReserved :one
 SELECT EXISTS (
     SELECT 1 FROM order_reservations
@@ -23,4 +91,20 @@ func (q *Queries) IsOrderReserved(ctx context.Context, orderID pgtype.UUID) (boo
 	var reserved bool
 	err := row.Scan(&reserved)
 	return reserved, err
+}
+
+const updateReservationStatusOfOrder = `-- name: UpdateReservationStatusOfOrder :exec
+UPDATE order_reservations
+SET reservation_status = $2, updated_at = NOW()
+WHERE order_id = $1
+`
+
+type UpdateReservationStatusOfOrderParams struct {
+	OrderID           pgtype.UUID       `json:"order_id"`
+	ReservationStatus ReservationStatus `json:"reservation_status"`
+}
+
+func (q *Queries) UpdateReservationStatusOfOrder(ctx context.Context, arg UpdateReservationStatusOfOrderParams) error {
+	_, err := q.db.Exec(ctx, updateReservationStatusOfOrder, arg.OrderID, arg.ReservationStatus)
+	return err
 }

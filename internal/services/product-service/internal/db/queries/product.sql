@@ -71,3 +71,17 @@ RETURNING *;
 SELECT * FROM products
 WHERE id = ANY(@product_ids::uuid[]) AND delete_at IS NULL
 FOR UPDATE;
+
+-- name: UnreserveProducts :exec
+UPDATE products
+SET
+    reserve_quantity = CASE 
+        WHEN p.reserve_quantity >= p.quantity THEN p.reserve_quantity - p.quantity
+        ELSE p.reserve_quantity
+    END
+FROM (
+    SELECT 
+        CAST(unnest(@product_ids::uuid[]) as uuid) as id,
+        CAST(unnest(@quantities::int[]) as integer) as quantity
+) AS p
+WHERE products.id = p.id AND products.delete_at IS NULL;

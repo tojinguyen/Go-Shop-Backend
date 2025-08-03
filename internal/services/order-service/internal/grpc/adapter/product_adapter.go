@@ -12,7 +12,9 @@ import (
 type ProductServiceAdapter interface {
 	GetProductsInfo(ctx context.Context, req *product_v1.GetProductsInfoRequest) (*product_v1.GetProductsInfoResponse, error)
 	ReserveProducts(ctx context.Context, req *product_v1.ReserveProductsRequest) (*product_v1.ReserveProductsResponse, error)
-	UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error)
+	GetOrderReservationStatus(ctx context.Context, req *product_v1.GetOrderReservationStatusRequest) (*product_v1.GetOrderReservationStatusResponse, error)
+	GetOrdersReservationStatus(ctx context.Context, req *product_v1.GetOrdersReservationStatusRequest) (*product_v1.GetOrdersReservationStatusResponse, error)
+	UnreserveOrders(ctx context.Context, req *product_v1.UnreserveOrdersRequest) (*product_v1.UnreserveOrdersResponse, error)
 	Close() error
 }
 
@@ -47,8 +49,16 @@ func (a *grpcProductAdapter) ReserveProducts(ctx context.Context, req *product_v
 	return a.client.ReserveProducts(ctx, req)
 }
 
-func (a *grpcProductAdapter) UnreserveProducts(ctx context.Context, req *product_v1.UnreserveProductsRequest) (*product_v1.UnreserveProductsResponse, error) {
-	return a.client.UnreserveProducts(ctx, req)
+func (a *grpcProductAdapter) GetOrderReservationStatus(ctx context.Context, req *product_v1.GetOrderReservationStatusRequest) (*product_v1.GetOrderReservationStatusResponse, error) {
+	return a.client.GetOrderReservationStatus(ctx, req)
+}
+
+func (a *grpcProductAdapter) GetOrdersReservationStatus(ctx context.Context, req *product_v1.GetOrdersReservationStatusRequest) (*product_v1.GetOrdersReservationStatusResponse, error) {
+	return a.client.GetOrdersReservationStatus(ctx, req)
+}
+
+func (a *grpcProductAdapter) UnreserveOrders(ctx context.Context, req *product_v1.UnreserveOrdersRequest) (*product_v1.UnreserveOrdersResponse, error) {
+	return a.client.UnreserveOrders(ctx, req)
 }
 
 func (a *grpcProductAdapter) Close() error {
