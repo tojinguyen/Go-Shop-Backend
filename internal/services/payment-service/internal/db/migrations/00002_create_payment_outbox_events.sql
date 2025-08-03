@@ -9,7 +9,8 @@ CREATE TYPE outbox_event_status AS ENUM (
 CREATE TABLE payment_outbox_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     payment_id UUID NOT NULL,
-    event_type VARCHAR(255) NOT NULL,
+    order_id UUID NOT NULL,
+    event_type VARCHAR(255) NOT NULL, -- Ví dụ: 'PaymentSucceeded', 'PaymentFailed'
     payload JSONB NOT NULL,
     event_status outbox_event_status NOT NULL DEFAULT 'PENDING',
     retry_count INT NOT NULL DEFAULT 0,

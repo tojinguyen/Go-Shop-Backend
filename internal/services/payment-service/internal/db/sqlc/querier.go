@@ -12,7 +12,11 @@ import (
 
 type Querier interface {
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
+	CreatePaymentEvent(ctx context.Context, arg CreatePaymentEventParams) (PaymentOutboxEvent, error)
+	GetBatchPaymentEventsByEventTypeAndStatus(ctx context.Context, arg GetBatchPaymentEventsByEventTypeAndStatusParams) ([]PaymentOutboxEvent, error)
 	GetPaymentByOrderID(ctx context.Context, orderID pgtype.UUID) (Payment, error)
+	UpdatePaymentEvent(ctx context.Context, arg UpdatePaymentEventParams) (PaymentOutboxEvent, error)
+	UpdatePaymentEventStatus(ctx context.Context, arg UpdatePaymentEventStatusParams) (PaymentOutboxEvent, error)
 	UpdatePaymentStatus(ctx context.Context, arg UpdatePaymentStatusParams) (Payment, error)
 }
 
