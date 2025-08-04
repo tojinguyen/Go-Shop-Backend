@@ -212,7 +212,10 @@ func (p *momoProvider) HandleIPN(r *http.Request) (*domain.Payment, error) {
 	log.Printf("[MOMO IPN] Signature verification successful")
 
 	// Chuyển đổi thành domain.Payment để usecase xử lý
+	log.Printf("[MOMO IPN] Request IPN: %+v", req)
+	log.Printf("[MOMO IPN] Processing payment for OrderID: %d", req.TransID)
 	providerTransID := fmt.Sprintf("%d", req.TransID)
+	log.Printf("[MOMO IPN] Provider Transaction ID: %s", providerTransID)
 	payment := &domain.Payment{
 		OrderID:               originalOrderID,
 		Amount:                float64(req.Amount),
