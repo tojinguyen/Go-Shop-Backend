@@ -15,6 +15,7 @@ import (
 type PaymentHandler interface {
 	InitiatePayment(c *gin.Context)
 	HandleIPN(c *gin.Context)
+	RefundPayment(c *gin.Context)
 }
 
 type paymentHandler struct {
@@ -60,4 +61,20 @@ func (h *paymentHandler) HandleIPN(c *gin.Context) {
 		return
 	}
 	response.NoContent(c)
+}
+
+func (h *paymentHandler) RefundPayment(c *gin.Context) {
+	var req dto.PaymentRefundRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_REQUEST", "Invalid request body", err.Error())
+		return
+	}
+
+	refundRes, err := h.paymentUseCase.Refund(c.Request.Context(), req.PaymentID, req.OrderID, req.Reason)
+	if err != nil {
+		log.Printf("Error refunding payment: %v", err)
+		response.InternalServerError(c, "PAYMENT_REFUND_FAILED", err.Error())
+		return
+	}
+	response.Success(c, "Payment refunded successfully", refundRes)
 }

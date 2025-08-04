@@ -21,6 +21,7 @@ import (
 type PaymentUseCase interface {
 	InitiatePayment(ctx context.Context, userID string, req dto.InitiatePaymentRequest) (*dto.InitiatePaymentResponse, error)
 	HandleIPN(ctx context.Context, providerName constant.PaymentProviderMethod, r *http.Request) error
+	Refund(ctx context.Context, paymentID, orderID, reason string) (*dto.RefundResult, error)
 }
 
 type paymentUseCase struct {
@@ -158,4 +159,51 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 	}
 
 	return nil
+}
+
+func (uc *paymentUseCase) Refund(ctx context.Context, paymentID, orderID, reason string) (*dto.RefundResult, error) {
+	log.Printf("Refunding payment with ID: %s", paymentID)
+	payment, err := uc.paymentRepo.GetPaymentByOrderID(ctx, orderID)
+	if err != nil {
+		log.Printf("Error retrieving payment with ID %s: %v", paymentID, err)
+		return nil, fmt.Errorf("failed to get payment with ID %s: %w", paymentID, err)
+	}
+
+	if payment.Status != constant.PaymentStatusSuccess {
+		log.Printf("Payment with ID %s is not eligible for refund, current status: %s", paymentID, payment.Status)
+		return nil, fmt.Errorf("payment with ID %s is not eligible for refund, current status: %s", paymentID, payment.Status)
+	}
+
+	paymentMethod := payment.Provider
+	paymentProvider, err := uc.providerFactory.GetProvider(constant.PaymentProviderMethod(paymentMethod))
+
+	// Call provider's refund method
+	refundData := paymentprovider.RefundData{
+		PaymentID:             paymentID,
+		OrderID:               orderID,
+		ProviderTransactionID: *payment.ProviderTransactionID,
+		Amount:                int64(payment.Amount),
+		Reason:                reason,
+	}
+
+	refundRes, err := paymentProvider.Refund(ctx, refundData)
+
+	if err != nil {
+		log.Printf("Error refunding payment with ID %s: %v", paymentID, err)
+		return nil, fmt.Errorf("failed to refund payment with ID %s: %w", paymentID, err)
+	}
+
+	//TODO: Update payment status and provider transaction ID in the database
+	updateParams := sqlc.UpdatePaymentStatusParams{
+		ID:                    converter.StringToPgUUID(payment.ID),
+		PaymentStatus:         sqlc.PaymentStatus(constant.PaymentStatusRefunded),
+		ProviderTransactionID: converter.StringToPgText(payment.ProviderTransactionID),
+	}
+	_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updateParams)
+
+	return &dto.RefundResult{
+		ProviderRefundID: refundRes.ProviderRefundID,
+		Status:           refundRes.Status,
+		Message:          "Refund processed successfully.",
+	}, nil
 }

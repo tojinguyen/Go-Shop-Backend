@@ -23,3 +23,11 @@ RETURNING *;
 -- name: GetPaymentByOrderID :one
 SELECT * FROM payments
 WHERE order_id = $1;
+
+-- name: UpdatePaymentProviderRefundID :one
+UPDATE payments
+SET
+    provider_refund_id = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;

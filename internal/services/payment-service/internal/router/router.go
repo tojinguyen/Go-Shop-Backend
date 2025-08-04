@@ -41,6 +41,7 @@ func Init(router *gin.Engine, dependencyContainer *dependency_container.Dependen
 		payments.Use(middleware.AuthHeaderMiddleware())
 		{
 			payments.POST("/initiate", paymentHandler.InitiatePayment)
+			payments.POST("/refund", paymentHandler.RefundPayment)
 		}
 	}
 }
