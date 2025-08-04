@@ -111,11 +111,6 @@ PUT    /api/v1/shops/{id}/orders/{order_id}/status
 POST   /api/v1/shops/{id}/orders/{order_id}/fulfill
 GET    /api/v1/shops/{id}/orders/pending
 
-# Shop Analytics & Reports
-GET    /api/v1/shops/{id}/analytics/revenue
-GET    /api/v1/shops/{id}/analytics/orders
-GET    /api/v1/shops/{id}/analytics/products
-
 # Promotions & Campaigns
 GET    /api/v1/shops/{id}/promotions
 POST   /api/v1/shops/{id}/promotions
