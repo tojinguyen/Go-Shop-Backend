@@ -193,6 +193,14 @@ func (uc *paymentUseCase) Refund(ctx context.Context, paymentID, orderID, reason
 		return nil, fmt.Errorf("failed to refund payment with ID %s: %w", paymentID, err)
 	}
 
+	//TODO: Update payment status and provider transaction ID in the database
+	updateParams := sqlc.UpdatePaymentStatusParams{
+		ID:                    converter.StringToPgUUID(payment.ID),
+		PaymentStatus:         sqlc.PaymentStatus(constant.PaymentStatusRefunded),
+		ProviderTransactionID: converter.StringToPgText(payment.ProviderTransactionID),
+	}
+	_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updateParams)
+
 	return &dto.RefundResult{
 		ProviderRefundID: refundRes.ProviderRefundID,
 		Status:           refundRes.Status,

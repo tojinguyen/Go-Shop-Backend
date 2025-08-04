@@ -18,6 +18,7 @@ type Querier interface {
 	GetPaymentByOrderID(ctx context.Context, orderID pgtype.UUID) (Payment, error)
 	GetRefundPaymentByID(ctx context.Context, id pgtype.UUID) (RefundPayment, error)
 	UpdatePaymentEvent(ctx context.Context, arg UpdatePaymentEventParams) (PaymentOutboxEvent, error)
+	UpdatePaymentProviderRefundID(ctx context.Context, arg UpdatePaymentProviderRefundIDParams) (Payment, error)
 	UpdatePaymentStatus(ctx context.Context, arg UpdatePaymentStatusParams) (Payment, error)
 	UpdateRefundPaymentStatus(ctx context.Context, arg UpdateRefundPaymentStatusParams) error
 }
