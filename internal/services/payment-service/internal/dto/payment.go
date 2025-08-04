@@ -26,3 +26,15 @@ type MomoIPNRequest struct {
 	ExtraData    string `json:"extraData"`
 	Signature    string `json:"signature"`
 }
+
+type PaymentRefundRequest struct {
+	PaymentID string `json:"payment_id" binding:"required,uuid"`
+	OrderID   string `json:"order_id" binding:"required,uuid"`
+	Reason    string `json:"reason" binding:"required"`
+}
+
+type RefundResult struct {
+	ProviderRefundID string `json:"provider_refund_id"`
+	Status           string `json:"status"`            // e.g., "COMPLETED", "FAILED"
+	Message          string `json:"message,omitempty"` // Optional message for additional context
+}

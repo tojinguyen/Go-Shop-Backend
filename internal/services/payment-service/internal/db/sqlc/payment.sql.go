@@ -22,7 +22,7 @@ INSERT INTO payments (
     payment_status
 ) VALUES (
     $1, $2, $3, $4, $5, $6, 'PENDING'
-) RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at
+) RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id
 `
 
 type CreatePaymentParams struct {
@@ -56,12 +56,13 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 		&i.PaymentStatus,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProviderRefundID,
 	)
 	return i, err
 }
 
 const getPaymentByOrderID = `-- name: GetPaymentByOrderID :one
-SELECT id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at FROM payments
+SELECT id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id FROM payments
 WHERE order_id = $1
 `
 
@@ -80,6 +81,7 @@ func (q *Queries) GetPaymentByOrderID(ctx context.Context, orderID pgtype.UUID) 
 		&i.PaymentStatus,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProviderRefundID,
 	)
 	return i, err
 }
@@ -91,7 +93,7 @@ SET
     provider_transaction_id = $3,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at
+RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id
 `
 
 type UpdatePaymentStatusParams struct {
@@ -115,6 +117,7 @@ func (q *Queries) UpdatePaymentStatus(ctx context.Context, arg UpdatePaymentStat
 		&i.PaymentStatus,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProviderRefundID,
 	)
 	return i, err
 }

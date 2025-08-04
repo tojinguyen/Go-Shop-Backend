@@ -143,6 +143,49 @@ func (ns NullPaymentStatus) Value() (driver.Value, error) {
 	return string(ns.PaymentStatus), nil
 }
 
+type RefundStatus string
+
+const (
+	RefundStatusPENDING   RefundStatus = "PENDING"
+	RefundStatusCOMPLETED RefundStatus = "COMPLETED"
+	RefundStatusFAILED    RefundStatus = "FAILED"
+)
+
+func (e *RefundStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RefundStatus(s)
+	case string:
+		*e = RefundStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RefundStatus: %T", src)
+	}
+	return nil
+}
+
+type NullRefundStatus struct {
+	RefundStatus RefundStatus `json:"refund_status"`
+	Valid        bool         `json:"valid"` // Valid is true if RefundStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRefundStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.RefundStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RefundStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRefundStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RefundStatus), nil
+}
+
 type Payment struct {
 	ID                    pgtype.UUID        `json:"id"`
 	OrderID               pgtype.UUID        `json:"order_id"`
@@ -155,6 +198,7 @@ type Payment struct {
 	PaymentStatus         PaymentStatus      `json:"payment_status"`
 	CreatedAt             pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
+	ProviderRefundID      pgtype.Text        `json:"provider_refund_id"`
 }
 
 type PaymentOutboxEvent struct {
@@ -167,4 +211,15 @@ type PaymentOutboxEvent struct {
 	RetryCount  int32              `json:"retry_count"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type RefundPayment struct {
+	ID               pgtype.UUID        `json:"id"`
+	PaymentID        pgtype.UUID        `json:"payment_id"`
+	Amount           pgtype.Numeric     `json:"amount"`
+	Reason           pgtype.Text        `json:"reason"`
+	ProviderRefundID pgtype.Text        `json:"provider_refund_id"`
+	RefundStatus     RefundStatus       `json:"refund_status"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }

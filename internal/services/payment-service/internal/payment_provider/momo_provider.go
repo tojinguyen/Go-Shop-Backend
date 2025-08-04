@@ -11,11 +11,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/dto"
 )
@@ -60,6 +62,27 @@ type MomoIPNRequest struct {
 	ResponseTime int64  `json:"responseTime"`
 	ExtraData    string `json:"extraData"`
 	Signature    string `json:"signature"`
+}
+
+type MomoRefundRequest struct {
+	PartnerCode string `json:"partnerCode"`
+	OrderID     string `json:"orderId"`
+	RequestID   string `json:"requestId"`
+	Amount      int64  `json:"amount"`
+	TransID     int64  `json:"transId"`
+	Lang        string `json:"lang"`
+	Description string `json:"description"`
+	Signature   string `json:"signature"`
+}
+
+type MomoRefundResponse struct {
+	PartnerCode string `json:"partnerCode"`
+	OrderID     string `json:"orderId"`
+	RequestID   string `json:"requestId"`
+	Amount      int64  `json:"amount"`
+	ResultCode  int    `json:"resultCode"`
+	Message     string `json:"message"`
+	TransID     int64  `json:"transId"`
 }
 
 type momoProvider struct {
@@ -205,6 +228,82 @@ func (p *momoProvider) HandleIPN(r *http.Request) (*domain.Payment, error) {
 	}
 
 	return payment, nil
+}
+
+func (p *momoProvider) Refund(ctx context.Context, data RefundData) (*RefundResult, error) {
+	requestID := uuid.New().String()
+	transID, err := strconv.ParseInt(data.ProviderTransactionID, 10, 64)
+	if err != nil {
+		log.Printf("[MOMO REFUND] Invalid provider transaction ID format: %v", err)
+		return nil, fmt.Errorf("invalid provider transaction ID format: %w", err)
+	}
+
+	req := &MomoRefundRequest{
+		PartnerCode: p.cfg.PartnerCode,
+		OrderID:     data.OrderID,
+		RequestID:   requestID,
+		Amount:      data.Amount,
+		TransID:     transID,
+		Lang:        "vi",
+		Description: data.Reason,
+	}
+
+	rawSignature := fmt.Sprintf(
+		"accessKey=%s&amount=%d&description=%s&orderId=%s&partnerCode=%s&requestId=%s&transId=%d",
+		p.cfg.AccessKey,
+		req.Amount,
+		req.Description,
+		req.OrderID,
+		p.cfg.PartnerCode,
+		req.RequestID,
+		req.TransID,
+	)
+
+	req.Signature = p.generateSignature(rawSignature)
+
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error marshalling MoMo refund request: %v", err)
+		return nil, fmt.Errorf("failed to marshal MoMo refund request: %w", err)
+	}
+
+	httpRequest, err := http.NewRequestWithContext(ctx, "POST", p.cfg.ApiRefundEndpoint, bytes.NewBuffer(reqBody))
+	if err != nil {
+		log.Printf("Error creating MoMo refund HTTP request: %v", err)
+		return nil, fmt.Errorf("failed to create MoMo refund HTTP request: %w", err)
+	}
+
+	httpRequest.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+
+	resp, err := client.Do(httpRequest)
+	if err != nil {
+		log.Printf("Error sending refund request to MoMo: %v", err)
+		return nil, fmt.Errorf("failed to send refund request to MoMo: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading MoMo refund response body: %v", err)
+		return nil, fmt.Errorf("failed to read MoMo refund response body: %w", err)
+	}
+
+	var momoResp MomoRefundResponse
+	if err := json.Unmarshal(body, &momoResp); err != nil {
+		log.Printf("Error unmarshalling MoMo refund response: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal MoMo refund response: %w", err)
+	}
+
+	if momoResp.ResultCode != 0 && momoResp.ResultCode != 10 {
+		log.Printf("MoMo refund returned an error: %s (code: %d)", momoResp.Message, momoResp.ResultCode)
+		return nil, fmt.Errorf("momo refund failed with code %d: %s", momoResp.ResultCode, momoResp.Message)
+	}
+
+	return &RefundResult{
+		ProviderRefundID: fmt.Sprintf("%d", momoResp.TransID),
+		Status:           string(sqlc.RefundStatusCOMPLETED),
+	}, nil
 }
 
 func (p *momoProvider) verifySignature(data, signature string) bool {

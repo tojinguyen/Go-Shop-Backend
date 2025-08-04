@@ -62,10 +62,11 @@ type ExternalServiceConfig struct {
 }
 
 type MomoConfig struct {
-	PartnerCode string `mapstructure:"partner_code"`
-	AccessKey   string `mapstructure:"access_key"`
-	SecretKey   string `mapstructure:"secret_key"`
-	ApiEndpoint string `mapstructure:"api_endpoint"`
+	PartnerCode       string `mapstructure:"partner_code"`
+	AccessKey         string `mapstructure:"access_key"`
+	SecretKey         string `mapstructure:"secret_key"`
+	ApiEndpoint       string `mapstructure:"api_endpoint"`
+	ApiRefundEndpoint string `mapstructure:"api_refund_endpoint"`
 }
 
 func (a *AppConfig) IsProduction() bool {
@@ -102,10 +103,11 @@ func Load() (*Config, error) {
 			DB:       getIntEnv("REDIS_DB", 1),
 		},
 		Momo: MomoConfig{
-			PartnerCode: getEnv("MOMO_PARTNER_CODE", ""),
-			AccessKey:   getEnv("MOMO_ACCESS_KEY", ""),
-			SecretKey:   getEnv("MOMO_SECRET_KEY", ""),
-			ApiEndpoint: getEnv("MOMO_API_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/create"),
+			PartnerCode:       getEnv("MOMO_PARTNER_CODE", ""),
+			AccessKey:         getEnv("MOMO_ACCESS_KEY", ""),
+			SecretKey:         getEnv("MOMO_SECRET_KEY", ""),
+			ApiEndpoint:       getEnv("MOMO_API_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/create"),
+			ApiRefundEndpoint: getEnv("MOMO_API_REFUND_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/refund"),
 		},
 		OrderGrpcConfig: GrpcConfig{
 			OrderServiceHost: getEnv("ORDER_SERVICE_GRPC_HOST", "localhost"),
