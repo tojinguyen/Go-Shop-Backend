@@ -164,6 +164,9 @@ POST   /api/v1/payments/initiate
 # Payment Gateway Integration
 POST   /api/v1/payments/ipn/:provider
 
+# Refund Payment
+POST   /api/v1/payments/refund
+
 # Transaction History
 GET    /api/v1/payments/history
 GET    /api/v1/payments/receipts/{id}
