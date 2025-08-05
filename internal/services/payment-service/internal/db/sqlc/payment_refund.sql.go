@@ -78,8 +78,8 @@ func (q *Queries) GetRefundPaymentByID(ctx context.Context, id pgtype.UUID) (Ref
 	return i, err
 }
 
-const updateRefundPaymentStatus = `-- name: UpdateRefundPaymentStatus :exec
-UPDATE refund_payments SET refund_status = $2 WHERE id = $1
+const updateRefundPaymentStatus = `-- name: UpdateRefundPaymentStatus :one
+UPDATE refund_payments SET refund_status = $2 WHERE id = $1 RETURNING id, payment_id, order_id, amount, reason, provider_refund_id, refund_status, created_at, updated_at
 `
 
 type UpdateRefundPaymentStatusParams struct {
@@ -87,7 +87,19 @@ type UpdateRefundPaymentStatusParams struct {
 	RefundStatus RefundStatus `json:"refund_status"`
 }
 
-func (q *Queries) UpdateRefundPaymentStatus(ctx context.Context, arg UpdateRefundPaymentStatusParams) error {
-	_, err := q.db.Exec(ctx, updateRefundPaymentStatus, arg.ID, arg.RefundStatus)
-	return err
+func (q *Queries) UpdateRefundPaymentStatus(ctx context.Context, arg UpdateRefundPaymentStatusParams) (RefundPayment, error) {
+	row := q.db.QueryRow(ctx, updateRefundPaymentStatus, arg.ID, arg.RefundStatus)
+	var i RefundPayment
+	err := row.Scan(
+		&i.ID,
+		&i.PaymentID,
+		&i.OrderID,
+		&i.Amount,
+		&i.Reason,
+		&i.ProviderRefundID,
+		&i.RefundStatus,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

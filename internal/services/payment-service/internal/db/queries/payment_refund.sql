@@ -13,5 +13,5 @@ INSERT INTO refund_payments (
 -- name: GetRefundPaymentByID :one
 SELECT * FROM refund_payments WHERE id = $1;
 
--- name: UpdateRefundPaymentStatus :exec
-UPDATE refund_payments SET refund_status = $2 WHERE id = $1;
+-- name: UpdateRefundPaymentStatus :one
+UPDATE refund_payments SET refund_status = $2 WHERE id = $1 RETURNING *;

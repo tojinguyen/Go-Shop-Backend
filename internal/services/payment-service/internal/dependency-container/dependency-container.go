@@ -107,7 +107,12 @@ func (sc *DependencyContainer) initUseCases() {
 		sc.orderServiceAdapter,
 	)
 
-	sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(sc.paymentEventRepo, sc.orderServiceAdapter)
+	sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(
+		sc.paymentRepo,
+		sc.paymentEventRepo,
+		sc.orderServiceAdapter,
+		sc.paymentMethodFactory,
+	)
 	log.Println("Payment use case initialized")
 }
 
@@ -138,7 +143,13 @@ func (sc *DependencyContainer) GetPaymentUseCase() usecase.PaymentUseCase {
 
 func (sc *DependencyContainer) GetPaymentEventUseCase() usecase.PaymentEventUseCase {
 	if sc.paymentEventUseCase == nil {
-		sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(sc.paymentEventRepo, sc.orderServiceAdapter)
+		sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(
+			sc.paymentRepo,
+			sc.paymentEventRepo,
+			sc.orderServiceAdapter,
+			sc.paymentMethodFactory,
+		)
 	}
+
 	return sc.paymentEventUseCase
 }

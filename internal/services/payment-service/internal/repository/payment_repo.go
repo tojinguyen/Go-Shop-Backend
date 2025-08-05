@@ -15,6 +15,8 @@ type PaymentRepository interface {
 	UpdatePaymentStatus(ctx context.Context, params sqlc.UpdatePaymentStatusParams) (*domain.Payment, error)
 	GetPaymentByOrderID(ctx context.Context, orderID string) (*domain.Payment, error)
 	CreatePaymentRefund(ctx context.Context, params sqlc.CreateRefundPaymentParams) (*domain.PaymentRefund, error)
+	GetRefundByPaymentID(ctx context.Context, paymentID string) (*domain.PaymentRefund, error)
+	UpdateRefundPaymentStatus(ctx context.Context, params sqlc.UpdateRefundPaymentStatusParams) (*domain.PaymentRefund, error)
 }
 
 type paymentRepository struct {
@@ -92,6 +94,22 @@ func (r *paymentRepository) GetPaymentByOrderID(ctx context.Context, orderID str
 
 func (r *paymentRepository) CreatePaymentRefund(ctx context.Context, params sqlc.CreateRefundPaymentParams) (*domain.PaymentRefund, error) {
 	result, err := r.queries.CreateRefundPayment(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return toDomainRefund(&result), nil
+}
+
+func (r *paymentRepository) GetRefundByPaymentID(ctx context.Context, paymentID string) (*domain.PaymentRefund, error) {
+	result, err := r.queries.GetRefundPaymentByID(ctx, converter.StringToPgUUID(paymentID))
+	if err != nil {
+		return nil, err
+	}
+	return toDomainRefund(&result), nil
+}
+
+func (r *paymentRepository) UpdateRefundPaymentStatus(ctx context.Context, params sqlc.UpdateRefundPaymentStatusParams) (*domain.PaymentRefund, error) {
+	result, err := r.queries.UpdateRefundPaymentStatus(ctx, params)
 	if err != nil {
 		return nil, err
 	}

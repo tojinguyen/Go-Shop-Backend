@@ -20,7 +20,7 @@ type Querier interface {
 	UpdatePaymentEvent(ctx context.Context, arg UpdatePaymentEventParams) (PaymentOutboxEvent, error)
 	UpdatePaymentProviderRefundID(ctx context.Context, arg UpdatePaymentProviderRefundIDParams) (Payment, error)
 	UpdatePaymentStatus(ctx context.Context, arg UpdatePaymentStatusParams) (Payment, error)
-	UpdateRefundPaymentStatus(ctx context.Context, arg UpdateRefundPaymentStatusParams) error
+	UpdateRefundPaymentStatus(ctx context.Context, arg UpdateRefundPaymentStatusParams) (RefundPayment, error)
 }
 
 var _ Querier = (*Queries)(nil)
