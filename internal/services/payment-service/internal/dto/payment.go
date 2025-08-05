@@ -34,7 +34,6 @@ type PaymentRefundRequest struct {
 }
 
 type RefundResult struct {
-	ProviderRefundID string `json:"provider_refund_id"`
-	Status           string `json:"status"`            // e.g., "COMPLETED", "FAILED"
-	Message          string `json:"message,omitempty"` // Optional message for additional context
+	Status  string `json:"status"`            // e.g., "COMPLETED", "FAILED"
+	Message string `json:"message,omitempty"` // Optional message for additional context
 }

@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 CREATE TYPE refund_status AS ENUM (
     'PENDING',
+    'REFUND_REQUESTED',
     'COMPLETED',
     'FAILED'
 );
