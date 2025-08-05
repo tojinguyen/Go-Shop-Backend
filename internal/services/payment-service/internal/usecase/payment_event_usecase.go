@@ -135,6 +135,7 @@ func (uc *paymentEventUseCase) HandleRefundPaymentPending() {
 			_, updateErr := uc.eventRepo.UpdatePaymentEvent(ctx, event)
 			if updateErr != nil {
 				log.Printf("[PaymentEventWorker] CRITICAL: Failed to update event status after successful processing for event ID %s: %v", event.ID, updateErr)
+				continue
 			}
 
 			// Add payment event REFUND_SUCCEEDED
@@ -224,6 +225,17 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 
 	if err != nil {
 		log.Printf("Error refunding payment with ID %s: %v", event.PaymentID, err)
+		updateRefundStatusParams := sqlc.UpdateRefundPaymentStatusParams{
+			ID:           converter.StringToPgUUID(refundPayment.ID),
+			RefundStatus: sqlc.RefundStatusFAILED,
+		}
+
+		_, err = uc.paymentRepo.UpdateRefundPaymentStatus(ctx, updateRefundStatusParams)
+		if err != nil {
+			log.Printf("Failed to update refund payment status for OrderID %s: %v", event.OrderID, err)
+			return fmt.Errorf("failed to update refund payment status for OrderID %s: %w", event.OrderID, err)
+		}
+
 		return fmt.Errorf("failed to refund payment with ID %s: %w", event.PaymentID, err)
 	}
 
@@ -234,7 +246,7 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 
 	updateRefundStatusParams := sqlc.UpdateRefundPaymentStatusParams{
 		ID:           converter.StringToPgUUID(refundPayment.ID),
-		RefundStatus: sqlc.RefundStatus(refundRes.Status),
+		RefundStatus: sqlc.RefundStatusCOMPLETED,
 	}
 
 	_, err = uc.paymentRepo.UpdateRefundPaymentStatus(ctx, updateRefundStatusParams)
@@ -245,7 +257,7 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 
 	updatePaymentStatus := sqlc.UpdatePaymentStatusParams{
 		ID:                    converter.StringToPgUUID(payment.ID),
-		PaymentStatus:         sqlc.PaymentStatus(refundRes.Status),
+		PaymentStatus:         sqlc.PaymentStatusREFUNDED,
 		ProviderTransactionID: converter.StringToPgText(payment.ProviderTransactionID),
 	}
 
