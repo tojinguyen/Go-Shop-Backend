@@ -10,6 +10,7 @@ CREATE TYPE refund_status AS ENUM (
 CREATE TABLE refund_payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     payment_id UUID NOT NULL,
+    order_id UUID NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     reason TEXT,
     provider_refund_id VARCHAR(255),

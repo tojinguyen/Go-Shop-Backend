@@ -14,6 +14,7 @@ type PaymentRepository interface {
 	CreatePayment(ctx context.Context, params sqlc.CreatePaymentParams) (*domain.Payment, error)
 	UpdatePaymentStatus(ctx context.Context, params sqlc.UpdatePaymentStatusParams) (*domain.Payment, error)
 	GetPaymentByOrderID(ctx context.Context, orderID string) (*domain.Payment, error)
+	CreatePaymentRefund(ctx context.Context, params sqlc.CreateRefundPaymentParams) (*domain.PaymentRefund, error)
 }
 
 type paymentRepository struct {
@@ -31,6 +32,37 @@ func NewPaymentRepository(db *postgresql_infra.PostgreSQLService) PaymentReposit
 	return &paymentRepository{
 		db:      db,
 		queries: queries,
+	}
+}
+
+// toDomain converts sqlc.Payment to domain.Payment
+func toDomain(p *sqlc.Payment) *domain.Payment {
+	return &domain.Payment{
+		ID:                    converter.PgUUIDToString(p.ID),
+		OrderID:               converter.PgUUIDToString(p.OrderID),
+		UserID:                converter.PgUUIDToString(p.UserID),
+		Amount:                converter.PgNumericToFloat64(p.Amount),
+		Currency:              p.Currency,
+		Method:                constant.PaymentMethod(p.PaymentMethod),
+		Provider:              *converter.PgTextToStringPtr(p.PaymentProvider),
+		ProviderTransactionID: converter.PgTextToStringPtr(p.ProviderTransactionID),
+		Status:                constant.PaymentStatus(p.PaymentStatus),
+		CreatedAt:             p.CreatedAt.Time,
+		UpdatedAt:             p.UpdatedAt.Time,
+	}
+}
+
+// toDomain converts sqlc.PaymentRefund to domain.PaymentRefund
+func toDomainRefund(r *sqlc.RefundPayment) *domain.PaymentRefund {
+	return &domain.PaymentRefund{
+		ID:           converter.PgUUIDToString(r.ID),
+		PaymentID:    converter.PgUUIDToString(r.PaymentID),
+		OrderID:      converter.PgUUIDToString(r.OrderID),
+		Amount:       converter.PgNumericToFloat64(r.Amount),
+		RefundStatus: constant.RefundStatus(r.RefundStatus),
+		Reason:       r.Reason.String,
+		CreatedAt:    r.CreatedAt.Time,
+		UpdatedAt:    r.UpdatedAt.Time,
 	}
 }
 
@@ -58,19 +90,10 @@ func (r *paymentRepository) GetPaymentByOrderID(ctx context.Context, orderID str
 	return toDomain(&result), nil
 }
 
-// toDomain converts sqlc.Payment to domain.Payment
-func toDomain(p *sqlc.Payment) *domain.Payment {
-	return &domain.Payment{
-		ID:                    converter.PgUUIDToString(p.ID),
-		OrderID:               converter.PgUUIDToString(p.OrderID),
-		UserID:                converter.PgUUIDToString(p.UserID),
-		Amount:                converter.PgNumericToFloat64(p.Amount),
-		Currency:              p.Currency,
-		Method:                constant.PaymentMethod(p.PaymentMethod),
-		Provider:              *converter.PgTextToStringPtr(p.PaymentProvider),
-		ProviderTransactionID: converter.PgTextToStringPtr(p.ProviderTransactionID),
-		Status:                constant.PaymentStatus(p.PaymentStatus),
-		CreatedAt:             p.CreatedAt.Time,
-		UpdatedAt:             p.UpdatedAt.Time,
+func (r *paymentRepository) CreatePaymentRefund(ctx context.Context, params sqlc.CreateRefundPaymentParams) (*domain.PaymentRefund, error) {
+	result, err := r.queries.CreateRefundPayment(ctx, params)
+	if err != nil {
+		return nil, err
 	}
+	return toDomainRefund(&result), nil
 }

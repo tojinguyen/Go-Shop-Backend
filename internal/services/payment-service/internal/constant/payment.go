@@ -24,3 +24,12 @@ const (
 	PaymentMethodBankTransfer PaymentMethod = "BANK_TRANSFER"
 	PaymentMethodEWallet      PaymentMethod = "E_WALLET"
 )
+
+type RefundStatus string
+
+const (
+	RefundStatusPending   RefundStatus = "PENDING"
+	RefundStatusRequested RefundStatus = "REFUND_REQUESTED"
+	RefundStatusCompleted RefundStatus = "COMPLETED"
+	RefundStatusFailed    RefundStatus = "FAILED"
+)

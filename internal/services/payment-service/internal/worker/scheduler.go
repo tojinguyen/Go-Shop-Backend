@@ -30,7 +30,7 @@ func (s *Scheduler) RegisterJobs() {
 
 	paymentEventUseCase := s.container.GetPaymentEventUseCase()
 
-	_, err := s.cron.AddFunc("@every 10m", paymentEventUseCase.HandlePaymentEvent)
+	_, err := s.cron.AddFunc("@every 10m", paymentEventUseCase.HandleSuccessPaymentPending)
 
 	if err != nil {
 		// Dùng Fatalf ở đây vì nếu job không đăng ký được thì là lỗi nghiêm trọng.

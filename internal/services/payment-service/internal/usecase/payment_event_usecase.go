@@ -19,7 +19,8 @@ const (
 )
 
 type PaymentEventUseCase interface {
-	HandlePaymentEvent()
+	HandleSuccessPaymentPending()
+	HandleRefundPaymentPending()
 }
 
 type paymentEventUseCase struct {
@@ -34,7 +35,7 @@ func NewPaymentEventUseCase(eventRepo repository.PaymentEventRepository, orderAd
 	}
 }
 
-func (uc *paymentEventUseCase) HandlePaymentEvent() {
+func (uc *paymentEventUseCase) HandleSuccessPaymentPending() {
 	ctx := context.Background()
 	log.Println("[PaymentEventWorker] Starting to handle pending payment events...")
 
@@ -80,6 +81,9 @@ func (uc *paymentEventUseCase) HandlePaymentEvent() {
 	}
 
 	log.Printf("[PaymentEventWorker] Finished processing batch of %d events.", len(events))
+}
+
+func (uc *paymentEventUseCase) HandleRefundPaymentPending() {
 }
 
 func (uc *paymentEventUseCase) processEvent(ctx context.Context, event *domain.PaymentEvent) error {

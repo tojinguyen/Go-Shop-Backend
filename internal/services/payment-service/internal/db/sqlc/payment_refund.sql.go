@@ -14,17 +14,19 @@ import (
 const createRefundPayment = `-- name: CreateRefundPayment :one
 INSERT INTO refund_payments (
     payment_id,
+    order_id,
     amount,
     reason,
     provider_refund_id,
     refund_status
 ) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING id, payment_id, amount, reason, provider_refund_id, refund_status, created_at, updated_at
+    $1, $2, $3, $4, $5, $6
+) RETURNING id, payment_id, order_id, amount, reason, provider_refund_id, refund_status, created_at, updated_at
 `
 
 type CreateRefundPaymentParams struct {
 	PaymentID        pgtype.UUID    `json:"payment_id"`
+	OrderID          pgtype.UUID    `json:"order_id"`
 	Amount           pgtype.Numeric `json:"amount"`
 	Reason           pgtype.Text    `json:"reason"`
 	ProviderRefundID pgtype.Text    `json:"provider_refund_id"`
@@ -34,6 +36,7 @@ type CreateRefundPaymentParams struct {
 func (q *Queries) CreateRefundPayment(ctx context.Context, arg CreateRefundPaymentParams) (RefundPayment, error) {
 	row := q.db.QueryRow(ctx, createRefundPayment,
 		arg.PaymentID,
+		arg.OrderID,
 		arg.Amount,
 		arg.Reason,
 		arg.ProviderRefundID,
@@ -43,6 +46,7 @@ func (q *Queries) CreateRefundPayment(ctx context.Context, arg CreateRefundPayme
 	err := row.Scan(
 		&i.ID,
 		&i.PaymentID,
+		&i.OrderID,
 		&i.Amount,
 		&i.Reason,
 		&i.ProviderRefundID,
@@ -54,7 +58,7 @@ func (q *Queries) CreateRefundPayment(ctx context.Context, arg CreateRefundPayme
 }
 
 const getRefundPaymentByID = `-- name: GetRefundPaymentByID :one
-SELECT id, payment_id, amount, reason, provider_refund_id, refund_status, created_at, updated_at FROM refund_payments WHERE id = $1
+SELECT id, payment_id, order_id, amount, reason, provider_refund_id, refund_status, created_at, updated_at FROM refund_payments WHERE id = $1
 `
 
 func (q *Queries) GetRefundPaymentByID(ctx context.Context, id pgtype.UUID) (RefundPayment, error) {
@@ -63,6 +67,7 @@ func (q *Queries) GetRefundPaymentByID(ctx context.Context, id pgtype.UUID) (Ref
 	err := row.Scan(
 		&i.ID,
 		&i.PaymentID,
+		&i.OrderID,
 		&i.Amount,
 		&i.Reason,
 		&i.ProviderRefundID,

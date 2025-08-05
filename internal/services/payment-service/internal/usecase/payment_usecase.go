@@ -174,6 +174,19 @@ func (uc *paymentUseCase) Refund(ctx context.Context, paymentID, orderID, reason
 		return nil, fmt.Errorf("payment with ID %s is not eligible for refund, current status: %s", paymentID, payment.Status)
 	}
 
+	param := sqlc.CreateRefundPaymentParams{
+		PaymentID: converter.StringToPgUUID(paymentID),
+		OrderID:   converter.StringToPgUUID(orderID),
+		Reason:    converter.StringToPgText(&reason),
+	}
+
+	_, err = uc.paymentRepo.CreatePaymentRefund(ctx, param)
+
+	if err != nil {
+		log.Printf("Error creating refund record for PaymentID %s: %v", paymentID, err)
+		return nil, fmt.Errorf("failed to create refund record for payment %s: %w", paymentID, err)
+	}
+
 	// paymentMethod := payment.Provider
 	// paymentProvider, err := uc.providerFactory.GetProvider(constant.PaymentProviderMethod(paymentMethod))
 
