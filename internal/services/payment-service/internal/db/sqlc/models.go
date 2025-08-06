@@ -146,9 +146,10 @@ func (ns NullPaymentStatus) Value() (driver.Value, error) {
 type RefundStatus string
 
 const (
-	RefundStatusPENDING   RefundStatus = "PENDING"
-	RefundStatusCOMPLETED RefundStatus = "COMPLETED"
-	RefundStatusFAILED    RefundStatus = "FAILED"
+	RefundStatusPENDING         RefundStatus = "PENDING"
+	RefundStatusREFUNDREQUESTED RefundStatus = "REFUND_REQUESTED"
+	RefundStatusCOMPLETED       RefundStatus = "COMPLETED"
+	RefundStatusFAILED          RefundStatus = "FAILED"
 )
 
 func (e *RefundStatus) Scan(src interface{}) error {
@@ -216,6 +217,7 @@ type PaymentOutboxEvent struct {
 type RefundPayment struct {
 	ID               pgtype.UUID        `json:"id"`
 	PaymentID        pgtype.UUID        `json:"payment_id"`
+	OrderID          pgtype.UUID        `json:"order_id"`
 	Amount           pgtype.Numeric     `json:"amount"`
 	Reason           pgtype.Text        `json:"reason"`
 	ProviderRefundID pgtype.Text        `json:"provider_refund_id"`

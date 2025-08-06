@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	kafka_infra "github.com/toji-dev/go-shop/internal/pkg/infra/kafka-infra"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	grpc_adapter "github.com/toji-dev/go-shop/internal/services/payment-service/internal/grpc/adapter"
@@ -27,6 +28,8 @@ type DependencyContainer struct {
 	paymentMethodFactory *paymentprovider.PaymentProviderFactory
 
 	orderServiceAdapter grpc_adapter.OrderServiceAdapter
+
+	kafkaProducer kafka_infra.Producer
 }
 
 func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
@@ -37,6 +40,8 @@ func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 	if err := container.initPostgreSQL(); err != nil {
 		log.Fatalf("failed to initialize PostgreSQL: %v", err)
 	}
+
+	container.initKafkaProducer()
 
 	container.initRepositories()
 
@@ -49,6 +54,11 @@ func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 	container.initPaymentHandler()
 
 	return container
+}
+
+func (sc *DependencyContainer) initKafkaProducer() {
+	sc.kafkaProducer = kafka_infra.NewProducer(sc.config.Kafka.Brokers)
+	log.Println("Kafka producer initialized")
 }
 
 func (sc *DependencyContainer) initPostgreSQL() error {
@@ -105,9 +115,16 @@ func (sc *DependencyContainer) initUseCases() {
 		sc.paymentRepo,
 		sc.paymentMethodFactory,
 		sc.orderServiceAdapter,
+		sc.kafkaProducer,
 	)
 
-	sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(sc.paymentEventRepo, sc.orderServiceAdapter)
+	sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(
+		sc.paymentRepo,
+		sc.paymentEventRepo,
+		sc.orderServiceAdapter,
+		sc.paymentMethodFactory,
+		sc.kafkaProducer,
+	)
 	log.Println("Payment use case initialized")
 }
 
@@ -138,7 +155,18 @@ func (sc *DependencyContainer) GetPaymentUseCase() usecase.PaymentUseCase {
 
 func (sc *DependencyContainer) GetPaymentEventUseCase() usecase.PaymentEventUseCase {
 	if sc.paymentEventUseCase == nil {
-		sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(sc.paymentEventRepo, sc.orderServiceAdapter)
+		sc.paymentEventUseCase = usecase.NewPaymentEventUseCase(
+			sc.paymentRepo,
+			sc.paymentEventRepo,
+			sc.orderServiceAdapter,
+			sc.paymentMethodFactory,
+			sc.kafkaProducer,
+		)
 	}
+
 	return sc.paymentEventUseCase
+}
+
+func (sc *DependencyContainer) GetKafkaProducer() kafka_infra.Producer {
+	return sc.kafkaProducer
 }

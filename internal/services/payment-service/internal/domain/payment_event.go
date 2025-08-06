@@ -13,7 +13,9 @@ const (
 type PaymentEventType string
 
 const (
-	PaymentEventTypePaymentSuccess PaymentEventType = "PAYMENT_SUCCESS"
+	PaymentEventTypePaymentSuccess  PaymentEventType = "PAYMENT_SUCCESS"
+	PaymentEventTypeRefundRequested PaymentEventType = "REFUND_REQUESTED"
+	PaymentEventTypeRefundSuccessed PaymentEventType = "REFUND_SUCCEEDED"
 )
 
 type PaymentEvent struct {

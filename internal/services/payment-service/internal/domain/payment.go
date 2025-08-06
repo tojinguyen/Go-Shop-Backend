@@ -19,3 +19,15 @@ type Payment struct {
 	CreatedAt             time.Time     `json:"created_at"`
 	UpdatedAt             time.Time     `json:"updated_at"`
 }
+
+type PaymentRefund struct {
+	ID                string       `json:"id"`
+	PaymentID         string       `json:"payment_id"`
+	OrderID           string       `json:"order_id"`
+	Amount            float64      `json:"amount"`
+	Reason            string       `json:"reason"`
+	ProviderPaymentID *string      `json:"provider_refund_id"`
+	RefundStatus      RefundStatus `json:"refund_status"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+}

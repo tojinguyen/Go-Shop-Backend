@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/payment-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/router"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/worker"
 )
 
 func main() {
@@ -21,6 +23,11 @@ func main() {
 
 	// Initialize dependency container
 	dependencyContainer := dependency_container.NewDependencyContainer(cfg)
+
+	scheduler := worker.NewScheduler(dependencyContainer)
+	scheduler.RegisterJobs()
+	go scheduler.Start()
+	log.Println("Scheduler started.")
 
 	// Initialize Gin router
 	r := gin.Default()

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
+	kafka_infra "github.com/toji-dev/go-shop/internal/pkg/infra/kafka-infra"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
@@ -29,14 +30,22 @@ type paymentUseCase struct {
 	paymentRepo     repository.PaymentRepository
 	providerFactory *paymentprovider.PaymentProviderFactory
 	orderAdapter    grpc_adapter.OrderServiceAdapter
+	kafkaProducer   kafka_infra.Producer
 }
 
-func NewPaymentUsecase(appConfig *config.AppConfig, paymentRepo repository.PaymentRepository, factory *paymentprovider.PaymentProviderFactory, orderAdapter grpc_adapter.OrderServiceAdapter) PaymentUseCase {
+func NewPaymentUsecase(
+	appConfig *config.AppConfig,
+	paymentRepo repository.PaymentRepository,
+	factory *paymentprovider.PaymentProviderFactory,
+	orderAdapter grpc_adapter.OrderServiceAdapter,
+	kafkaProducer kafka_infra.Producer,
+) PaymentUseCase {
 	return &paymentUseCase{
 		appConfig:       appConfig,
 		paymentRepo:     paymentRepo,
 		providerFactory: factory,
 		orderAdapter:    orderAdapter,
+		kafkaProducer:   kafkaProducer,
 	}
 }
 
@@ -174,36 +183,21 @@ func (uc *paymentUseCase) Refund(ctx context.Context, paymentID, orderID, reason
 		return nil, fmt.Errorf("payment with ID %s is not eligible for refund, current status: %s", paymentID, payment.Status)
 	}
 
-	paymentMethod := payment.Provider
-	paymentProvider, err := uc.providerFactory.GetProvider(constant.PaymentProviderMethod(paymentMethod))
-
-	// Call provider's refund method
-	refundData := paymentprovider.RefundData{
-		PaymentID:             paymentID,
-		OrderID:               orderID,
-		ProviderTransactionID: *payment.ProviderTransactionID,
-		Amount:                int64(payment.Amount),
-		Reason:                reason,
+	param := sqlc.CreateRefundPaymentParams{
+		PaymentID: converter.StringToPgUUID(paymentID),
+		OrderID:   converter.StringToPgUUID(orderID),
+		Reason:    converter.StringToPgText(&reason),
 	}
 
-	refundRes, err := paymentProvider.Refund(ctx, refundData)
+	_, err = uc.paymentRepo.CreatePaymentRefund(ctx, param)
 
 	if err != nil {
-		log.Printf("Error refunding payment with ID %s: %v", paymentID, err)
-		return nil, fmt.Errorf("failed to refund payment with ID %s: %w", paymentID, err)
+		log.Printf("Error creating refund record for PaymentID %s: %v", paymentID, err)
+		return nil, fmt.Errorf("failed to create refund record for payment %s: %w", paymentID, err)
 	}
-
-	//TODO: Update payment status and provider transaction ID in the database
-	updateParams := sqlc.UpdatePaymentStatusParams{
-		ID:                    converter.StringToPgUUID(payment.ID),
-		PaymentStatus:         sqlc.PaymentStatus(constant.PaymentStatusRefunded),
-		ProviderTransactionID: converter.StringToPgText(payment.ProviderTransactionID),
-	}
-	_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updateParams)
 
 	return &dto.RefundResult{
-		ProviderRefundID: refundRes.ProviderRefundID,
-		Status:           refundRes.Status,
-		Message:          "Refund processed successfully.",
+		Status:  string(sqlc.RefundStatusPENDING),
+		Message: "Refund request accepted, processing will take some time.",
 	}, nil
 }
