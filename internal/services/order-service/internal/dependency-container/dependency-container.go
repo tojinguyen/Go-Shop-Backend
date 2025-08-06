@@ -155,3 +155,7 @@ func (sc *DependencyContainer) GetOrderRepository() repository.OrderRepository {
 func (sc *DependencyContainer) GetProductServiceAdapter() adapter.ProductServiceAdapter {
 	return sc.productServiceAdapter
 }
+
+func (sc *DependencyContainer) GetOrderUsecase() usecase.OrderUsecase {
+	return sc.orderUsecase
+}

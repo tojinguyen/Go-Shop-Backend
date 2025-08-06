@@ -11,6 +11,7 @@ const (
 	OrderStatusDELIVERING     OrderStatus = "DELIVERING"
 	OrderStatusDELIVERED      OrderStatus = "DELIVERED"
 	OrderStatusCANCELED       OrderStatus = "CANCELED"
+	OrderStatusREFUNDED       OrderStatus = "REFUNDED"
 )
 
 type Order struct {

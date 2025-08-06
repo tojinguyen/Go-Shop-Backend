@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -13,6 +15,7 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/dto"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/adapter"
+	"github.com/toji-dev/go-shop/internal/services/order-service/internal/payload"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/repository"
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
 	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/shop/v1"
@@ -20,6 +23,7 @@ import (
 
 type OrderUsecase interface {
 	CreateOrder(ctx *gin.Context, userId string, req dto.CreateOrderRequest) (*domain.Order, error)
+	HandleRefundSucceededEvent(ctx context.Context, key, value []byte) error
 }
 
 type orderUsecase struct {
@@ -179,6 +183,26 @@ func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.Crea
 	finalOrder.Items = createdOrder.Items
 
 	return finalOrder, nil
+}
+
+func (u *orderUsecase) HandleRefundSucceededEvent(ctx context.Context, key, value []byte) error {
+	var payload payload.RefundSucceededPayload
+	if err := json.Unmarshal(value, &payload); err != nil {
+		log.Printf("ERROR: Failed to unmarshal refund event payload: %v", err)
+		return fmt.Errorf("failed to unmarshal payload: %w", err)
+	}
+
+	log.Printf("Received RefundSucceeded event for OrderID: %s", payload.OrderID)
+
+	// Cập nhật trạng thái đơn hàng thành REFUNDED
+	_, err := u.orderRepo.UpdateOrderStatus(ctx, payload.OrderID, sqlc.OrderStatus(domain.OrderStatusREFUNDED))
+	if err != nil {
+		log.Printf("ERROR: Failed to update order status to REFUNDED for OrderID %s: %v", payload.OrderID, err)
+		return fmt.Errorf("failed to update order status: %w", err)
+	}
+
+	log.Printf("Successfully updated OrderID %s status to REFUNDED", payload.OrderID)
+	return nil
 }
 
 // Validate data with business rules before creating an order
