@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
+	kafka_infra "github.com/toji-dev/go-shop/internal/pkg/infra/kafka-infra"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
@@ -29,14 +30,22 @@ type paymentUseCase struct {
 	paymentRepo     repository.PaymentRepository
 	providerFactory *paymentprovider.PaymentProviderFactory
 	orderAdapter    grpc_adapter.OrderServiceAdapter
+	kafkaProducer   kafka_infra.Producer
 }
 
-func NewPaymentUsecase(appConfig *config.AppConfig, paymentRepo repository.PaymentRepository, factory *paymentprovider.PaymentProviderFactory, orderAdapter grpc_adapter.OrderServiceAdapter) PaymentUseCase {
+func NewPaymentUsecase(
+	appConfig *config.AppConfig,
+	paymentRepo repository.PaymentRepository,
+	factory *paymentprovider.PaymentProviderFactory,
+	orderAdapter grpc_adapter.OrderServiceAdapter,
+	kafkaProducer kafka_infra.Producer,
+) PaymentUseCase {
 	return &paymentUseCase{
 		appConfig:       appConfig,
 		paymentRepo:     paymentRepo,
 		providerFactory: factory,
 		orderAdapter:    orderAdapter,
+		kafkaProducer:   kafkaProducer,
 	}
 }
 
