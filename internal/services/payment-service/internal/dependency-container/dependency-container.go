@@ -123,6 +123,7 @@ func (sc *DependencyContainer) initUseCases() {
 		sc.paymentEventRepo,
 		sc.orderServiceAdapter,
 		sc.paymentMethodFactory,
+		sc.kafkaProducer,
 	)
 	log.Println("Payment use case initialized")
 }
@@ -159,6 +160,7 @@ func (sc *DependencyContainer) GetPaymentEventUseCase() usecase.PaymentEventUseC
 			sc.paymentEventRepo,
 			sc.orderServiceAdapter,
 			sc.paymentMethodFactory,
+			sc.kafkaProducer,
 		)
 	}
 

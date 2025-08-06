@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
-	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
+	kafka_infra "github.com/toji-dev/go-shop/internal/pkg/infra/kafka-infra"
+	payment_constant "github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/domain"
 	grpc_adapter "github.com/toji-dev/go-shop/internal/services/payment-service/internal/grpc/adapter"
@@ -24,6 +26,7 @@ const (
 type PaymentEventUseCase interface {
 	HandleSuccessPaymentPending()
 	HandleRefundPaymentPending()
+	PublishRefundSucceededEvents()
 }
 
 type paymentEventUseCase struct {
@@ -31,6 +34,7 @@ type paymentEventUseCase struct {
 	eventRepo       repository.PaymentEventRepository
 	orderAdapter    grpc_adapter.OrderServiceAdapter
 	providerFactory *paymentprovider.PaymentProviderFactory
+	kafkaProducer   kafka_infra.Producer
 }
 
 func NewPaymentEventUseCase(
@@ -38,12 +42,14 @@ func NewPaymentEventUseCase(
 	eventRepo repository.PaymentEventRepository,
 	orderAdapter grpc_adapter.OrderServiceAdapter,
 	providerFactory *paymentprovider.PaymentProviderFactory,
+	kafkaProducer kafka_infra.Producer,
 ) PaymentEventUseCase {
 	return &paymentEventUseCase{
 		paymentRepo:     paymentRepo,
 		eventRepo:       eventRepo,
 		orderAdapter:    orderAdapter,
 		providerFactory: providerFactory,
+		kafkaProducer:   kafkaProducer,
 	}
 }
 
@@ -158,6 +164,55 @@ func (uc *paymentEventUseCase) HandleRefundPaymentPending() {
 	log.Printf("[PaymentEventWorker] Finished processing batch of %d events.", len(events))
 }
 
+func (uc *paymentEventUseCase) PublishRefundSucceededEvents() {
+	ctx := context.Background()
+	log.Println("[PaymentEventPublisher] Starting to handle REFUND_SUCCEEDED events...")
+
+	events, err := uc.eventRepo.GetBatchPaymentEventByEventTypeAndStatus(
+		ctx,
+		domain.PaymentEventTypeRefundSuccessed,
+		domain.PaymentEventStatusPending,
+		BATCH_SIZE,
+	)
+	if err != nil {
+		log.Printf("[PaymentEventPublisher] Error fetching pending REFUND_SUCCEEDED events: %v", err)
+		return
+	}
+
+	if len(events) == 0 {
+		log.Println("[PaymentEventPublisher] No pending REFUND_SUCCEEDED events to publish.")
+		return
+	}
+
+	log.Printf("[PaymentEventPublisher] Found %d pending REFUND_SUCCEEDED events to publish.", len(events))
+
+	for _, event := range events {
+		// Event payload đã chứa thông tin cần thiết, chỉ cần publish lại
+		kafkaPayload := map[string]string{
+			"order_id":   event.OrderID,
+			"payment_id": event.PaymentID,
+		}
+
+		err := uc.kafkaProducer.Publish(ctx, string(constant.EventTypeRefundSuccessed), event.OrderID, kafkaPayload)
+		if err != nil {
+			log.Printf("[PaymentEventPublisher] Error publishing event ID %s: %v. Updating retry count.", event.ID, err)
+			event.RetryCount++
+			if event.RetryCount >= MAX_RETRY_COUNT {
+				event.EventStatus = domain.PaymentEventStatusFailed
+			}
+		} else {
+			log.Printf("[PaymentEventPublisher] Successfully published event ID %s for Order ID %s.", event.ID, event.OrderID)
+			event.EventStatus = domain.PaymentEventStatusSent
+		}
+
+		// Cập nhật trạng thái event trong outbox
+		_, updateErr := uc.eventRepo.UpdatePaymentEvent(ctx, event)
+		if updateErr != nil {
+			log.Printf("[PaymentEventPublisher] CRITICAL: Failed to update event status for event ID %s: %v", event.ID, updateErr)
+		}
+	}
+}
+
 func (uc *paymentEventUseCase) processUpdateOrderStatus(ctx context.Context, event *domain.PaymentEvent) error {
 	var payload struct {
 		PaymentStatus string `json:"payment_status"`
@@ -208,7 +263,7 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 	}
 
 	paymentMethod := payment.Provider
-	paymentProvider, err := uc.providerFactory.GetProvider(constant.PaymentProviderMethod(paymentMethod))
+	paymentProvider, err := uc.providerFactory.GetProvider(payment_constant.PaymentProviderMethod(paymentMethod))
 
 	refundPayment, err := uc.paymentRepo.GetRefundByPaymentID(ctx, payment.ID)
 

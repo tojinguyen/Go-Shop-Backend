@@ -30,14 +30,27 @@ func (s *Scheduler) RegisterJobs() {
 
 	paymentEventUseCase := s.container.GetPaymentEventUseCase()
 
+	// Job 1: Xử lý các payment success đang pending để cập nhật order status
 	_, err := s.cron.AddFunc("@every 10m", paymentEventUseCase.HandleSuccessPaymentPending)
 
 	if err != nil {
-		// Dùng Fatalf ở đây vì nếu job không đăng ký được thì là lỗi nghiêm trọng.
 		log.Fatalf("[Scheduler] FATAL: Could not register 'ReconcilePendingOrders' job: %v", err)
 	}
-
 	log.Println("[Scheduler] 'ReconcilePendingOrders' job registered to run every 5 minutes.")
+
+	// Job 2: Xử lý các yêu cầu refund đang pending
+	_, err = s.cron.AddFunc("@every 1m", paymentEventUseCase.HandleRefundPaymentPending)
+	if err != nil {
+		log.Fatalf("[Scheduler] FATAL: Could not register 'HandleRefundPaymentPending' job: %v", err)
+	}
+	log.Println("[Scheduler] 'HandleRefundPaymentPending' job registered to run every 1 minute.")
+
+	// Job 3: Publish các event refund thành công
+	_, err = s.cron.AddFunc("@every 1m", paymentEventUseCase.PublishRefundSucceededEvents)
+	if err != nil {
+		log.Fatalf("[Scheduler] FATAL: Could not register 'PublishRefundSucceededEvents' job: %v", err)
+	}
+	log.Println("[Scheduler] 'PublishRefundSucceededEvents' job registered to run every 1 minute.")
 }
 
 // Start khởi động scheduler để bắt đầu chạy các công việc.

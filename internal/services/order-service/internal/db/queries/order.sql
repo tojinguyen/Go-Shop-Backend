@@ -56,6 +56,6 @@ RETURNING *;
 
 -- name: GetStaleOrders :many
 SELECT * FROM orders 
-WHERE order_status = 'PENDING'
+WHERE order_status = 'PENDING' OR order_status = "REFUNDED"
 AND updated_at < $1
 LIMIT $2;
