@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type Config struct {
 	App             AppConfig      `mapstructure:"app"`
 	Momo            MomoConfig     `mapstructure:"momo"`
 	OrderGrpcConfig GrpcConfig     `mapstructure:"order_grpc"`
+	Kafka           KafkaConfig    `mapstructure:"kafka"`
 }
 
 type ServerConfig struct {
@@ -69,6 +71,10 @@ type MomoConfig struct {
 	ApiRefundEndpoint string `mapstructure:"api_refund_endpoint"`
 }
 
+type KafkaConfig struct {
+	Brokers []string `mapstructure:"brokers"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -113,6 +119,9 @@ func Load() (*Config, error) {
 			OrderServiceHost: getEnv("ORDER_SERVICE_GRPC_HOST", "localhost"),
 			OrderServicePort: getIntEnv("ORDER_SERVICE_GRPC_PORT", 50054),
 		},
+		Kafka: KafkaConfig{
+			Brokers: getSliceEnv("KAFKA_BROKERS", []string{"localhost:9092"}),
+		},
 	}
 	return cfg, nil
 }
@@ -139,4 +148,12 @@ func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 		return value
 	}
 	return defaultValue
+}
+
+func getSliceEnv(key string, defaultValue []string) []string {
+	valueStr := getEnv(key, "")
+	if valueStr == "" {
+		return defaultValue
+	}
+	return strings.Split(valueStr, ",")
 }
