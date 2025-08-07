@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	kafka_infra "github.com/toji-dev/go-shop/internal/pkg/infra/kafka-infra"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/usecase"
@@ -30,8 +31,8 @@ func NewKafkaConsumer(
 func (sc *KafkaConsumer) initKafkaConsumer() {
 	sc.refundPaymentConsumer = kafka_infra.NewConsumer(
 		sc.config.Kafka.Brokers,
-		"payment_events",
-		"order-service-group",
+		string(constant.EventTypeRefundSuccessed),
+		string(constant.KafkaConsumerGroupOrderService),
 	)
 	log.Println("Kafka consumer initialized for topic 'payment_events'")
 }

@@ -189,7 +189,14 @@ func (u *orderUsecase) HandleRefundSucceededEvent(ctx context.Context, key, valu
 	var payload payload.RefundSucceededPayload
 	if err := json.Unmarshal(value, &payload); err != nil {
 		log.Printf("ERROR: Failed to unmarshal refund event payload: %v", err)
-		return fmt.Errorf("failed to unmarshal payload: %w", err)
+		// Thay vì trả về lỗi, chúng ta trả về nil để consumer commit offset và đi tiếp.
+		// (Nâng cao hơn: bạn có thể đẩy message lỗi này vào một topic Kafka khác gọi là Dead Letter Queue)
+		return nil
+	}
+
+	if _, err := uuid.Parse(payload.OrderID); err != nil {
+		log.Printf("ERROR: [POISON PILL] OrderID không hợp lệ. Bỏ qua message. OrderID: %s. Lỗi: %v", payload.OrderID, err)
+		return nil
 	}
 
 	log.Printf("Received RefundSucceeded event for OrderID: %s", payload.OrderID)

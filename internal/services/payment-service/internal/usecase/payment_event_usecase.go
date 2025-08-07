@@ -82,6 +82,7 @@ func (uc *paymentEventUseCase) HandleSuccessPaymentPending() {
 			log.Printf("[PaymentEventWorker] Error processing event ID %s: %v. Updating retry count.", event.ID, err)
 			event.RetryCount++
 			if event.RetryCount >= MAX_RETRY_COUNT {
+				log.Printf("CRITICAL: [EVENT_FAILURE] Event ID %s for Order ID %s has failed permanently after %d retries. Manual intervention required.", event.ID, event.OrderID, MAX_RETRY_COUNT)
 				event.EventStatus = domain.PaymentEventStatusFailed
 			}
 			_, updateErr := uc.eventRepo.UpdatePaymentEvent(ctx, event)
