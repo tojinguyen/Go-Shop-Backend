@@ -188,10 +188,12 @@ func (uc *paymentEventUseCase) PublishRefundSucceededEvents() {
 	log.Printf("[PaymentEventPublisher] Found %d pending REFUND_SUCCEEDED events to publish.", len(events))
 
 	for _, event := range events {
-		// Event payload đã chứa thông tin cần thiết, chỉ cần publish lại
-		kafkaPayload := map[string]string{
+		kafkaPayload := map[string]interface{}{
+			"event_id":   event.ID,
+			"event_type": constant.EventTypeRefundSuccessed,
 			"order_id":   event.OrderID,
 			"payment_id": event.PaymentID,
+			"source":     "payment-service",
 		}
 
 		err := uc.kafkaProducer.Publish(ctx, string(constant.EventTypeRefundSuccessed), event.OrderID, kafkaPayload)

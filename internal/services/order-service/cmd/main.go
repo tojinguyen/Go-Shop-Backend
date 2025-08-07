@@ -33,10 +33,18 @@ func main() {
 	scheduler := worker.NewScheduler(dependencyContainer)
 	scheduler.RegisterJobs()
 
-	// Start Kafka consumer
-	kafkaConsumer := worker.NewKafkaConsumer(cfg, dependencyContainer.GetOrderUsecase())
+	// Start Kafka consumer with inbox pattern
+	kafkaConsumer := worker.NewKafkaConsumer(
+		cfg,
+		dependencyContainer.GetOrderUsecase(),
+		dependencyContainer.GetInboxEventUsecase(),
+	)
+
+	// Start inbox processing worker
+	inboxWorker := worker.NewInboxWorker(dependencyContainer.GetInboxEventUsecase())
 
 	go kafkaConsumer.StartAllKafkaConsumer()
+	go inboxWorker.Start()
 
 	// Chạy scheduler trong một goroutine riêng
 	go scheduler.Start()

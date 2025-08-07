@@ -13,11 +13,13 @@ import (
 )
 
 type DependencyContainer struct {
-	config       *config.Config
-	postgreSQL   *postgresql_infra.PostgreSQLService
-	orderRepo    repository.OrderRepository
-	orderUsecase usecase.OrderUsecase
-	orderHandler handler.OrderHandler
+	config            *config.Config
+	postgreSQL        *postgresql_infra.PostgreSQLService
+	orderRepo         repository.OrderRepository
+	inboxEventRepo    repository.InboxEventRepository // New inbox repository
+	orderUsecase      usecase.OrderUsecase
+	inboxEventUsecase usecase.InboxEventUseCase // New inbox usecase
+	orderHandler      handler.OrderHandler
 
 	shopServiceAdapter    adapter.ShopServiceAdapter
 	productServiceAdapter adapter.ProductServiceAdapter
@@ -74,7 +76,8 @@ func (sc *DependencyContainer) initPostgreSQL() error {
 
 func (sc *DependencyContainer) initRepositories() {
 	sc.orderRepo = repository.NewOrderRepository(sc.postgreSQL)
-	log.Println("Order repository initialized")
+	sc.inboxEventRepo = repository.NewInboxEventRepository(sc.postgreSQL)
+	log.Println("Order and inbox event repositories initialized")
 }
 
 func (sc *DependencyContainer) initUseCases() {
@@ -84,7 +87,12 @@ func (sc *DependencyContainer) initUseCases() {
 		sc.productServiceAdapter,
 		sc.userAdapter,
 	)
-	log.Println("Order use case initialized")
+
+	sc.inboxEventUsecase = usecase.NewInboxEventUseCase(
+		sc.inboxEventRepo,
+		sc.orderRepo,
+	)
+	log.Println("Order and inbox event use cases initialized")
 }
 
 func (sc *DependencyContainer) initOrderHandler() {
@@ -158,4 +166,12 @@ func (sc *DependencyContainer) GetProductServiceAdapter() adapter.ProductService
 
 func (sc *DependencyContainer) GetOrderUsecase() usecase.OrderUsecase {
 	return sc.orderUsecase
+}
+
+func (sc *DependencyContainer) GetInboxEventUsecase() usecase.InboxEventUseCase {
+	return sc.inboxEventUsecase
+}
+
+func (sc *DependencyContainer) GetInboxEventRepository() repository.InboxEventRepository {
+	return sc.inboxEventRepo
 }

@@ -11,12 +11,19 @@ import (
 )
 
 type Querier interface {
+	CleanupOldInboxEvents(ctx context.Context) error
+	CreateInboxEvent(ctx context.Context, arg CreateInboxEventParams) (OrderInboxEvent, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
+	GetFailedInboxEvents(ctx context.Context, limit int32) ([]OrderInboxEvent, error)
+	GetInboxEventByEventId(ctx context.Context, eventID string) (OrderInboxEvent, error)
+	GetInboxEventStats(ctx context.Context) (GetInboxEventStatsRow, error)
 	GetOrderByID(ctx context.Context, id pgtype.UUID) (Order, error)
 	GetOrderByIDWithItems(ctx context.Context, id pgtype.UUID) (GetOrderByIDWithItemsRow, error)
 	GetOrdersByUserIDWithItems(ctx context.Context, arg GetOrdersByUserIDWithItemsParams) ([]GetOrdersByUserIDWithItemsRow, error)
+	GetPendingInboxEvents(ctx context.Context, limit int32) ([]OrderInboxEvent, error)
 	GetStaleOrders(ctx context.Context, arg GetStaleOrdersParams) ([]Order, error)
+	UpdateInboxEventStatus(ctx context.Context, arg UpdateInboxEventStatusParams) (OrderInboxEvent, error)
 	// Bỏ qua bao nhiêu đơn hàng (để qua trang mới)
 	UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (Order, error)
 }

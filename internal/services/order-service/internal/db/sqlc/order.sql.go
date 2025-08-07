@@ -224,7 +224,7 @@ func (q *Queries) GetOrdersByUserIDWithItems(ctx context.Context, arg GetOrdersB
 
 const getStaleOrders = `-- name: GetStaleOrders :many
 SELECT id, owner_id, shop_id, shipping_address_id, promotion_id, shipping_fee, discount_amount, total_amount, final_amount, order_status, created_at, updated_at FROM orders 
-WHERE order_status = 'PENDING'
+WHERE order_status = 'PENDING' OR order_status = "REFUNDED"
 AND updated_at < $1
 LIMIT $2
 `

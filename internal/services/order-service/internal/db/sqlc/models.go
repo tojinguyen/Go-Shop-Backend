@@ -11,6 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type InboxEventStatus string
+
+const (
+	InboxEventStatusPENDING   InboxEventStatus = "PENDING"
+	InboxEventStatusPROCESSED InboxEventStatus = "PROCESSED"
+	InboxEventStatusFAILED    InboxEventStatus = "FAILED"
+)
+
+func (e *InboxEventStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = InboxEventStatus(s)
+	case string:
+		*e = InboxEventStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for InboxEventStatus: %T", src)
+	}
+	return nil
+}
+
+type NullInboxEventStatus struct {
+	InboxEventStatus InboxEventStatus `json:"inbox_event_status"`
+	Valid            bool             `json:"valid"` // Valid is true if InboxEventStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullInboxEventStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.InboxEventStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.InboxEventStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullInboxEventStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.InboxEventStatus), nil
+}
+
 type OrderStatus string
 
 const (
@@ -74,6 +117,21 @@ type Order struct {
 	OrderStatus       OrderStatus        `json:"order_status"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
+type OrderInboxEvent struct {
+	ID            pgtype.UUID        `json:"id"`
+	EventID       string             `json:"event_id"`
+	EventType     string             `json:"event_type"`
+	SourceService string             `json:"source_service"`
+	Payload       []byte             `json:"payload"`
+	EventStatus   InboxEventStatus   `json:"event_status"`
+	RetryCount    int32              `json:"retry_count"`
+	MaxRetry      int32              `json:"max_retry"`
+	ReceivedAt    pgtype.Timestamptz `json:"received_at"`
+	ProcessedAt   pgtype.Timestamptz `json:"processed_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
 type OrderItem struct {

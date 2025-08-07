@@ -11,8 +11,9 @@ import (
 )
 
 type KafkaConsumer struct {
-	config       *config.Config
-	orderUsecase usecase.OrderUsecase
+	config            *config.Config
+	orderUsecase      usecase.OrderUsecase      // Deprecated: for backward compatibility
+	inboxEventUsecase usecase.InboxEventUseCase // New inbox-based processing
 
 	refundPaymentConsumer kafka_infra.Consumer
 }
@@ -20,9 +21,12 @@ type KafkaConsumer struct {
 func NewKafkaConsumer(
 	cfg *config.Config,
 	orderUsecase usecase.OrderUsecase,
+	inboxEventUsecase usecase.InboxEventUseCase,
 ) *KafkaConsumer {
 	consumer := &KafkaConsumer{
-		config: cfg,
+		config:            cfg,
+		orderUsecase:      orderUsecase,
+		inboxEventUsecase: inboxEventUsecase,
 	}
 	consumer.initKafkaConsumer()
 	return consumer
@@ -38,6 +42,7 @@ func (sc *KafkaConsumer) initKafkaConsumer() {
 }
 
 func (ks *KafkaConsumer) StartAllKafkaConsumer() {
-	log.Println("Starting Kafka consumer...")
-	ks.refundPaymentConsumer.Start(context.Background(), ks.orderUsecase.HandleRefundSucceededEvent)
+	log.Println("Starting Kafka consumer with inbox pattern...")
+	// Use inbox event usecase for idempotent processing
+	ks.refundPaymentConsumer.Start(context.Background(), ks.inboxEventUsecase.HandleIncomingEvent)
 }

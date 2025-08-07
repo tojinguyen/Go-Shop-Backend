@@ -23,7 +23,7 @@ import (
 
 type OrderUsecase interface {
 	CreateOrder(ctx *gin.Context, userId string, req dto.CreateOrderRequest) (*domain.Order, error)
-	HandleRefundSucceededEvent(ctx context.Context, key, value []byte) error
+	HandleRefundSucceededEvent(ctx context.Context, key, value []byte) error // Deprecated: Use InboxEventUseCase instead
 }
 
 type orderUsecase struct {
@@ -189,8 +189,6 @@ func (u *orderUsecase) HandleRefundSucceededEvent(ctx context.Context, key, valu
 	var payload payload.RefundSucceededPayload
 	if err := json.Unmarshal(value, &payload); err != nil {
 		log.Printf("ERROR: Failed to unmarshal refund event payload: %v", err)
-		// Thay vì trả về lỗi, chúng ta trả về nil để consumer commit offset và đi tiếp.
-		// (Nâng cao hơn: bạn có thể đẩy message lỗi này vào một topic Kafka khác gọi là Dead Letter Queue)
 		return nil
 	}
 
