@@ -23,7 +23,7 @@ import (
 
 type OrderUsecase interface {
 	CreateOrder(ctx *gin.Context, userId string, req dto.CreateOrderRequest) (*domain.Order, error)
-	HandleRefundSucceededEvent(ctx context.Context, key, value []byte) error
+	HandleRefundSucceededEvent(ctx context.Context, key, value []byte) error // Deprecated: Use InboxEventUseCase instead
 }
 
 type orderUsecase struct {
@@ -189,7 +189,12 @@ func (u *orderUsecase) HandleRefundSucceededEvent(ctx context.Context, key, valu
 	var payload payload.RefundSucceededPayload
 	if err := json.Unmarshal(value, &payload); err != nil {
 		log.Printf("ERROR: Failed to unmarshal refund event payload: %v", err)
-		return fmt.Errorf("failed to unmarshal payload: %w", err)
+		return nil
+	}
+
+	if _, err := uuid.Parse(payload.OrderID); err != nil {
+		log.Printf("ERROR: [POISON PILL] OrderID không hợp lệ. Bỏ qua message. OrderID: %s. Lỗi: %v", payload.OrderID, err)
+		return nil
 	}
 
 	log.Printf("Received RefundSucceeded event for OrderID: %s", payload.OrderID)
