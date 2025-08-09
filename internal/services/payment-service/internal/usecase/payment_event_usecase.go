@@ -24,9 +24,9 @@ const (
 )
 
 type PaymentEventUseCase interface {
-	HandleSuccessPaymentPending()
-	HandleFailedPaymentPending()
-	HandleRefundPaymentPending()
+	HandleSuccessPaymentEventPending()
+	HandleFailedPaymentEventPending()
+	HandleRefundPaymentEventPending()
 	PublishRefundSucceededEvents()
 }
 
@@ -54,7 +54,7 @@ func NewPaymentEventUseCase(
 	}
 }
 
-func (uc *paymentEventUseCase) HandleSuccessPaymentPending() {
+func (uc *paymentEventUseCase) HandleSuccessPaymentEventPending() {
 	ctx := context.Background()
 	log.Println("[PaymentEventWorker] Starting to handle pending payment events...")
 
@@ -103,7 +103,7 @@ func (uc *paymentEventUseCase) HandleSuccessPaymentPending() {
 	log.Printf("[PaymentEventWorker] Finished processing batch of %d events.", len(events))
 }
 
-func (uc *paymentEventUseCase) HandleFailedPaymentPending() {
+func (uc *paymentEventUseCase) HandleFailedPaymentEventPending() {
 	ctx := context.Background()
 	log.Println("[PaymentEventWorker] Starting to handle pending payment events...")
 
@@ -152,7 +152,7 @@ func (uc *paymentEventUseCase) HandleFailedPaymentPending() {
 	log.Printf("[PaymentEventWorker] Finished processing batch of %d events.", len(events))
 }
 
-func (uc *paymentEventUseCase) HandleRefundPaymentPending() {
+func (uc *paymentEventUseCase) HandleRefundPaymentEventPending() {
 	ctx := context.Background()
 	log.Println("[PaymentEventWorker] Starting to handle pending payment events...")
 
