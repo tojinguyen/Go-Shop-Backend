@@ -113,6 +113,7 @@ func (sc *DependencyContainer) initUseCases() {
 	sc.paymentUseCase = usecase.NewPaymentUsecase(
 		&sc.config.App,
 		sc.paymentRepo,
+		sc.paymentEventRepo,
 		sc.paymentMethodFactory,
 		sc.orderServiceAdapter,
 		sc.kafkaProducer,

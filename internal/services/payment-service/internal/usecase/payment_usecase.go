@@ -12,6 +12,7 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/dto"
 	grpc_adapter "github.com/toji-dev/go-shop/internal/services/payment-service/internal/grpc/adapter"
 	paymentprovider "github.com/toji-dev/go-shop/internal/services/payment-service/internal/payment_provider"
@@ -26,8 +27,10 @@ type PaymentUseCase interface {
 }
 
 type paymentUseCase struct {
-	appConfig       *config.AppConfig
-	paymentRepo     repository.PaymentRepository
+	appConfig        *config.AppConfig
+	paymentRepo      repository.PaymentRepository
+	paymentEventRepo repository.PaymentEventRepository
+
 	providerFactory *paymentprovider.PaymentProviderFactory
 	orderAdapter    grpc_adapter.OrderServiceAdapter
 	kafkaProducer   kafka_infra.Producer
@@ -36,16 +39,18 @@ type paymentUseCase struct {
 func NewPaymentUsecase(
 	appConfig *config.AppConfig,
 	paymentRepo repository.PaymentRepository,
+	paymentEventRepo repository.PaymentEventRepository,
 	factory *paymentprovider.PaymentProviderFactory,
 	orderAdapter grpc_adapter.OrderServiceAdapter,
 	kafkaProducer kafka_infra.Producer,
 ) PaymentUseCase {
 	return &paymentUseCase{
-		appConfig:       appConfig,
-		paymentRepo:     paymentRepo,
-		providerFactory: factory,
-		orderAdapter:    orderAdapter,
-		kafkaProducer:   kafkaProducer,
+		appConfig:        appConfig,
+		paymentRepo:      paymentRepo,
+		paymentEventRepo: paymentEventRepo,
+		providerFactory:  factory,
+		orderAdapter:     orderAdapter,
+		kafkaProducer:    kafkaProducer,
 	}
 }
 
@@ -164,7 +169,25 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 	_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updateParams)
 
 	if err != nil {
+		log.Printf("Error updating payment status for OrderID %s: %v", originalPayment.OrderID, err)
 		return fmt.Errorf("failed to update payment status for order %s: %w", originalPayment.OrderID, err)
+	}
+
+	// 6. Create payment event payment success
+	paymentEventSuccess := &domain.PaymentEvent{
+		PaymentID:   paymentUpdate.ID,
+		OrderID:     paymentUpdate.OrderID,
+		EventType:   string(domain.PaymentEventTypePaymentSuccess),
+		Payload:     "",
+		EventStatus: domain.PaymentEventStatusPending,
+		RetryCount:  0,
+	}
+
+	_, err = uc.paymentEventRepo.CreatePaymentEvent(ctx, paymentEventSuccess)
+
+	if err != nil {
+		log.Printf("Error creating payment event for OrderID %s: %v", originalPayment.OrderID, err)
+		return fmt.Errorf("failed to create payment event for order %s: %w", originalPayment.OrderID, err)
 	}
 
 	return nil
