@@ -15,6 +15,7 @@ type Querier interface {
 	CreatePaymentEvent(ctx context.Context, arg CreatePaymentEventParams) (PaymentOutboxEvent, error)
 	CreateRefundPayment(ctx context.Context, arg CreateRefundPaymentParams) (RefundPayment, error)
 	GetBatchPaymentEventsByEventTypeAndStatus(ctx context.Context, arg GetBatchPaymentEventsByEventTypeAndStatusParams) ([]PaymentOutboxEvent, error)
+	GetBatchRefundPaymentsByStatus(ctx context.Context, refundStatus RefundStatus) ([]RefundPayment, error)
 	GetPaymentByOrderID(ctx context.Context, orderID pgtype.UUID) (Payment, error)
 	GetRefundPaymentByID(ctx context.Context, id pgtype.UUID) (RefundPayment, error)
 	UpdatePaymentEvent(ctx context.Context, arg UpdatePaymentEventParams) (PaymentOutboxEvent, error)

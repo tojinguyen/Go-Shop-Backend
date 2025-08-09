@@ -106,63 +106,46 @@ func (uc *paymentEventUseCase) HandleRefundPaymentPending() {
 	ctx := context.Background()
 	log.Println("[PaymentEventWorker] Starting to handle pending payment events...")
 
-	events, err := uc.eventRepo.GetBatchPaymentEventByEventTypeAndStatus(
+	refunds, err := uc.paymentRepo.GetBatchRefundPaymentsByStatus(
 		ctx,
-		domain.PaymentEventTypeRefundRequested,
-		domain.PaymentEventStatusPending,
-		BATCH_SIZE,
+		sqlc.RefundStatusPENDING,
 	)
 	if err != nil {
 		log.Printf("[PaymentEventWorker] Error fetching pending events: %v", err)
 		return
 	}
 
-	if len(events) == 0 {
+	if len(refunds) == 0 {
 		log.Println("[PaymentEventWorker] No pending payment events to process.")
 		return
 	}
 
-	log.Printf("[PaymentEventWorker] Found %d pending events to process.", len(events))
+	log.Printf("[PaymentEventWorker] Found %d pending events to process.", len(refunds))
 
-	for _, event := range events {
-		err := uc.processRefundRequest(ctx, event)
+	for _, refund := range refunds {
+		err := uc.processRefundRequest(ctx, &refund)
 
 		if err != nil {
-			log.Printf("[PaymentEventWorker] Error processing event ID %s: %v. Updating retry count.", event.ID, err)
-			event.RetryCount++
-			if event.RetryCount >= MAX_RETRY_COUNT {
-				event.EventStatus = domain.PaymentEventStatusFailed
-			}
-			_, updateErr := uc.eventRepo.UpdatePaymentEvent(ctx, event)
-			if updateErr != nil {
-				log.Printf("[PaymentEventWorker] CRITICAL: Failed to update event status after processing error for event ID %s: %v", event.ID, updateErr)
-			}
+			log.Printf("[PaymentEventWorker] Error processing event ID %s: %v. Updating retry count.", refund.ID, err)
 		} else {
-			event.EventStatus = domain.PaymentEventStatusSent
-			_, updateErr := uc.eventRepo.UpdatePaymentEvent(ctx, event)
-			if updateErr != nil {
-				log.Printf("[PaymentEventWorker] CRITICAL: Failed to update event status after successful processing for event ID %s: %v", event.ID, updateErr)
-				continue
-			}
-
 			// Add payment event REFUND_SUCCEEDED
 			eventRefundSuccessed := &domain.PaymentEvent{
-				PaymentID:   event.PaymentID,
-				OrderID:     event.OrderID,
+				PaymentID:   refund.PaymentID,
+				OrderID:     refund.OrderID,
 				EventType:   string(domain.PaymentEventTypeRefundSuccessed),
-				Payload:     event.Payload,
+				Payload:     "",
 				EventStatus: domain.PaymentEventStatusPending,
 				RetryCount:  0,
 			}
 			_, insertErr := uc.eventRepo.CreatePaymentEvent(ctx, eventRefundSuccessed)
 			if insertErr != nil {
-				log.Printf("[PaymentEventWorker] CRITICAL: Failed to insert REFUND_SUCCEEDED event for event ID %s: %v", event.ID, insertErr)
+				log.Printf("[PaymentEventWorker] CRITICAL: Failed to insert REFUND_SUCCEEDED event for event ID %s: %v", refund.ID, insertErr)
 			}
-			log.Printf("[PaymentEventWorker] Successfully processed event ID %s for Order ID %s.", event.ID, event.OrderID)
+			log.Printf("[PaymentEventWorker] Successfully processed event ID %s for Order ID %s.", refund.ID, refund.OrderID)
 		}
 	}
 
-	log.Printf("[PaymentEventWorker] Finished processing batch of %d events.", len(events))
+	log.Printf("[PaymentEventWorker] Finished processing batch of %d events.", len(refunds))
 }
 
 func (uc *paymentEventUseCase) PublishRefundSucceededEvents() {
@@ -248,20 +231,16 @@ func (uc *paymentEventUseCase) processUpdateOrderStatus(ctx context.Context, eve
 	return nil
 }
 
-func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *domain.PaymentEvent) error {
+func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, refund *domain.PaymentRefund) error {
 	var payload struct {
 		Reason string `json:"reason"`
 	}
 
-	if err := json.Unmarshal([]byte(event.Payload), &payload); err != nil {
-		return fmt.Errorf("failed to unmarshal event payload: %w", err)
-	}
+	log.Printf("Processing refund request for OrderID %s with reason: %s", refund.OrderID, payload.Reason)
 
-	log.Printf("Processing refund request for OrderID %s with reason: %s", event.OrderID, payload.Reason)
-
-	payment, err := uc.paymentRepo.GetPaymentByOrderID(ctx, event.OrderID)
+	payment, err := uc.paymentRepo.GetPaymentByOrderID(ctx, refund.OrderID)
 	if err != nil {
-		log.Printf("Failed to get payment by OrderID %s: %v", event.OrderID, err)
+		log.Printf("Failed to get payment by OrderID %s: %v", refund.OrderID, err)
 		return fmt.Errorf("failed to get payment by OrderID: %w", err)
 	}
 
@@ -272,8 +251,8 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 
 	// Call provider's refund method
 	refundData := paymentprovider.RefundData{
-		PaymentID:             event.PaymentID,
-		OrderID:               event.OrderID,
+		PaymentID:             refund.PaymentID,
+		OrderID:               refund.OrderID,
 		ProviderTransactionID: *payment.ProviderTransactionID,
 		Amount:                int64(payment.Amount),
 		Reason:                refundPayment.Reason,
@@ -282,7 +261,7 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 	refundRes, err := paymentProvider.Refund(ctx, refundData)
 
 	if err != nil {
-		log.Printf("Error refunding payment with ID %s: %v", event.PaymentID, err)
+		log.Printf("Error refunding payment with ID %s: %v", refund.PaymentID, err)
 		updateRefundStatusParams := sqlc.UpdateRefundPaymentStatusParams{
 			ID:           converter.StringToPgUUID(refundPayment.ID),
 			RefundStatus: sqlc.RefundStatusFAILED,
@@ -290,16 +269,16 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 
 		_, err = uc.paymentRepo.UpdateRefundPaymentStatus(ctx, updateRefundStatusParams)
 		if err != nil {
-			log.Printf("Failed to update refund payment status for OrderID %s: %v", event.OrderID, err)
-			return fmt.Errorf("failed to update refund payment status for OrderID %s: %w", event.OrderID, err)
+			log.Printf("Failed to update refund payment status for OrderID %s: %v", refund.OrderID, err)
+			return fmt.Errorf("failed to update refund payment status for OrderID %s: %w", refund.OrderID, err)
 		}
 
-		return fmt.Errorf("failed to refund payment with ID %s: %w", event.PaymentID, err)
+		return fmt.Errorf("failed to refund payment with ID %s: %w", refund.PaymentID, err)
 	}
 
 	if refundRes == nil {
-		log.Printf("Refund result is nil for OrderID %s", event.OrderID)
-		return fmt.Errorf("refund result is nil for OrderID %s", event.OrderID)
+		log.Printf("Refund result is nil for OrderID %s", refund.OrderID)
+		return fmt.Errorf("refund result is nil for OrderID %s", refund.OrderID)
 	}
 
 	updateRefundStatusParams := sqlc.UpdateRefundPaymentStatusParams{
@@ -309,8 +288,8 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 
 	_, err = uc.paymentRepo.UpdateRefundPaymentStatus(ctx, updateRefundStatusParams)
 	if err != nil {
-		log.Printf("Failed to update refund payment status for OrderID %s: %v", event.OrderID, err)
-		return fmt.Errorf("failed to update refund payment status for OrderID %s: %w", event.OrderID, err)
+		log.Printf("Failed to update refund payment status for OrderID %s: %v", refund.OrderID, err)
+		return fmt.Errorf("failed to update refund payment status for OrderID %s: %w", refund.OrderID, err)
 	}
 
 	updatePaymentStatus := sqlc.UpdatePaymentStatusParams{
@@ -322,11 +301,11 @@ func (uc *paymentEventUseCase) processRefundRequest(ctx context.Context, event *
 	_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updatePaymentStatus)
 
 	if err != nil {
-		log.Printf("Failed to update payment status for OrderID %s: %v", event.OrderID, err)
-		return fmt.Errorf("failed to update payment status for OrderID %s: %w", event.OrderID, err)
+		log.Printf("Failed to update payment status for OrderID %s: %v", refund.OrderID, err)
+		return fmt.Errorf("failed to update payment status for OrderID %s: %w", refund.OrderID, err)
 	}
 
-	log.Printf("Refund request for OrderID %s processed successfully.", event.OrderID)
+	log.Printf("Refund request for OrderID %s processed successfully.", refund.OrderID)
 
 	return nil
 }
