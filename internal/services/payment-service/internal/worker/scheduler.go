@@ -38,7 +38,13 @@ func (s *Scheduler) RegisterJobs() {
 	}
 	log.Println("[Scheduler] 'ReconcilePendingOrders' job registered to run every 5 minutes.")
 
-	// Job 2: Xử lý các yêu cầu refund đang pending
+	// Job 2: Xử lý các payment failed đang pending để cập nhật order status
+	_, err = s.cron.AddFunc("@every 5m", paymentEventUseCase.HandleFailedPaymentPending)
+	if err != nil {
+		log.Fatalf("[Scheduler] FATAL: Could not register 'HandleFailedPaymentPending' job: %v", err)
+	}
+
+	// Job 3: Xử lý các yêu cầu refund đang pending
 	_, err = s.cron.AddFunc("@every 1m", paymentEventUseCase.HandleRefundPaymentPending)
 	if err != nil {
 		log.Fatalf("[Scheduler] FATAL: Could not register 'HandleRefundPaymentPending' job: %v", err)

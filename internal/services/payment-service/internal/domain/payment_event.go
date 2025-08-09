@@ -14,6 +14,7 @@ type PaymentEventType string
 
 const (
 	PaymentEventTypePaymentSuccess  PaymentEventType = "PAYMENT_SUCCESS"
+	PaymentEventTypePaymentFailed   PaymentEventType = "PAYMENT_FAILED"
 	PaymentEventTypeRefundRequested PaymentEventType = "REFUND_REQUESTED"
 	PaymentEventTypeRefundSuccessed PaymentEventType = "REFUND_SUCCEEDED"
 )

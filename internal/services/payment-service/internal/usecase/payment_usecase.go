@@ -173,11 +173,18 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 		return fmt.Errorf("failed to update payment status for order %s: %w", originalPayment.OrderID, err)
 	}
 
-	// 6. Create payment event payment success
+	// 6. Create payment event
+	var eventType string
+	if paymentUpdate.Status == constant.PaymentStatusSuccess {
+		eventType = string(domain.PaymentEventTypePaymentSuccess)
+	} else {
+		eventType = string(domain.PaymentEventTypePaymentFailed)
+	}
+
 	paymentEventSuccess := &domain.PaymentEvent{
 		PaymentID:   paymentUpdate.ID,
 		OrderID:     paymentUpdate.OrderID,
-		EventType:   string(domain.PaymentEventTypePaymentSuccess),
+		EventType:   eventType,
 		Payload:     "",
 		EventStatus: domain.PaymentEventStatusPending,
 		RetryCount:  0,

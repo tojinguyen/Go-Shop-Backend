@@ -25,6 +25,7 @@ const (
 
 type PaymentEventUseCase interface {
 	HandleSuccessPaymentPending()
+	HandleFailedPaymentPending()
 	HandleRefundPaymentPending()
 	PublishRefundSucceededEvents()
 }
@@ -60,6 +61,55 @@ func (uc *paymentEventUseCase) HandleSuccessPaymentPending() {
 	events, err := uc.eventRepo.GetBatchPaymentEventByEventTypeAndStatus(
 		ctx,
 		domain.PaymentEventTypePaymentSuccess,
+		domain.PaymentEventStatusPending,
+		BATCH_SIZE,
+	)
+	if err != nil {
+		log.Printf("[PaymentEventWorker] Error fetching pending events: %v", err)
+		return
+	}
+
+	if len(events) == 0 {
+		log.Println("[PaymentEventWorker] No pending payment events to process.")
+		return
+	}
+
+	log.Printf("[PaymentEventWorker] Found %d pending events to process.", len(events))
+
+	for _, event := range events {
+		err := uc.processUpdateOrderStatus(ctx, event)
+
+		if err != nil {
+			log.Printf("[PaymentEventWorker] Error processing event ID %s: %v. Updating retry count.", event.ID, err)
+			event.RetryCount++
+			if event.RetryCount >= MAX_RETRY_COUNT {
+				log.Printf("CRITICAL: [EVENT_FAILURE] Event ID %s for Order ID %s has failed permanently after %d retries. Manual intervention required.", event.ID, event.OrderID, MAX_RETRY_COUNT)
+				event.EventStatus = domain.PaymentEventStatusFailed
+			}
+			_, updateErr := uc.eventRepo.UpdatePaymentEvent(ctx, event)
+			if updateErr != nil {
+				log.Printf("[PaymentEventWorker] CRITICAL: Failed to update event status after processing error for event ID %s: %v", event.ID, updateErr)
+			}
+		} else {
+			event.EventStatus = domain.PaymentEventStatusSent
+			_, updateErr := uc.eventRepo.UpdatePaymentEvent(ctx, event)
+			if updateErr != nil {
+				log.Printf("[PaymentEventWorker] CRITICAL: Failed to update event status after successful processing for event ID %s: %v", event.ID, updateErr)
+			}
+			log.Printf("[PaymentEventWorker] Successfully processed event ID %s for Order ID %s.", event.ID, event.OrderID)
+		}
+	}
+
+	log.Printf("[PaymentEventWorker] Finished processing batch of %d events.", len(events))
+}
+
+func (uc *paymentEventUseCase) HandleFailedPaymentPending() {
+	ctx := context.Background()
+	log.Println("[PaymentEventWorker] Starting to handle pending payment events...")
+
+	events, err := uc.eventRepo.GetBatchPaymentEventByEventTypeAndStatus(
+		ctx,
+		domain.PaymentEventTypePaymentFailed,
 		domain.PaymentEventStatusPending,
 		BATCH_SIZE,
 	)
