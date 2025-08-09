@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	pkgConstant "github.com/toji-dev/go-shop/internal/pkg/constant" // Import package constant chung
 	dependency_container "github.com/toji-dev/go-shop/internal/services/product-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/handler"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/middleware"
@@ -30,7 +31,7 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 		products := v1.Group(("/products"))
 		products.Use(middleware.AuthHeaderMiddleware())
 		{
-			products.POST("", productHandler.CreateProduct)
+			products.POST("", middleware.AuthorizationMiddleware(string(pkgConstant.UserRoleSeller)), productHandler.CreateProduct)
 			products.GET("", productHandler.GetProducts)
 			products.PUT("/:id", productHandler.UpdateProduct)
 			products.DELETE("/:id", productHandler.DeleteProduct)
