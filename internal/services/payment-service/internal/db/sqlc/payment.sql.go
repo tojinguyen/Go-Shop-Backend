@@ -61,6 +61,44 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 	return i, err
 }
 
+const getBatchPendingPayments = `-- name: GetBatchPendingPayments :many
+SELECT id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id FROM payments
+WHERE payment_status = 'PENDING' AND created_at < NOW() - INTERVAL '15 minutes'
+`
+
+func (q *Queries) GetBatchPendingPayments(ctx context.Context) ([]Payment, error) {
+	rows, err := q.db.Query(ctx, getBatchPendingPayments)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Payment{}
+	for rows.Next() {
+		var i Payment
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrderID,
+			&i.UserID,
+			&i.Amount,
+			&i.Currency,
+			&i.PaymentMethod,
+			&i.PaymentProvider,
+			&i.ProviderTransactionID,
+			&i.PaymentStatus,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProviderRefundID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPaymentByOrderID = `-- name: GetPaymentByOrderID :one
 SELECT id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id FROM payments
 WHERE order_id = $1

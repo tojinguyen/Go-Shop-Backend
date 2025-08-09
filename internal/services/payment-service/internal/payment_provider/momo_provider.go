@@ -309,6 +309,11 @@ func (p *momoProvider) Refund(ctx context.Context, data RefundData) (*RefundResu
 	}, nil
 }
 
+func (p *momoProvider) GetPaymentStatus(ctx context.Context, payment *domain.Payment) (*PaymentStatusResult, error) {
+	// Implement the logic to get payment status from MoMo API
+	return nil, nil
+}
+
 func (p *momoProvider) verifySignature(data, signature string) bool {
 	expectedSignature := p.generateSignature(data)
 	isValid := expectedSignature == signature

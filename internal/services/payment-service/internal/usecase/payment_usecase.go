@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
@@ -24,6 +25,7 @@ type PaymentUseCase interface {
 	InitiatePayment(ctx context.Context, userID string, req dto.InitiatePaymentRequest) (*dto.InitiatePaymentResponse, error)
 	HandleIPN(ctx context.Context, providerName constant.PaymentProviderMethod, r *http.Request) error
 	Refund(ctx context.Context, paymentID, orderID, reason string) (*dto.RefundResult, error)
+	HandlePendingPaymentTooLong()
 }
 
 type paymentUseCase struct {
@@ -230,4 +232,44 @@ func (uc *paymentUseCase) Refund(ctx context.Context, paymentID, orderID, reason
 		Status:  string(sqlc.RefundStatusPENDING),
 		Message: "Refund request accepted, processing will take some time.",
 	}, nil
+}
+
+func (uc *paymentUseCase) HandlePendingPaymentTooLong() {
+	log.Println("Checking for pending payments that have been pending too long...")
+	// TODO: Query all payment Record with status PENDING and duration > 15 minutes
+	ctx := context.Background()
+	payments, err := uc.paymentRepo.GetBatchPendingPayments(ctx)
+	if err != nil {
+		log.Printf("Error retrieving pending payments: %v", err)
+		return
+	}
+
+	for _, payment := range payments {
+		log.Printf("Handling pending payment with ID: %s", payment.ID)
+		provider, err := uc.providerFactory.GetProvider(constant.PaymentProviderMethod(payment.Provider))
+		if err != nil {
+			log.Printf("Error retrieving payment status from MoMo for payment ID %s: %v", payment.ID, err)
+			continue
+		}
+
+		paymentStatusRes, err := provider.GetPaymentStatus(ctx, &payment)
+		if err != nil {
+			log.Printf("Error retrieving payment status from MoMo for payment ID %s: %v", payment.ID, err)
+			continue
+		}
+
+		transId := strconv.FormatInt(paymentStatusRes.TransId, 10)
+
+		updatePaymentStatus := sqlc.UpdatePaymentStatusParams{
+			ID:                    converter.StringToPgUUID(payment.ID),
+			PaymentStatus:         sqlc.PaymentStatusFAILED,
+			ProviderTransactionID: converter.StringToPgText(&transId),
+		}
+		// Update the payment status in the database
+		_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updatePaymentStatus)
+		if err != nil {
+			log.Printf("Error updating payment status for payment ID %s: %v", payment.ID, err)
+			continue
+		}
+	}
 }

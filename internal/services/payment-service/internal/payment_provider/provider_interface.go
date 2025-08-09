@@ -33,6 +33,20 @@ type RefundResult struct {
 	Status           string // Trạng thái refund từ nhà cung cấp
 }
 
+type PaymentStatusResult struct {
+	PartnerCode  string `json:"partnerCode"`
+	OrderId      string `json:"orderId"`
+	RequestId    string `json:"requestId"`
+	Amount       int64  `json:"amount"`
+	TransId      int64  `json:"transId"`
+	PayType      string `json:"payType"`
+	ExtraData    string `json:"extraData"`
+	Signature    string `json:"signature"`
+	ResultCode   int    `json:"resultCode"`
+	Message      string `json:"message"`
+	ResponseTime string `json:"responseTime"`
+}
+
 type PaymentProvider interface {
 	// GetName trả về tên định danh của provider (vd: "MOMO", "VNPAY")
 	GetName() constant.PaymentProviderMethod
@@ -42,4 +56,6 @@ type PaymentProvider interface {
 	HandleIPN(r *http.Request) (*domain.Payment, error)
 	// Refund thực hiện hoàn tiền cho giao dịch đã thanh toán
 	Refund(ctx context.Context, data RefundData) (*RefundResult, error)
+	// GetPaymentStatus lấy trạng thái của một giao dịch thanh toán
+	GetPaymentStatus(ctx context.Context, payment *domain.Payment) (*PaymentStatusResult, error)
 }

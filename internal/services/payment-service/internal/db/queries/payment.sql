@@ -31,3 +31,7 @@ SET
     updated_at = NOW()
 WHERE id = $1
 RETURNING *;
+
+-- name: GetBatchPendingPayments :many
+SELECT * FROM payments
+WHERE payment_status = 'PENDING' AND created_at < NOW() - INTERVAL '15 minutes';

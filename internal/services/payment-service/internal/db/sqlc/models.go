@@ -146,9 +146,10 @@ func (ns NullPaymentStatus) Value() (driver.Value, error) {
 type RefundStatus string
 
 const (
-	RefundStatusPENDING   RefundStatus = "PENDING"
-	RefundStatusCOMPLETED RefundStatus = "COMPLETED"
-	RefundStatusFAILED    RefundStatus = "FAILED"
+	RefundStatusPENDING         RefundStatus = "PENDING"
+	RefundStatusREFUNDREQUESTED RefundStatus = "REFUND_REQUESTED"
+	RefundStatusCOMPLETED       RefundStatus = "COMPLETED"
+	RefundStatusFAILED          RefundStatus = "FAILED"
 )
 
 func (e *RefundStatus) Scan(src interface{}) error {
