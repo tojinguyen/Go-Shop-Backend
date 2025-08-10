@@ -4,7 +4,8 @@ _format_version: "3.0"
 _comment: "Declarative configuration for Go-Shop API Gateway"
 
 # =======================================================
-# 1. Định nghĩa các Upstream Services (các microservices)
+# 1. Định nghĩa các Upstream Services (các microservices của bạn)
+# Kong sẽ sử dụng tên service trong Docker network để giao tiếp.
 # =======================================================
 services:
   - name: user-service
@@ -28,10 +29,13 @@ routes:
   - name: auth-routes
     service: user-service
     paths:
-      - /api/v1/auth/
+      - ~^/api/v1/auth(/.*)?$
+    methods: 
+      - POST
+      - GET
     strip_path: false
     plugins:
-      - name: jwt 
+      - name: jwt # Ghi đè plugin global, tắt xác thực cho route này
         enabled: false
 
   - name: ipn-routes
@@ -65,7 +69,7 @@ routes:
   - name: cart-routes
     service: cart-service
     paths:
-      - /api/v1/carts 
+      - /api/v1/carts
     strip_path: false
 
   - name: order-routes
@@ -82,20 +86,35 @@ routes:
 
 # =======================================================
 # 3. Kích hoạt Plugin JWT trên toàn cục
+# Mọi request đi qua Kong sẽ được kiểm tra bởi plugin này,
+# trừ khi bị ghi đè (disabled) ở một route cụ thể.
 # =======================================================
 plugins:
   - name: jwt
-    # Áp dụng plugin này cho tất cả các service và route trừ khi bị ghi đè
     config:
-      # Kong sẽ tự động đọc biến môi trường JWT_SECRET_KEY
       secret_is_base64: false
-      key_claim_name: iss
+      # Kong sẽ tìm claim 'iss' trong token để xác định consumer.
+      key_claim_name: iss 
+      # Yêu cầu Kong xác thực claim 'exp' (expiration time).
       claims_to_verify:
         - exp
-      # Lấy các claim từ payload của JWT và thêm vào header cho các service phía sau
-      # Tên claim (ví dụ: UserId) phải khớp với tên trong struct CustomJwtClaims của bạn
+      # Tự động lấy các claim từ payload của JWT và thêm vào header 
+      # gửi lên các service backend. Đây là phần thay thế cho NJS script.
+      # Tên claim (ví dụ: UserId) phải khớp với tên trong struct CustomJwtClaims.
       claim_to_header:
         - UserId: X-User-ID
         - Role: X-User-Role
         - Email: X-User-Email
       run_on_preflight: true
+
+# =======================================================
+# 4. Tạo Consumer và JWT Credential
+# Consumer đại diện cho một client sử dụng API của bạn.
+# JWT credential liên kết secret key với consumer đó.
+# =======================================================
+consumers:
+  - username: go-shop-consumer
+    jwt_secrets:
+      - key: ${JWT_ISSUER} # Phải khớp với 'iss' trong token
+        # Kong sẽ tự động lấy giá trị từ biến môi trường
+        secret: ${JWT_SECRET_KEY} 
