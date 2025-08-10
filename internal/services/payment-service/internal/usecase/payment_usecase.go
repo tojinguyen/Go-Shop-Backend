@@ -265,9 +265,16 @@ func (uc *paymentUseCase) HandlePendingPaymentTooLong() {
 
 		transId := strconv.FormatInt(paymentStatusRes.TransId, 10)
 
+		var paymentStatus sqlc.PaymentStatus
+		if paymentStatusRes.PaymentStatus == paymentprovider.PaymentStatusSuccess {
+			paymentStatus = sqlc.PaymentStatusSUCCESS
+		} else {
+			paymentStatus = sqlc.PaymentStatusFAILED
+		}
+
 		updatePaymentStatus := sqlc.UpdatePaymentStatusParams{
 			ID:                    converter.StringToPgUUID(payment.ID),
-			PaymentStatus:         sqlc.PaymentStatusFAILED,
+			PaymentStatus:         paymentStatus,
 			ProviderTransactionID: converter.StringToPgText(&transId),
 		}
 		// Update the payment status in the database

@@ -310,8 +310,73 @@ func (p *momoProvider) Refund(ctx context.Context, data RefundData) (*RefundResu
 }
 
 func (p *momoProvider) GetPaymentStatus(ctx context.Context, payment *domain.Payment) (*PaymentStatusResult, error) {
+	requestID := uuid.New().String()
+	orderID := fmt.Sprintf("%s_%s", payment.OrderID, requestID)
 
-	return nil, nil
+	rawData := fmt.Sprintf(
+		"accessKey=%s&orderId=%s&partnerCode=%s&requestId=%s",
+		p.cfg.AccessKey,
+		orderID,
+		p.cfg.PartnerCode,
+		requestID,
+	)
+
+	signature := p.generateSignature(rawData)
+
+	// Tạo payload gửi MoMo
+	req := map[string]string{
+		"partnerCode": p.cfg.PartnerCode,
+		"orderId":     orderID,
+		"requestId":   requestID,
+		"lang":        "vi",
+		"signature":   signature,
+	}
+
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("marshal request: %w", err)
+	}
+
+	queryEndpoint := p.cfg.ApiGetStatusEndpoint
+	httpRequest, err := http.NewRequestWithContext(ctx, "POST", queryEndpoint, bytes.NewBuffer(reqBody))
+	if err != nil {
+		log.Printf("Error creating MoMo query HTTP request: %v", err)
+		return nil, fmt.Errorf("failed to create MoMo query HTTP request: %w", err)
+	}
+	httpRequest.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpRequest)
+	if err != nil {
+		log.Printf("Error sending query request to MoMo: %v", err)
+		return nil, fmt.Errorf("failed to send query request to MoMo: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading MoMo query response body: %v", err)
+		return nil, fmt.Errorf("failed to read MoMo query response body: %w", err)
+	}
+
+	log.Printf("[MOMO DEBUG] MoMo Query Response Body: %s", string(body))
+
+	// Parse response
+	var momoResp PaymentStatusResult
+	if err := json.Unmarshal(body, &momoResp); err != nil {
+		log.Printf("Error unmarshalling MoMo query response: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal MoMo query response: %w", err)
+	}
+
+	// Kiểm tra kết quả
+	if momoResp.ResultCode != 0 {
+		log.Printf("MoMo query returned an error: %s (code: %d)", momoResp.Message, momoResp.ResultCode)
+		return nil, fmt.Errorf("momo query returned an error: %s (code: %d)", momoResp.Message, momoResp.ResultCode)
+	}
+
+	momoResp.PaymentStatus = MapResultCodeToStatus(momoResp.ResultCode)
+
+	return &momoResp, nil
 }
 
 func (p *momoProvider) verifySignature(data, signature string) bool {

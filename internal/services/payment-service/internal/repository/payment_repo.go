@@ -51,6 +51,7 @@ func toDomain(p *sqlc.Payment) *domain.Payment {
 		Provider:              *converter.PgTextToStringPtr(p.PaymentProvider),
 		ProviderTransactionID: converter.PgTextToStringPtr(p.ProviderTransactionID),
 		Status:                constant.PaymentStatus(p.PaymentStatus),
+		RequestID:             *converter.PgTextToStringPtr(p.RequestID),
 		CreatedAt:             p.CreatedAt.Time,
 		UpdatedAt:             p.UpdatedAt.Time,
 	}

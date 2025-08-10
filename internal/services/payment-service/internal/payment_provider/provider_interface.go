@@ -8,6 +8,25 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/domain"
 )
 
+type PaymentStatus string
+
+const (
+	PaymentStatusSuccess PaymentStatus = "SUCCESS"
+	PaymentStatusPending PaymentStatus = "PENDING"
+	PaymentStatusFailed  PaymentStatus = "FAILED"
+)
+
+func MapResultCodeToStatus(resultCode int) PaymentStatus {
+	switch resultCode {
+	case 0:
+		return PaymentStatusSuccess
+	case 9000:
+		return PaymentStatusPending
+	default:
+		return PaymentStatusFailed
+	}
+}
+
 type PaymentData struct {
 	RequestID   string
 	OrderID     string
@@ -35,17 +54,18 @@ type RefundResult struct {
 }
 
 type PaymentStatusResult struct {
-	PartnerCode  string `json:"partnerCode"`
-	OrderId      string `json:"orderId"`
-	RequestId    string `json:"requestId"`
-	Amount       int64  `json:"amount"`
-	TransId      int64  `json:"transId"`
-	PayType      string `json:"payType"`
-	ExtraData    string `json:"extraData"`
-	Signature    string `json:"signature"`
-	ResultCode   int    `json:"resultCode"`
-	Message      string `json:"message"`
-	ResponseTime string `json:"responseTime"`
+	PartnerCode   string        `json:"partnerCode"`
+	OrderId       string        `json:"orderId"`
+	RequestId     string        `json:"requestId"`
+	Amount        int64         `json:"amount"`
+	TransId       int64         `json:"transId"`
+	PayType       string        `json:"payType"`
+	ExtraData     string        `json:"extraData"`
+	Signature     string        `json:"signature"`
+	ResultCode    int           `json:"resultCode"`
+	Message       string        `json:"message"`
+	ResponseTime  string        `json:"responseTime"`
+	PaymentStatus PaymentStatus `json:"paymentStatus"`
 }
 
 type PaymentProvider interface {
