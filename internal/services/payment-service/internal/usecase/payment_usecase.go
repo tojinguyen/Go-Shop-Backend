@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	kafka_infra "github.com/toji-dev/go-shop/internal/pkg/infra/kafka-infra"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/db/sqlc"
+	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/dto"
 	grpc_adapter "github.com/toji-dev/go-shop/internal/services/payment-service/internal/grpc/adapter"
 	paymentprovider "github.com/toji-dev/go-shop/internal/services/payment-service/internal/payment_provider"
@@ -23,11 +26,14 @@ type PaymentUseCase interface {
 	InitiatePayment(ctx context.Context, userID string, req dto.InitiatePaymentRequest) (*dto.InitiatePaymentResponse, error)
 	HandleIPN(ctx context.Context, providerName constant.PaymentProviderMethod, r *http.Request) error
 	Refund(ctx context.Context, paymentID, orderID, reason string) (*dto.RefundResult, error)
+	HandlePendingPaymentTooLong()
 }
 
 type paymentUseCase struct {
-	appConfig       *config.AppConfig
-	paymentRepo     repository.PaymentRepository
+	appConfig        *config.AppConfig
+	paymentRepo      repository.PaymentRepository
+	paymentEventRepo repository.PaymentEventRepository
+
 	providerFactory *paymentprovider.PaymentProviderFactory
 	orderAdapter    grpc_adapter.OrderServiceAdapter
 	kafkaProducer   kafka_infra.Producer
@@ -36,16 +42,18 @@ type paymentUseCase struct {
 func NewPaymentUsecase(
 	appConfig *config.AppConfig,
 	paymentRepo repository.PaymentRepository,
+	paymentEventRepo repository.PaymentEventRepository,
 	factory *paymentprovider.PaymentProviderFactory,
 	orderAdapter grpc_adapter.OrderServiceAdapter,
 	kafkaProducer kafka_infra.Producer,
 ) PaymentUseCase {
 	return &paymentUseCase{
-		appConfig:       appConfig,
-		paymentRepo:     paymentRepo,
-		providerFactory: factory,
-		orderAdapter:    orderAdapter,
-		kafkaProducer:   kafkaProducer,
+		appConfig:        appConfig,
+		paymentRepo:      paymentRepo,
+		paymentEventRepo: paymentEventRepo,
+		providerFactory:  factory,
+		orderAdapter:     orderAdapter,
+		kafkaProducer:    kafkaProducer,
 	}
 }
 
@@ -81,6 +89,8 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 	amount := float64(order.Order.FinalAmount)
 	paymentMethod := strings.ToUpper(req.PaymentMethod)
 
+	requestID := uuid.New().String()
+
 	// 3. Tạo bản ghi payment trong DB
 	params := sqlc.CreatePaymentParams{
 		OrderID:         converter.StringToPgUUID(req.OrderID),
@@ -89,6 +99,7 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 		Currency:        "VND",
 		PaymentMethod:   sqlc.PaymentMethodEWALLET,
 		PaymentProvider: converter.StringToPgText(&paymentMethod),
+		RequestID:       converter.StringToPgText(&requestID),
 	}
 
 	paymentRecord, err := uc.paymentRepo.CreatePayment(ctx, params)
@@ -100,12 +111,15 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 
 	// 4. Gọi provider để tạo link thanh toán
 	paymentData := paymentprovider.PaymentData{
+		RequestID:   requestID,
 		OrderID:     req.OrderID,
 		Amount:      int64(amount),
 		OrderInfo:   fmt.Sprintf("Thanh_toan_don_hang_%s", req.OrderID),
 		IPNURL:      fmt.Sprintf("%s/api/v1/payments/ipn/%s", uc.appConfig.ApiGatewayURL, strings.ToLower(string(paymentProvider.GetName()))),
 		RedirectURL: fmt.Sprintf("%s/orders/%s/result", uc.appConfig.FrontendURL, req.OrderID),
 	}
+
+	log.Printf("IPN URL: %s", paymentData.IPNURL)
 
 	result, err := paymentProvider.CreatePayment(ctx, paymentData)
 
@@ -164,7 +178,32 @@ func (uc *paymentUseCase) HandleIPN(ctx context.Context, provider constant.Payme
 	_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updateParams)
 
 	if err != nil {
+		log.Printf("Error updating payment status for OrderID %s: %v", originalPayment.OrderID, err)
 		return fmt.Errorf("failed to update payment status for order %s: %w", originalPayment.OrderID, err)
+	}
+
+	// 6. Create payment event
+	var eventType string
+	if paymentUpdate.Status == constant.PaymentStatusSuccess {
+		eventType = string(domain.PaymentEventTypePaymentSuccess)
+	} else {
+		eventType = string(domain.PaymentEventTypePaymentFailed)
+	}
+
+	paymentEventSuccess := &domain.PaymentEvent{
+		PaymentID:   paymentUpdate.ID,
+		OrderID:     paymentUpdate.OrderID,
+		EventType:   eventType,
+		Payload:     "",
+		EventStatus: domain.PaymentEventStatusPending,
+		RetryCount:  0,
+	}
+
+	_, err = uc.paymentEventRepo.CreatePaymentEvent(ctx, paymentEventSuccess)
+
+	if err != nil {
+		log.Printf("Error creating payment event for OrderID %s: %v", originalPayment.OrderID, err)
+		return fmt.Errorf("failed to create payment event for order %s: %w", originalPayment.OrderID, err)
 	}
 
 	return nil
@@ -200,4 +239,56 @@ func (uc *paymentUseCase) Refund(ctx context.Context, paymentID, orderID, reason
 		Status:  string(sqlc.RefundStatusPENDING),
 		Message: "Refund request accepted, processing will take some time.",
 	}, nil
+}
+
+func (uc *paymentUseCase) HandlePendingPaymentTooLong() {
+	log.Println("Checking for pending payments that have been pending too long...")
+
+	ctx := context.Background()
+	payments, err := uc.paymentRepo.GetBatchPendingPayments(ctx)
+	if err != nil {
+		log.Printf("Error retrieving pending payments: %v", err)
+		return
+	}
+
+	if len(payments) == 0 {
+		log.Println("No pending payments found.")
+		return
+	}
+
+	for _, payment := range payments {
+		log.Printf("Handling pending payment with ID: %s", payment.ID)
+		provider, err := uc.providerFactory.GetProvider(constant.PaymentProviderMethod(payment.Provider))
+		if err != nil {
+			log.Printf("Error retrieving payment status from MoMo for payment ID %s: %v", payment.ID, err)
+			continue
+		}
+
+		paymentStatusRes, err := provider.GetPaymentStatus(ctx, &payment)
+		if err != nil {
+			log.Printf("Error retrieving payment status from MoMo for payment ID %s: %v", payment.ID, err)
+			continue
+		}
+
+		transId := strconv.FormatInt(paymentStatusRes.TransId, 10)
+
+		var paymentStatus sqlc.PaymentStatus
+		if paymentStatusRes.PaymentStatus == paymentprovider.PaymentStatusSuccess {
+			paymentStatus = sqlc.PaymentStatusSUCCESS
+		} else {
+			paymentStatus = sqlc.PaymentStatusFAILED
+		}
+
+		updatePaymentStatus := sqlc.UpdatePaymentStatusParams{
+			ID:                    converter.StringToPgUUID(payment.ID),
+			PaymentStatus:         paymentStatus,
+			ProviderTransactionID: converter.StringToPgText(&transId),
+		}
+		// Update the payment status in the database
+		_, err = uc.paymentRepo.UpdatePaymentStatus(ctx, updatePaymentStatus)
+		if err != nil {
+			log.Printf("Error updating payment status for payment ID %s: %v", payment.ID, err)
+			continue
+		}
+	}
 }

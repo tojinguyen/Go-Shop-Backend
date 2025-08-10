@@ -10,12 +10,6 @@ down:
 recreate:
 	docker compose up -d --force-recreate
 
-.PHONY: seed-users
-seed-users:
-	@echo "🌱 Seeding user-service database with 50000 customers and 1000 shippers..."
-	@go run ./internal/services/user-service/cmd/seeder/main.go -users=50000 -shippers=1000
-
-
 # ===================================================================
 # Protobuf/gRPC Generation
 # ===================================================================
@@ -47,3 +41,29 @@ proto-tidy:
 # Lệnh tổng hợp: generate code và sau đó tidy go.mod
 .PHONY: proto
 proto: proto-gen proto-tidy ## Generate all Protobuf/gRPC code and tidy modules
+
+
+
+# ===================================================================
+# Database Seeding
+# ===================================================================
+.PHONY: seed-users-small
+seed-users-small:
+	@echo "Seeding user-service database with 50 customers and 10 shippers..."
+	@cd internal/services/user-service && go run ./cmd/seeder/main.go -users=50 -shippers=10
+	@echo "User service seeding complete."
+
+# Lệnh để seed số lượng lớn dữ liệu
+.PHONY: seed-users-large
+seed-users-large:
+	@echo "Seeding user-service database with 5000 customers and 100 shippers..."
+	@cd internal/services/user-service && go run ./cmd/seeder/main.go -users=5000 -shippers=100
+	@echo "User service large seeding complete."
+
+# Lệnh để seed 50,000 users với phân bố thực tế
+.PHONY: seed-users
+seed-users:
+	@echo "Seeding user-service database with 50,000 users (realistic e-commerce distribution)..."
+	@echo "Distribution: ~87% customers, ~10% sellers, ~2.5% shippers, ~0.5% admins"
+	@cd internal/services/user-service && go run ./cmd/seeder/main.go -total=50000
+	@echo "50K users seeding complete!"

@@ -11,14 +11,15 @@ import (
 
 // Config holds all configuration for the user service
 type Config struct {
-	Server   ServerConfig   `json:"server"`
-	Database DatabaseConfig `json:"database"`
-	JWT      JWTConfig      `json:"jwt"`
-	Redis    RedisConfig    `json:"redis"`
-	CORS     CORSConfig     `json:"cors"`
-	App      AppConfig      `json:"app"`
-	Email    EmailConfig    `json:"email"`
-	GRPC     GRPCConfig     `json:"grpc"`
+	Server    ServerConfig    `json:"server"`
+	Database  DatabaseConfig  `json:"database"`
+	JWT       JWTConfig       `json:"jwt"`
+	Redis     RedisConfig     `json:"redis"`
+	CORS      CORSConfig      `json:"cors"`
+	App       AppConfig       `json:"app"`
+	Email     EmailConfig     `json:"email"`
+	GRPC      GRPCConfig      `json:"grpc"`
+	RateLimit RateLimitConfig `json:"rate_limit"`
 }
 
 // ServerConfig holds server configuration
@@ -95,6 +96,11 @@ type GRPCConfig struct {
 	Port string `json:"port"`
 }
 
+type RateLimitConfig struct {
+	LoginMaxAttempts   int           `json:"login_max_attempts"`
+	LoginWindowMinutes time.Duration `json:"login_window_minutes"`
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if it exists
@@ -159,6 +165,10 @@ func Load() (*Config, error) {
 		GRPC: GRPCConfig{
 			Host: getEnvWithDefault("USER_SERVICE_GRPC_HOST", "localhost"),
 			Port: getEnvWithDefault("USER_SERVICE_GRPC_PORT", "50051"),
+		},
+		RateLimit: RateLimitConfig{
+			LoginMaxAttempts:   getIntEnvWithDefault("RATE_LIMIT_LOGIN_ATTEMPTS", 5),
+			LoginWindowMinutes: getDurationEnvWithDefault("RATE_LIMIT_LOGIN_WINDOW_MINUTES", 1*time.Minute),
 		},
 	}
 

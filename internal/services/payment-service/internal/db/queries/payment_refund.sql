@@ -15,3 +15,6 @@ SELECT * FROM refund_payments WHERE id = $1;
 
 -- name: UpdateRefundPaymentStatus :one
 UPDATE refund_payments SET refund_status = $2 WHERE id = $1 RETURNING *;
+
+-- name: GetBatchRefundPaymentsByStatus :many
+SELECT * FROM refund_payments WHERE refund_status = $1;

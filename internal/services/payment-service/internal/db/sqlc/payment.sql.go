@@ -19,10 +19,11 @@ INSERT INTO payments (
     currency,
     payment_method,
     payment_provider,
-    payment_status
+    payment_status,
+    request_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, 'PENDING'
-) RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id
+    $1, $2, $3, $4, $5, $6, 'PENDING', $7
+) RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, request_id, created_at, updated_at, provider_refund_id
 `
 
 type CreatePaymentParams struct {
@@ -32,6 +33,7 @@ type CreatePaymentParams struct {
 	Currency        string         `json:"currency"`
 	PaymentMethod   PaymentMethod  `json:"payment_method"`
 	PaymentProvider pgtype.Text    `json:"payment_provider"`
+	RequestID       pgtype.Text    `json:"request_id"`
 }
 
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
@@ -42,6 +44,7 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 		arg.Currency,
 		arg.PaymentMethod,
 		arg.PaymentProvider,
+		arg.RequestID,
 	)
 	var i Payment
 	err := row.Scan(
@@ -54,6 +57,7 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 		&i.PaymentProvider,
 		&i.ProviderTransactionID,
 		&i.PaymentStatus,
+		&i.RequestID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ProviderRefundID,
@@ -61,8 +65,47 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 	return i, err
 }
 
+const getBatchPendingPayments = `-- name: GetBatchPendingPayments :many
+SELECT id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, request_id, created_at, updated_at, provider_refund_id FROM payments
+WHERE payment_status = 'PENDING' AND created_at < NOW() - INTERVAL '15 minutes'
+`
+
+func (q *Queries) GetBatchPendingPayments(ctx context.Context) ([]Payment, error) {
+	rows, err := q.db.Query(ctx, getBatchPendingPayments)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Payment{}
+	for rows.Next() {
+		var i Payment
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrderID,
+			&i.UserID,
+			&i.Amount,
+			&i.Currency,
+			&i.PaymentMethod,
+			&i.PaymentProvider,
+			&i.ProviderTransactionID,
+			&i.PaymentStatus,
+			&i.RequestID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProviderRefundID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPaymentByOrderID = `-- name: GetPaymentByOrderID :one
-SELECT id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id FROM payments
+SELECT id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, request_id, created_at, updated_at, provider_refund_id FROM payments
 WHERE order_id = $1
 `
 
@@ -79,6 +122,7 @@ func (q *Queries) GetPaymentByOrderID(ctx context.Context, orderID pgtype.UUID) 
 		&i.PaymentProvider,
 		&i.ProviderTransactionID,
 		&i.PaymentStatus,
+		&i.RequestID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ProviderRefundID,
@@ -92,7 +136,7 @@ SET
     provider_refund_id = $2,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id
+RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, request_id, created_at, updated_at, provider_refund_id
 `
 
 type UpdatePaymentProviderRefundIDParams struct {
@@ -113,6 +157,7 @@ func (q *Queries) UpdatePaymentProviderRefundID(ctx context.Context, arg UpdateP
 		&i.PaymentProvider,
 		&i.ProviderTransactionID,
 		&i.PaymentStatus,
+		&i.RequestID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ProviderRefundID,
@@ -127,7 +172,7 @@ SET
     provider_transaction_id = $3,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, created_at, updated_at, provider_refund_id
+RETURNING id, order_id, user_id, amount, currency, payment_method, payment_provider, provider_transaction_id, payment_status, request_id, created_at, updated_at, provider_refund_id
 `
 
 type UpdatePaymentStatusParams struct {
@@ -149,6 +194,7 @@ func (q *Queries) UpdatePaymentStatus(ctx context.Context, arg UpdatePaymentStat
 		&i.PaymentProvider,
 		&i.ProviderTransactionID,
 		&i.PaymentStatus,
+		&i.RequestID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ProviderRefundID,

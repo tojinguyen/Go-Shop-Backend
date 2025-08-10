@@ -30,6 +30,8 @@ func ErrorHandler() gin.HandlerFunc {
 					response.Forbidden(c, string(appErr.Code), appErr.Message)
 				case apperror.TypeDependencyFailure:
 					response.ServiceUnavailable(c, string(appErr.Code), appErr.Message)
+				case apperror.TypeRateLimitExceeded:
+					response.TooManyRequests(c, string(appErr.Code), appErr.Message)
 				default:
 					response.InternalServerError(c, string(appErr.Code), appErr.Message)
 				}

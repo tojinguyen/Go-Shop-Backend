@@ -16,6 +16,7 @@ type Payment struct {
 	Provider              string        `json:"payment_provider"`
 	ProviderTransactionID *string       `json:"provider_transaction_id"`
 	Status                PaymentStatus `json:"payment_status"`
+	RequestID             string        `json:"request_id"`
 	CreatedAt             time.Time     `json:"created_at"`
 	UpdatedAt             time.Time     `json:"updated_at"`
 }

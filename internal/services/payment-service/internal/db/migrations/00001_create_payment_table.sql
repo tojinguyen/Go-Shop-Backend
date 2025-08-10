@@ -25,6 +25,7 @@ CREATE TABLE payments (
     payment_provider VARCHAR(50), -- e.g., 'STRIPE', 'MOMO', 'VNPAY', 'NONE'
     provider_transaction_id VARCHAR(255),
     payment_status payment_status NOT NULL DEFAULT 'PENDING',
+    request_id VARCHAR(255),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

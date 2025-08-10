@@ -162,3 +162,13 @@ func Custom(c *gin.Context, statusCode int, success bool, message string, data i
 		Error:   err,
 	})
 }
+
+func TooManyRequests(c *gin.Context, code, message string) {
+	c.JSON(http.StatusTooManyRequests, APIResponse{
+		Success: false,
+		Error: &ErrorInfo{
+			Code:    code,
+			Message: message,
+		},
+	})
+}

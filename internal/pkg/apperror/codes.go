@@ -31,4 +31,5 @@ const (
 	CodeInvalidCredentials ErrorCode = "INVALID_CREDENTIALS"
 	CodeTokenExpired       ErrorCode = "TOKEN_EXPIRED"
 	CodeTokenInvalid       ErrorCode = "TOKEN_INVALID"
+	CodeRateLimitExceeded  ErrorCode = "RATE_LIMIT_EXCEEDED"
 )

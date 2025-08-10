@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/email"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	timeUtils "github.com/toji-dev/go-shop/internal/pkg/time"
@@ -84,6 +85,28 @@ func (s *AuthService) Register(ctx *gin.Context, req dto.RegisterRequest) (*dto.
 }
 
 func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthResponse, error) {
+	rateLimitKey := fmt.Sprintf("rate_limit:login:%s", req.Email)
+	attempts, err := s.redisService.Increment(rateLimitKey)
+
+	if err != nil {
+		// Nếu Redis lỗi, ta ghi log nhưng vẫn cho phép tiếp tục để không làm gián đoạn hệ thống
+		log.Printf("Warning: Redis error on incrementing rate limit key: %v", err)
+	} else {
+		// Nếu đây là lần thử đầu tiên trong khoảng thời gian, đặt TTL (thời gian sống) cho key
+		if attempts == 1 {
+			s.redisService.SetTTL(rateLimitKey, s.config.RateLimit.LoginWindowMinutes)
+		}
+
+		// Nếu số lần thử vượt quá giới hạn
+		if attempts > int64(s.config.RateLimit.LoginMaxAttempts) {
+			log.Printf("Rate limit exceeded for email: %s", req.Email)
+			// Trả về lỗi Rate Limit Exceeded
+			return dto.AuthResponse{}, apperror.NewRateLimitExceeded(
+				fmt.Sprintf("Too many failed login attempts. Please try again in %v.", s.config.RateLimit.LoginWindowMinutes),
+			)
+		}
+	}
+
 	// Get user by email
 	userAccount, err := s.userAccountRepo.GetUserAccountByEmail(ctx, req.Email)
 	if err != nil {
@@ -97,6 +120,13 @@ func (s *AuthService) Login(ctx *gin.Context, req dto.LoginRequest) (dto.AuthRes
 	err = bcrypt.CompareHashAndPassword([]byte(userAccount.HashedPassword), []byte(req.Password))
 	if err != nil {
 		return dto.AuthResponse{}, fmt.Errorf("invalid email or password")
+	}
+
+	// If login success, reset counter
+	err = s.redisService.Delete(rateLimitKey)
+	if err != nil {
+		// Ghi log nếu có lỗi khi xóa key, nhưng không làm gián đoạn luồng login
+		log.Printf("Warning: Failed to reset rate limit counter for %s: %v", req.Email, err)
 	}
 
 	// Generate JWT tokens

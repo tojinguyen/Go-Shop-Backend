@@ -17,6 +17,8 @@ type PaymentRepository interface {
 	CreatePaymentRefund(ctx context.Context, params sqlc.CreateRefundPaymentParams) (*domain.PaymentRefund, error)
 	GetRefundByPaymentID(ctx context.Context, paymentID string) (*domain.PaymentRefund, error)
 	UpdateRefundPaymentStatus(ctx context.Context, params sqlc.UpdateRefundPaymentStatusParams) (*domain.PaymentRefund, error)
+	GetBatchRefundPaymentsByStatus(ctx context.Context, status sqlc.RefundStatus) ([]domain.PaymentRefund, error)
+	GetBatchPendingPayments(ctx context.Context) ([]domain.Payment, error)
 }
 
 type paymentRepository struct {
@@ -49,9 +51,18 @@ func toDomain(p *sqlc.Payment) *domain.Payment {
 		Provider:              *converter.PgTextToStringPtr(p.PaymentProvider),
 		ProviderTransactionID: converter.PgTextToStringPtr(p.ProviderTransactionID),
 		Status:                constant.PaymentStatus(p.PaymentStatus),
+		RequestID:             *converter.PgTextToStringPtr(p.RequestID),
 		CreatedAt:             p.CreatedAt.Time,
 		UpdatedAt:             p.UpdatedAt.Time,
 	}
+}
+
+func toDomainPayments(ps []sqlc.Payment) []domain.Payment {
+	payments := make([]domain.Payment, len(ps))
+	for i, p := range ps {
+		payments[i] = *toDomain(&p)
+	}
+	return payments
 }
 
 // toDomain converts sqlc.PaymentRefund to domain.PaymentRefund
@@ -66,6 +77,14 @@ func toDomainRefund(r *sqlc.RefundPayment) *domain.PaymentRefund {
 		CreatedAt:    r.CreatedAt.Time,
 		UpdatedAt:    r.UpdatedAt.Time,
 	}
+}
+
+func toDomainRefunds(rs []sqlc.RefundPayment) []domain.PaymentRefund {
+	refunds := make([]domain.PaymentRefund, len(rs))
+	for i, r := range rs {
+		refunds[i] = *toDomainRefund(&r)
+	}
+	return refunds
 }
 
 func (r *paymentRepository) CreatePayment(ctx context.Context, params sqlc.CreatePaymentParams) (*domain.Payment, error) {
@@ -114,4 +133,22 @@ func (r *paymentRepository) UpdateRefundPaymentStatus(ctx context.Context, param
 		return nil, err
 	}
 	return toDomainRefund(&result), nil
+}
+
+func (r *paymentRepository) GetBatchRefundPaymentsByStatus(ctx context.Context, status sqlc.RefundStatus) ([]domain.PaymentRefund, error) {
+	results, err := r.queries.GetBatchRefundPaymentsByStatus(ctx, status)
+	if err != nil {
+		return nil, err
+	}
+
+	return toDomainRefunds(results), nil
+}
+
+func (r *paymentRepository) GetBatchPendingPayments(ctx context.Context) ([]domain.Payment, error) {
+	results, err := r.queries.GetBatchPendingPayments(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return toDomainPayments(results), nil
 }

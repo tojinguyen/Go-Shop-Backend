@@ -57,6 +57,40 @@ func (q *Queries) CreateRefundPayment(ctx context.Context, arg CreateRefundPayme
 	return i, err
 }
 
+const getBatchRefundPaymentsByStatus = `-- name: GetBatchRefundPaymentsByStatus :many
+SELECT id, payment_id, order_id, amount, reason, provider_refund_id, refund_status, created_at, updated_at FROM refund_payments WHERE refund_status = $1
+`
+
+func (q *Queries) GetBatchRefundPaymentsByStatus(ctx context.Context, refundStatus RefundStatus) ([]RefundPayment, error) {
+	rows, err := q.db.Query(ctx, getBatchRefundPaymentsByStatus, refundStatus)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []RefundPayment{}
+	for rows.Next() {
+		var i RefundPayment
+		if err := rows.Scan(
+			&i.ID,
+			&i.PaymentID,
+			&i.OrderID,
+			&i.Amount,
+			&i.Reason,
+			&i.ProviderRefundID,
+			&i.RefundStatus,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRefundPaymentByID = `-- name: GetRefundPaymentByID :one
 SELECT id, payment_id, order_id, amount, reason, provider_refund_id, refund_status, created_at, updated_at FROM refund_payments WHERE id = $1
 `
