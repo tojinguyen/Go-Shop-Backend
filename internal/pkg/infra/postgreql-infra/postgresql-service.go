@@ -67,6 +67,17 @@ func (s *PostgreSQLService) connect() error {
 	poolConfig.MaxConnLifetime = s.config.MaxLifetime
 	poolConfig.MaxConnIdleTime = 30 * time.Minute
 
+	// Ensure MinConns is not greater than MaxConns
+	if poolConfig.MinConns > poolConfig.MaxConns {
+		poolConfig.MinConns = poolConfig.MaxConns
+	}
+
+	// Ensure MaxConns is at least 1
+	if poolConfig.MaxConns < 1 {
+		poolConfig.MaxConns = 10
+		poolConfig.MinConns = 1
+	}
+
 	// Create connection pool
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
