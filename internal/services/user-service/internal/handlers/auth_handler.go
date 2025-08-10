@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
@@ -115,6 +117,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	// Use AuthService to handle login
 	authResponse, err := h.authService.Login(c, req)
 	if err != nil {
+		var appErr *apperror.AppError
+		if errors.As(err, &appErr) && appErr.Type == apperror.TypeRateLimitExceeded {
+			response.TooManyRequests(c, string(appErr.Code), appErr.Message)
+			return
+		}
 		if strings.Contains(err.Error(), "invalid email or password") {
 			response.Unauthorized(c, "INVALID_CREDENTIALS", "Invalid email or password")
 			return

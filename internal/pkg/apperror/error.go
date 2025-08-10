@@ -17,6 +17,7 @@ const (
 	TypeForbidden                          // 403
 	TypeInternal                           // 500
 	TypeDependencyFailure                  // 502 (e.g., gRPC call to another service failed)
+	TypeRateLimitExceeded                  // 429 (Too Many Requests)
 )
 
 // AppError là cấu trúc lỗi chuẩn của chúng ta.
@@ -129,4 +130,12 @@ func GetType(err error) ErrorType {
 	}
 	// Mặc định là lỗi hệ thống nếu không phải là AppError
 	return TypeInternal
+}
+
+func NewRateLimitExceeded(message string) *AppError {
+	return &AppError{
+		Type:    TypeRateLimitExceeded,
+		Code:    CodeRateLimitExceeded,
+		Message: message,
+	}
 }
