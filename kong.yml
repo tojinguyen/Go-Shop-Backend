@@ -29,23 +29,18 @@ routes:
   - name: auth-routes
     service: user-service
     paths:
-      - /api/v1/auth/
+      - ~/api/v1/auth(/.*)?$
     methods: 
       - POST
       - GET
+      - OPTIONS
     strip_path: false
-    plugins:
-      - name: jwt # Ghi đè plugin global, tắt xác thực cho route này
-        enabled: false
 
   - name: ipn-routes
     service: payment-service
     paths:
       - /api/v1/payments/ipn/
     strip_path: false
-    plugins:
-      - name: jwt # Tắt xác thực cho route IPN
-        enabled: false
 
   # --- Protected Routes (Cần xác thực) ---
   - name: user-routes
@@ -53,64 +48,51 @@ routes:
     paths:
       - /api/v1/users
     strip_path: false
+    plugins:
+      - name: jwt
 
   - name: shop-routes
     service: shop-service
     paths:
       - /api/v1/shops
     strip_path: false
+    plugins:
+      - name: jwt
 
   - name: product-routes
     service: product-service
     paths:
       - /api/v1/products
     strip_path: false
+    plugins:
+      - name: jwt
 
   - name: cart-routes
     service: cart-service
     paths:
       - /api/v1/carts
     strip_path: false
+    plugins:
+      - name: jwt
 
   - name: order-routes
     service: order-service
     paths:
       - /api/v1/orders
     strip_path: false
+    plugins:
+      - name: jwt
   
   - name: payment-protected-routes
     service: payment-service
     paths:
       - /api/v1/payments
     strip_path: false
+    plugins:
+      - name: jwt
 
 # =======================================================
-# 3. Kích hoạt Plugin JWT trên toàn cục
-# Mọi request đi qua Kong sẽ được kiểm tra bởi plugin này,
-# trừ khi bị ghi đè (disabled) ở một route cụ thể.
-# =======================================================
-plugins:
-  - name: jwt
-    config:
-      secret_is_base64: false
-      # Kong sẽ tìm claim 'iss' trong token để xác định consumer.
-      key_claim_name: iss 
-      # Yêu cầu Kong xác thực claim 'exp' (expiration time).
-      claims_to_verify:
-        - exp
-      # Tự động lấy các claim từ payload của JWT và thêm vào header 
-      # gửi lên các service backend. Đây là phần thay thế cho NJS script.
-      # Tên claim (ví dụ: UserId) phải khớp với tên trong struct CustomJwtClaims.
-      claim_to_header:
-        - UserId: X-User-ID
-        - Role: X-User-Role
-        - Email: X-User-Email
-      run_on_preflight: true
-
-# =======================================================
-# 4. Tạo Consumer và JWT Credential
-# Consumer đại diện cho một client sử dụng API của bạn.
-# JWT credential liên kết secret key với consumer đó.
+# 3. Consumer và JWT Credential (không cần global plugin)
 # =======================================================
 consumers:
   - username: go-shop-consumer
