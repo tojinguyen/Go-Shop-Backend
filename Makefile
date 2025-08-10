@@ -10,12 +10,6 @@ down:
 recreate:
 	docker compose up -d --force-recreate
 
-.PHONY: seed-users
-seed-users:
-	@echo "🌱 Seeding user-service database with 50000 customers and 1000 shippers..."
-	@cd internal/services/user-service && go run ./cmd/seeder/main.go -users=50000 -shippers=1000
-
-
 # ===================================================================
 # Protobuf/gRPC Generation
 # ===================================================================
@@ -65,3 +59,11 @@ seed-users-large:
 	@echo "Seeding user-service database with 5000 customers and 100 shippers..."
 	@cd internal/services/user-service && go run ./cmd/seeder/main.go -users=5000 -shippers=100
 	@echo "User service large seeding complete."
+
+# Lệnh để seed 50,000 users với phân bố thực tế
+.PHONY: seed-users
+seed-users:
+	@echo "Seeding user-service database with 50,000 users (realistic e-commerce distribution)..."
+	@echo "Distribution: ~87% customers, ~10% sellers, ~2.5% shippers, ~0.5% admins"
+	@cd internal/services/user-service && go run ./cmd/seeder/main.go -total=50000
+	@echo "50K users seeding complete!"
