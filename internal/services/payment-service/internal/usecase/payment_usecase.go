@@ -119,6 +119,8 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 		RedirectURL: fmt.Sprintf("%s/orders/%s/result", uc.appConfig.FrontendURL, req.OrderID),
 	}
 
+	log.Printf("IPN URL: %s", paymentData.IPNURL)
+
 	result, err := paymentProvider.CreatePayment(ctx, paymentData)
 
 	if err != nil {
@@ -246,6 +248,11 @@ func (uc *paymentUseCase) HandlePendingPaymentTooLong() {
 	payments, err := uc.paymentRepo.GetBatchPendingPayments(ctx)
 	if err != nil {
 		log.Printf("Error retrieving pending payments: %v", err)
+		return
+	}
+
+	if len(payments) == 0 {
+		log.Println("No pending payments found.")
 		return
 	}
 
