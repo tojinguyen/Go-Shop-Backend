@@ -11,21 +11,21 @@ import (
 )
 
 func main() {
-	// Define command-line flags
+	// Định nghĩa các flag cho dòng lệnh để tùy chỉnh số lượng dữ liệu
 	userCount := flag.Int("users", 10, "Number of regular customer users to seed")
 	shipperCount := flag.Int("shippers", 5, "Number of shipper users to seed")
 	flag.Parse()
 
-	log.Println("Starting database seeder...")
+	log.Println("🌱 Starting database seeder...")
 
-	// 1. Load configuration
+	// 1. Tải cấu hình
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		log.Fatalf("❌ Failed to load configuration: %v", err)
 	}
-	log.Println("Configuration loaded successfully.")
+	log.Println("✅ Configuration loaded successfully.")
 
-	// 2. Connect to the database
+	// 2. Kết nối đến database
 	dbConfig := &postgresql_infra.DatabaseConfig{
 		Host:     cfg.Database.Host,
 		Port:     cfg.Database.Port,
@@ -37,14 +37,14 @@ func main() {
 
 	dbService, err := postgresql_infra.NewPostgreSQLService(dbConfig)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("❌ Failed to connect to database: %v", err)
 	}
 	defer dbService.Close()
-	log.Println("Database connection successful.")
+	log.Println("✅ Database connection successful.")
 
-	// 3. Run the seeder
+	// 3. Chạy seeder
 	s := seeder.NewSeeder(dbService.GetPool())
 	s.SeedAll(*userCount, *shipperCount)
 
-	log.Println("Seeding complete.")
+	log.Println("🎉 Seeding complete.")
 }
