@@ -63,6 +63,7 @@ services:
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
       JWT_SECRET_KEY: ${JWT_SECRET_KEY} 
+      KONG_LOG_LEVEL: debug   # Các mức có thể là: debug, info, notice, warn, error, crit, alert, emerg
     networks:
       - go-shop-network
     ports:

@@ -28,10 +28,10 @@ routes:
   - name: auth-routes
     service: user-service
     paths:
-      - ~/api/v1/auth/
+      - /api/v1/auth/
     strip_path: false
     plugins:
-      - name: jwt # Ghi đè plugin global, tắt xác thực cho route này
+      - name: jwt 
         enabled: false
 
   - name: ipn-routes
