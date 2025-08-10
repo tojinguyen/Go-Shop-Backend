@@ -1,0 +1,101 @@
+# kong.yml
+
+_format_version: "3.0"
+_comment: "Declarative configuration for Go-Shop API Gateway"
+
+# =======================================================
+# 1. Định nghĩa các Upstream Services (các microservices)
+# =======================================================
+services:
+  - name: user-service
+    url: http://user-service:8080
+  - name: shop-service
+    url: http://shop-service:8081
+  - name: product-service
+    url: http://product-service:8082
+  - name: cart-service
+    url: http://cart-service:8083
+  - name: order-service
+    url: http://order-service:8084
+  - name: payment-service
+    url: http://payment-service:8085
+
+# =======================================================
+# 2. Định nghĩa các Routes (ánh xạ URL tới service)
+# =======================================================
+routes:
+  # --- Public Routes (Không cần xác thực) ---
+  - name: auth-routes
+    service: user-service
+    paths:
+      - ~/api/v1/auth/
+    strip_path: false
+    plugins:
+      - name: jwt # Ghi đè plugin global, tắt xác thực cho route này
+        enabled: false
+
+  - name: ipn-routes
+    service: payment-service
+    paths:
+      - /api/v1/payments/ipn/
+    strip_path: false
+    plugins:
+      - name: jwt # Tắt xác thực cho route IPN
+        enabled: false
+
+  # --- Protected Routes (Cần xác thực) ---
+  - name: user-routes
+    service: user-service
+    paths:
+      - /api/v1/users
+    strip_path: false
+
+  - name: shop-routes
+    service: shop-service
+    paths:
+      - /api/v1/shops
+    strip_path: false
+
+  - name: product-routes
+    service: product-service
+    paths:
+      - /api/v1/products
+    strip_path: false
+
+  - name: cart-routes
+    service: cart-service
+    paths:
+      - /api/v1/carts 
+    strip_path: false
+
+  - name: order-routes
+    service: order-service
+    paths:
+      - /api/v1/orders
+    strip_path: false
+  
+  - name: payment-protected-routes
+    service: payment-service
+    paths:
+      - /api/v1/payments
+    strip_path: false
+
+# =======================================================
+# 3. Kích hoạt Plugin JWT trên toàn cục
+# =======================================================
+plugins:
+  - name: jwt
+    # Áp dụng plugin này cho tất cả các service và route trừ khi bị ghi đè
+    config:
+      # Kong sẽ tự động đọc biến môi trường JWT_SECRET_KEY
+      secret_is_base64: false
+      key_claim_name: iss
+      claims_to_verify:
+        - exp
+      # Lấy các claim từ payload của JWT và thêm vào header cho các service phía sau
+      # Tên claim (ví dụ: UserId) phải khớp với tên trong struct CustomJwtClaims của bạn
+      claim_to_header:
+        - UserId: X-User-ID
+        - Role: X-User-Role
+        - Email: X-User-Email
+      run_on_preflight: true
