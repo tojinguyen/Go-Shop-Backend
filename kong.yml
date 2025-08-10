@@ -29,7 +29,7 @@ routes:
   - name: auth-routes
     service: user-service
     paths:
-      - ~^/api/v1/auth(/.*)?$
+      - /api/v1/auth/
     methods: 
       - POST
       - GET
