@@ -9,6 +9,7 @@ import (
 )
 
 type PaymentData struct {
+	RequestID   string
 	OrderID     string
 	Amount      int64
 	OrderInfo   string

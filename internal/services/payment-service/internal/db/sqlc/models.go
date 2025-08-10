@@ -197,6 +197,7 @@ type Payment struct {
 	PaymentProvider       pgtype.Text        `json:"payment_provider"`
 	ProviderTransactionID pgtype.Text        `json:"provider_transaction_id"`
 	PaymentStatus         PaymentStatus      `json:"payment_status"`
+	RequestID             pgtype.Text        `json:"request_id"`
 	CreatedAt             pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
 	ProviderRefundID      pgtype.Text        `json:"provider_refund_id"`

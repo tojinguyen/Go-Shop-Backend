@@ -6,9 +6,10 @@ INSERT INTO payments (
     currency,
     payment_method,
     payment_provider,
-    payment_status
+    payment_status,
+    request_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, 'PENDING'
+    $1, $2, $3, $4, $5, $6, 'PENDING', $7
 ) RETURNING *;
 
 -- name: UpdatePaymentStatus :one

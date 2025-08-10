@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	kafka_infra "github.com/toji-dev/go-shop/internal/pkg/infra/kafka-infra"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
@@ -88,6 +89,8 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 	amount := float64(order.Order.FinalAmount)
 	paymentMethod := strings.ToUpper(req.PaymentMethod)
 
+	requestID := uuid.New().String()
+
 	// 3. Tạo bản ghi payment trong DB
 	params := sqlc.CreatePaymentParams{
 		OrderID:         converter.StringToPgUUID(req.OrderID),
@@ -96,6 +99,7 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 		Currency:        "VND",
 		PaymentMethod:   sqlc.PaymentMethodEWALLET,
 		PaymentProvider: converter.StringToPgText(&paymentMethod),
+		RequestID:       converter.StringToPgText(&requestID),
 	}
 
 	paymentRecord, err := uc.paymentRepo.CreatePayment(ctx, params)
@@ -107,6 +111,7 @@ func (uc *paymentUseCase) InitiatePayment(ctx context.Context, userID string, re
 
 	// 4. Gọi provider để tạo link thanh toán
 	paymentData := paymentprovider.PaymentData{
+		RequestID:   requestID,
 		OrderID:     req.OrderID,
 		Amount:      int64(amount),
 		OrderInfo:   fmt.Sprintf("Thanh_toan_don_hang_%s", req.OrderID),
@@ -236,7 +241,7 @@ func (uc *paymentUseCase) Refund(ctx context.Context, paymentID, orderID, reason
 
 func (uc *paymentUseCase) HandlePendingPaymentTooLong() {
 	log.Println("Checking for pending payments that have been pending too long...")
-	// TODO: Query all payment Record with status PENDING and duration > 15 minutes
+
 	ctx := context.Background()
 	payments, err := uc.paymentRepo.GetBatchPendingPayments(ctx)
 	if err != nil {

@@ -98,7 +98,7 @@ func (p *momoProvider) GetName() constant.PaymentProviderMethod {
 }
 
 func (p *momoProvider) CreatePayment(ctx context.Context, data PaymentData) (*CreatePaymentResult, error) {
-	requestID := uuid.New().String()
+	requestID := data.RequestID
 	uniqueOrderID := fmt.Sprintf("%s_%s", data.OrderID, requestID)
 
 	req := &MomoCreatePaymentRequest{
@@ -310,7 +310,7 @@ func (p *momoProvider) Refund(ctx context.Context, data RefundData) (*RefundResu
 }
 
 func (p *momoProvider) GetPaymentStatus(ctx context.Context, payment *domain.Payment) (*PaymentStatusResult, error) {
-	// Implement the logic to get payment status from MoMo API
+
 	return nil, nil
 }
 
