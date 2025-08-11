@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/db/sqlc"
@@ -31,36 +32,82 @@ func NewSeeder(shopDB, userDB *pgxpool.Pool) *Seeder {
 	}
 }
 
-// fetchSellerIDs lấy danh sách ID của các user có vai trò 'seller' từ DB của user-service
-func (s *Seeder) fetchSellerIDs() ([]uuid.UUID, error) {
-	log.Println("Fetching seller IDs from user-service database...")
+// fetchAndPrepareSellers kiểm tra và "nâng cấp" người dùng thành seller nếu cần.
+func (s *Seeder) fetchAndPrepareSellers(requiredCount int) ([]uuid.UUID, error) {
+	log.Println("🔍 Checking for available sellers in user-service database...")
+
+	// 1. Lấy danh sách sellers hiện có
 	rows, err := s.userDB.Query(s.ctx, "SELECT id FROM user_accounts WHERE user_role = 'seller'")
-	if err != nil {
-		return nil, fmt.Errorf("failed to query seller IDs: %w", err)
+	if err != nil && err != pgx.ErrNoRows {
+		return nil, fmt.Errorf("failed to query existing sellers: %w", err)
 	}
 	defer rows.Close()
 
-	var sellerIDs []uuid.UUID
+	var existingSellerIDs []uuid.UUID
 	for rows.Next() {
 		var id uuid.UUID
 		if err := rows.Scan(&id); err != nil {
 			return nil, fmt.Errorf("failed to scan seller ID: %w", err)
 		}
-		sellerIDs = append(sellerIDs, id)
+		existingSellerIDs = append(existingSellerIDs, id)
 	}
-	log.Printf("Found %d sellers.", len(sellerIDs))
-	return sellerIDs, nil
+	log.Printf("Found %d existing sellers.", len(existingSellerIDs))
+
+	// 2. Kiểm tra nếu đã đủ số lượng
+	if len(existingSellerIDs) >= requiredCount {
+		return existingSellerIDs, nil
+	}
+
+	// 3. Nếu chưa đủ, tìm và nâng cấp user `customer`
+	needed := requiredCount - len(existingSellerIDs)
+	log.Printf("⚠️ Not enough sellers. Need to promote %d more users from 'customer' to 'seller'.", needed)
+
+	// Lấy ngẫu nhiên các user `customer`
+	promoteRows, err := s.userDB.Query(s.ctx, "SELECT id FROM user_accounts WHERE user_role = 'customer' ORDER BY RANDOM() LIMIT $1", needed)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find customers to promote: %w", err)
+	}
+	defer promoteRows.Close()
+
+	var usersToPromoteIDs []uuid.UUID
+	for promoteRows.Next() {
+		var id uuid.UUID
+		if err := promoteRows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("failed to scan customer ID for promotion: %w", err)
+		}
+		usersToPromoteIDs = append(usersToPromoteIDs, id)
+	}
+
+	if len(usersToPromoteIDs) < needed {
+		log.Printf("WARNING: Could only find %d customers to promote, but needed %d.", len(usersToPromoteIDs), needed)
+		if len(usersToPromoteIDs) == 0 && len(existingSellerIDs) == 0 {
+			return nil, fmt.Errorf("no customers available to promote to seller. Please run user-service seeder first")
+		}
+	}
+
+	// Nâng cấp vai trò của họ thành 'seller'
+	if len(usersToPromoteIDs) > 0 {
+		_, err = s.userDB.Exec(s.ctx, "UPDATE user_accounts SET user_role = 'seller' WHERE id = ANY($1)", usersToPromoteIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update user roles to seller: %w", err)
+		}
+		log.Printf("✅ Successfully promoted %d users to 'seller'.", len(usersToPromoteIDs))
+	}
+
+	// Gộp danh sách seller cũ và mới
+	allSellerIDs := append(existingSellerIDs, usersToPromoteIDs...)
+	return allSellerIDs, nil
 }
 
 // SeedShops tạo dữ liệu giả cho các cửa hàng
 func (s *Seeder) SeedShops(count int) {
-	sellerIDs, err := s.fetchSellerIDs()
+	// Sử dụng hàm mới để đảm bảo có đủ sellers
+	sellerIDs, err := s.fetchAndPrepareSellers(count)
 	if err != nil {
-		log.Fatalf("❌ Could not fetch sellers: %v", err)
+		log.Fatalf("❌ Could not prepare sellers: %v", err)
 	}
 	if len(sellerIDs) == 0 {
-		log.Println("⚠️ No sellers found in user-service DB. Please seed users with 'seller' role first.")
-		log.Println("Run: make seed-users")
+		log.Println("⚠️ No sellers available to create shops. Aborting.")
 		return
 	}
 
@@ -91,14 +138,13 @@ func (s *Seeder) SeedShops(count int) {
 		}
 
 		address := faker.GetRealAddress().City
-
 		// 1. Tạo bản ghi Address trước
 		addressParams := sqlc.CreateShopAddressParams{
 			ID:      converter.UUIDToPgUUID(addressID),
 			ShopID:  converter.UUIDToPgUUID(shopID),
 			Street:  faker.GetRealAddress().Address,
 			City:    converter.StringToPgText(&address),
-			Country: converter.StringToPgText(nil),
+			Country: converter.StringToPgText(nil), // Mặc định là 'Vietnam' trong schema
 		}
 		_, err = qtx.CreateShopAddress(s.ctx, addressParams)
 		if err != nil {
