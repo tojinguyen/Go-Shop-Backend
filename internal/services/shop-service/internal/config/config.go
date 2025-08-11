@@ -109,7 +109,7 @@ func LoadConfig() (*Config, error) {
 			Host:         getEnv("SHOP_SERVICE_POSTGRES_HOST", "localhost"),
 			Port:         getEnv("SHOP_SERVICE_POSTGRES_PORT_INTERNAL", "6001"),
 			User:         getEnv("SHOP_SERVICE_POSTGRES_USER", "postgres"),
-			Password:     getEnv("SHOP_SERVICE_POSTGRES_PASSWORD", ""),
+			Password:     getEnv("SHOP_SERVICE_POSTGRES_PASSWORD", "toai20102002"),
 			DBName:       getEnv("SHOP_SERVICE_POSTGRES_DB", "shop_service_go_shop_db"),
 			SSLMode:      getEnv("DB_SSL_MODE", "disable"),
 			MaxOpenConns: getIntEnv("DB_MAX_OPEN_CONNS", 25),
