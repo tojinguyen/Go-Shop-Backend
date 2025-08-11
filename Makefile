@@ -60,5 +60,5 @@ seed-users:
 .PHONY: seed-shops
 seed-shops:
 	@echo "Seeding shop-service database with 1000 shops..."
-	@cd internal/services/shop-service && go run ./cmd/seeder/main.go -shops=100
+	@cd internal/services/shop-service && go run ./cmd/seeder/main.go -shops=1000
 	@echo "Shop service seeding complete."

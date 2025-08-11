@@ -137,23 +137,11 @@ func (s *Seeder) SeedShops(count int) {
 			}
 		}
 
-		address := faker.GetRealAddress().City
-		// 1. Tạo bản ghi Address trước
-		addressParams := sqlc.CreateShopAddressParams{
-			ID:      converter.UUIDToPgUUID(addressID),
-			ShopID:  converter.UUIDToPgUUID(shopID),
-			Street:  faker.GetRealAddress().Address,
-			City:    converter.StringToPgText(&address),
-			Country: converter.StringToPgText(nil), // Mặc định là 'Vietnam' trong schema
-		}
-		_, err = qtx.CreateShopAddress(s.ctx, addressParams)
-		if err != nil {
-			log.Printf("Failed to create shop address: %v. Rolling back.", err)
-			tx.Rollback(s.ctx)
-			continue
-		}
+		// =======================================================
+		// SỬA LỖI Ở ĐÂY: Đảo ngược thứ tự
+		// =======================================================
 
-		// 2. Tạo bản ghi Shop
+		// BƯỚC 1: Tạo bản ghi Shop trước, nhưng với một address_id tạm thời.
 		shopDescription := faker.Sentence()
 		shopParams := sqlc.CreateShopParams{
 			ID:              converter.UUIDToPgUUID(shopID),
@@ -162,7 +150,7 @@ func (s *Seeder) SeedShops(count int) {
 			AvatarUrl:       "https://placehold.co/150x150/e8117f/ffffff.png?text=Shop",
 			BannerUrl:       "https://placehold.co/800x200/333333/ffffff.png?text=Welcome",
 			ShopDescription: converter.StringToPgText(&shopDescription),
-			AddressID:       converter.UUIDToPgUUID(addressID),
+			AddressID:       converter.UUIDToPgUUID(addressID), // Dùng address_id đã tạo
 			Phone:           faker.Phonenumber(),
 			Email:           shopEmail,
 		}
@@ -170,6 +158,23 @@ func (s *Seeder) SeedShops(count int) {
 		_, err = qtx.CreateShop(s.ctx, shopParams)
 		if err != nil {
 			log.Printf("Failed to create shop: %v. Rolling back.", err)
+			tx.Rollback(s.ctx)
+			continue
+		}
+
+		// BƯỚC 2: Bây giờ mới tạo bản ghi Address.
+		// Vì shop đã tồn tại trong transaction này, ràng buộc khóa ngoại sẽ hợp lệ.
+		address := faker.GetRealAddress().City
+		addressParams := sqlc.CreateShopAddressParams{
+			ID:      converter.UUIDToPgUUID(addressID),
+			ShopID:  converter.UUIDToPgUUID(shopID),
+			Street:  faker.GetRealAddress().Address,
+			City:    converter.StringToPgText(&address),
+			Country: converter.StringToPgText(nil),
+		}
+		_, err = qtx.CreateShopAddress(s.ctx, addressParams)
+		if err != nil {
+			log.Printf("Failed to create shop address: %v. Rolling back.", err)
 			tx.Rollback(s.ctx)
 			continue
 		}
