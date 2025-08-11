@@ -39,6 +39,9 @@ func main() {
 		cfg.UserServiceDB.DBName,
 		cfg.UserServiceDB.SSLMode,
 	)
+
+	log.Println("User DB Connection String:", userDBConnStr)
+
 	userDB, err := pgxpool.New(context.Background(), userDBConnStr)
 	if err != nil {
 		log.Fatalf("❌ Failed to connect to user-service database: %v", err)

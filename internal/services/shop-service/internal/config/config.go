@@ -144,9 +144,9 @@ func LoadConfig() (*Config, error) {
 		},
 		UserServiceDB: UserServiceDBConfig{
 			Host:     getEnv("USER_SERVICE_POSTGRES_HOST", "localhost"),
-			Port:     getEnv("USER_SERVICE_POSTGRES_PORT", "6000"), // Port public
+			Port:     getEnv("USER_SERVICE_POSTGRES_PORT_INTERNAL", "6000"), // Port public
 			User:     getEnv("USER_SERVICE_POSTGRES_USER", "postgres"),
-			Password: getEnv("USER_SERVICE_POSTGRES_PASSWORD", ""),
+			Password: getEnv("USER_SERVICE_POSTGRES_PASSWORD", "toai20102002"),
 			DBName:   getEnv("USER_SERVICE_POSTGRES_DB", "user_service_go_shop_db"),
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		},
