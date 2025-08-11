@@ -54,7 +54,7 @@ routes:
   - name: shop-routes
     service: shop-service
     paths:
-      - /api/v1/shops
+      - ~/api/v1/shops(/.*)?$
     strip_path: false
     plugins:
       - name: jwt
@@ -94,9 +94,16 @@ routes:
 # =======================================================
 # 3. Consumer và JWT Credential (không cần global plugin)
 # =======================================================
+# consumers:
+#   - username: go-shop-consumer
+#     jwt_secrets:
+#       - key: ${JWT_ISSUER} # Phải khớp với 'iss' trong token
+#         # Kong sẽ tự động lấy giá trị từ biến môi trường
+#         secret: ${JWT_SECRET_KEY} 
+
+
 consumers:
   - username: go-shop-consumer
     jwt_secrets:
-      - key: ${JWT_ISSUER} # Phải khớp với 'iss' trong token
-        # Kong sẽ tự động lấy giá trị từ biến môi trường
-        secret: ${JWT_SECRET_KEY} 
+      - key: "go-shop-platform" 
+        secret: 17e0f626f13454cbc22fcd6a3a44d5d2 
