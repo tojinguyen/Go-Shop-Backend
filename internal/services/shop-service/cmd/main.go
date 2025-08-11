@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
-	_ "github.com/toji-dev/go-shop/internal/services/shop-service/docs"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
 	promotion_api "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/api"
 	createpromotion "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/commands/create_promotion"

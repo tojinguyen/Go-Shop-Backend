@@ -12,13 +12,14 @@ import (
 
 // Config holds all configuration for the shop service
 type Config struct {
-	Server   ServerConfig   `json:"server"`
-	Database DatabaseConfig `json:"database"`
-	JWT      JWTConfig      `json:"jwt"`
-	Redis    RedisConfig    `json:"redis"`
-	CORS     CORSConfig     `json:"cors"`
-	App      AppConfig      `json:"app"`
-	GRPC     GRPCConfig     `json:"grpc"`
+	Server        ServerConfig        `json:"server"`
+	Database      DatabaseConfig      `json:"database"`
+	JWT           JWTConfig           `json:"jwt"`
+	Redis         RedisConfig         `json:"redis"`
+	CORS          CORSConfig          `json:"cors"`
+	App           AppConfig           `json:"app"`
+	GRPC          GRPCConfig          `json:"grpc"`
+	UserServiceDB UserServiceDBConfig `json:"user_service_db"`
 }
 
 // ServerConfig holds server configuration
@@ -78,6 +79,15 @@ type GRPCConfig struct {
 	Port string `json:"port"`
 }
 
+type UserServiceDBConfig struct {
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	DBName   string `json:"db_name"`
+	SSLMode  string `json:"ssl_mode"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -131,6 +141,14 @@ func LoadConfig() (*Config, error) {
 		GRPC: GRPCConfig{
 			Host: getEnv("SHOP_SERVICE_GRPC_HOST", "0.0.0.0"),
 			Port: getEnv("SHOP_SERVICE_GRPC_PORT", "50051"),
+		},
+		UserServiceDB: UserServiceDBConfig{
+			Host:     getEnv("USER_SERVICE_POSTGRES_HOST", "localhost"),
+			Port:     getEnv("USER_SERVICE_POSTGRES_PORT", "6000"), // Port public
+			User:     getEnv("USER_SERVICE_POSTGRES_USER", "postgres"),
+			Password: getEnv("USER_SERVICE_POSTGRES_PASSWORD", ""),
+			DBName:   getEnv("USER_SERVICE_POSTGRES_DB", "user_service_go_shop_db"),
+			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		},
 	}
 
