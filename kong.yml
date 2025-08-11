@@ -1,0 +1,102 @@
+# kong.yml
+
+_format_version: "3.0"
+_comment: "Declarative configuration for Go-Shop API Gateway"
+
+# =======================================================
+# 1. Định nghĩa các Upstream Services (các microservices của bạn)
+# Kong sẽ sử dụng tên service trong Docker network để giao tiếp.
+# =======================================================
+services:
+  - name: user-service
+    url: http://user-service:8080
+  - name: shop-service
+    url: http://shop-service:8081
+  - name: product-service
+    url: http://product-service:8082
+  - name: cart-service
+    url: http://cart-service:8083
+  - name: order-service
+    url: http://order-service:8084
+  - name: payment-service
+    url: http://payment-service:8085
+
+# =======================================================
+# 2. Định nghĩa các Routes (ánh xạ URL tới service)
+# =======================================================
+routes:
+  # --- Public Routes (Không cần xác thực) ---
+  - name: auth-routes
+    service: user-service
+    paths:
+      - ~/api/v1/auth(/.*)?$
+    methods: 
+      - POST
+      - GET
+      - OPTIONS
+    strip_path: false
+
+  - name: ipn-routes
+    service: payment-service
+    paths:
+      - /api/v1/payments/ipn/
+    strip_path: false
+
+  # --- Protected Routes (Cần xác thực) ---
+  - name: user-routes
+    service: user-service
+    paths:
+      - /api/v1/users
+    strip_path: false
+    plugins:
+      - name: jwt
+
+  - name: shop-routes
+    service: shop-service
+    paths:
+      - /api/v1/shops
+    strip_path: false
+    plugins:
+      - name: jwt
+
+  - name: product-routes
+    service: product-service
+    paths:
+      - /api/v1/products
+    strip_path: false
+    plugins:
+      - name: jwt
+
+  - name: cart-routes
+    service: cart-service
+    paths:
+      - /api/v1/carts
+    strip_path: false
+    plugins:
+      - name: jwt
+
+  - name: order-routes
+    service: order-service
+    paths:
+      - /api/v1/orders
+    strip_path: false
+    plugins:
+      - name: jwt
+  
+  - name: payment-protected-routes
+    service: payment-service
+    paths:
+      - /api/v1/payments
+    strip_path: false
+    plugins:
+      - name: jwt
+
+# =======================================================
+# 3. Consumer và JWT Credential (không cần global plugin)
+# =======================================================
+consumers:
+  - username: go-shop-consumer
+    jwt_secrets:
+      - key: ${JWT_ISSUER} # Phải khớp với 'iss' trong token
+        # Kong sẽ tự động lấy giá trị từ biến môi trường
+        secret: ${JWT_SECRET_KEY} 
