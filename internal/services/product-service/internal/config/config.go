@@ -11,13 +11,14 @@ import (
 )
 
 type Config struct {
-	Server      ServerConfig      `json:"server"`
-	Database    DatabaseConfig    `json:"database"`
-	Redis       RedisConfig       `json:"redis"`
-	CORS        CORSConfig        `json:"cors"`
-	App         AppConfig         `json:"app"`
-	ShopService ShopServiceConfig `json:"shop_service"`
-	GRPC        GRPCConfig        `json:"grpc"`
+	Server        ServerConfig        `json:"server"`
+	Database      DatabaseConfig      `json:"database"`
+	Redis         RedisConfig         `json:"redis"`
+	CORS          CORSConfig          `json:"cors"`
+	App           AppConfig           `json:"app"`
+	ShopService   ShopServiceConfig   `json:"shop_service"`
+	GRPC          GRPCConfig          `json:"grpc"`
+	ShopServiceDB ShopServiceDBConfig `json:"shop_service_db"`
 }
 
 // ServerConfig holds server configuration
@@ -78,6 +79,15 @@ type GRPCConfig struct {
 	Port string `json:"port"`
 }
 
+type ShopServiceDBConfig struct {
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	DBName   string `json:"db_name"`
+	SSLMode  string `json:"ssl_mode"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -129,6 +139,14 @@ func LoadConfig() (*Config, error) {
 		GRPC: GRPCConfig{
 			Host: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
 			Port: getEnv("PRODUCT_SERVICE_GRPC_PORT", "50051"),
+		},
+		ShopServiceDB: ShopServiceDBConfig{
+			Host:     getEnv("SHOP_SERVICE_POSTGRES_HOST", "localhost"),
+			Port:     getEnv("SHOP_SERVICE_POSTGRES_PORT", "6001"),
+			User:     getEnv("SHOP_SERVICE_POSTGRES_USER", "postgres"),
+			Password: getEnv("SHOP_SERVICE_POSTGRES_PASSWORD", "toai20102002"),
+			DBName:   getEnv("SHOP_SERVICE_POSTGRES_DB", "shop_service_go_shop_db"),
+			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		},
 	}
 
