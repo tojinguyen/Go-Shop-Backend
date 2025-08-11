@@ -64,6 +64,8 @@ services:
     container_name: ${PROJECT_NAME:-go-shop}-user-service
     env_file:
       - .env
+    ports:
+      - "${USER_SERVICE_PORT:-8080}:8080"
     depends_on:
       postgres-user-service:
         condition: service_healthy

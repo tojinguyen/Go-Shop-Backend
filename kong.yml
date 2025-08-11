@@ -94,14 +94,6 @@ routes:
 # =======================================================
 # 3. Consumer và JWT Credential (không cần global plugin)
 # =======================================================
-# consumers:
-#   - username: go-shop-consumer
-#     jwt_secrets:
-#       - key: ${JWT_ISSUER} # Phải khớp với 'iss' trong token
-#         # Kong sẽ tự động lấy giá trị từ biến môi trường
-#         secret: ${JWT_SECRET_KEY} 
-
-
 consumers:
   - username: go-shop-consumer
     jwt_secrets:
