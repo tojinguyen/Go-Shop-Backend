@@ -23,7 +23,6 @@ services:
       - go-shop-network
     ports:
       - "${KONG_HTTP_PORT:-80}:80"   # Cổng cho traffic
-      - "8001:8001"                 # Cổng cho Admin API
     depends_on:
       # Đảm bảo các service backend đã khởi động trước khi Kong bắt đầu nhận traffic
       user-service: { condition: service_started }
