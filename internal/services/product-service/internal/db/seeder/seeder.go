@@ -120,6 +120,8 @@ func (s *Seeder) SeedProducts(count int) {
 			continue // Bỏ qua sản phẩm này và tiếp tục
 		}
 
+		log.Printf("Successfully created product %d for shop %s", i+1, shopID)
+
 		if (i+1)%100 == 0 {
 			log.Printf("... seeded %d/%d products", i+1, count)
 		}
