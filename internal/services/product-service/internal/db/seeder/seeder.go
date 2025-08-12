@@ -53,7 +53,7 @@ func (s *Seeder) fetchShopIDs() ([]uuid.UUID, error) {
 	return shopIDs, nil
 }
 
-// SeedProducts đã được tối ưu hóa với pgx.CopyFrom
+// SeedProducts đã được tối ưu hóa với pre-generation và pgx.CopyFrom
 func (s *Seeder) SeedProducts(count int) {
 	shopIDs, err := s.fetchShopIDs()
 	if err != nil {
@@ -65,16 +65,24 @@ func (s *Seeder) SeedProducts(count int) {
 		return
 	}
 
-	log.Printf("🌱 Seeding %d products using highly optimized 'COPY' protocol...", count)
+	log.Printf("🌱 Seeding %d products using highly optimized 'COPY' protocol and pre-generation...", count)
 
-	// [TỐI ƯU HÓA] Định nghĩa tên các cột sẽ được chèn.
-	// Thứ tự phải khớp với thứ tự các giá trị trong mỗi row.
+	// [TỐI ƯU HÓA] Bước 1: Tạo sẵn một bộ dữ liệu mẫu để tránh gọi faker trong vòng lặp lớn
+	log.Println("Pre-generating sample data...")
+	const sampleSize = 200 // Tạo 200 mẫu tên và mô tả
+	preGeneratedNames := make([]string, sampleSize)
+	preGeneratedDescriptions := make([]string, sampleSize)
+	for i := 0; i < sampleSize; i++ {
+		preGeneratedNames[i] = faker.Sentence()
+		preGeneratedDescriptions[i] = faker.Paragraph()
+	}
+	log.Println("Sample data generated.")
+
+	// Định nghĩa tên các cột sẽ được chèn.
 	columnNames := []string{
 		"shop_id",
 		"product_name",
-		"thumbnail_url",
 		"product_description",
-		"category_id",
 		"price",
 		"currency",
 		"quantity",
@@ -82,7 +90,7 @@ func (s *Seeder) SeedProducts(count int) {
 		"product_status",
 	}
 
-	const batchSize = 1000 // Có thể tăng lên 5000 hoặc 10000 để nhanh hơn nữa
+	const batchSize = 1000 // Tăng batch size để hiệu quả hơn
 	productsCreated := 0
 
 	for i := 0; i < count; i += batchSize {
@@ -91,11 +99,9 @@ func (s *Seeder) SeedProducts(count int) {
 			batchEnd = count
 		}
 
-		log.Printf("Preparing batch %d-%d...", i+1, batchEnd)
-
-		// [TỐI ƯU HÓA] Tạo một slice chứa các hàng dữ liệu cho batch này.
 		rows := make([][]interface{}, 0, batchSize)
 
+		// [TỐI ƯU HÓA] Bước 2: Tạo dữ liệu cho batch từ các mẫu đã có, cực kỳ nhanh
 		for j := i; j < batchEnd; j++ {
 			var quantity int32
 			var status sqlc.ProductStatus
@@ -114,18 +120,18 @@ func (s *Seeder) SeedProducts(count int) {
 			}
 
 			shopID := shopIDs[rand.Intn(len(shopIDs))]
-			productDesc := faker.Paragraph()
-			price, _ := faker.RandomInt(10000, 5000000, 1)
+			// Sử dụng math/rand thay vì faker.RandomInt để nhanh hơn
+			price := rand.Intn(4990001) + 10000 // Giá từ 10,000 đến 5,000,000
 
-			// [TỐI ƯU HÓA] Thêm một hàng dữ liệu vào slice.
-			// Lưu ý: Thứ tự phải khớp với `columnNames` đã định nghĩa ở trên.
+			// Lấy dữ liệu từ bộ nhớ thay vì tạo mới
+			productName := preGeneratedNames[rand.Intn(sampleSize)]
+			productDesc := preGeneratedDescriptions[rand.Intn(sampleSize)]
+
 			rows = append(rows, []interface{}{
 				shopID,
-				faker.Sentence(),
-				nil, // thumbnail_url
+				productName,
 				productDesc,
-				nil, // category_id
-				float64(price[0]),
+				float64(price),
 				"VND",
 				quantity,
 				0, // reserve_quantity
@@ -133,7 +139,7 @@ func (s *Seeder) SeedProducts(count int) {
 			})
 		}
 
-		// [TỐI ƯU HÓA] Sử dụng CopyFrom để chèn toàn bộ batch vào DB.
+		// [TỐI ƯU HÓA] Bước 3: Sử dụng CopyFrom để chèn toàn bộ batch
 		copyCount, err := s.productDB.CopyFrom(
 			s.ctx,
 			pgx.Identifier{"products"},
@@ -147,7 +153,7 @@ func (s *Seeder) SeedProducts(count int) {
 		}
 
 		if int(copyCount) != len(rows) {
-			log.Printf("⚠️ Mismatch count for batch %d-%d: expected %d, got %d. Some rows might not have been inserted.", i+1, batchEnd, len(rows), copyCount)
+			log.Printf("⚠️ Mismatch count for batch %d-%d: expected %d, got %d.", i+1, batchEnd, len(rows), copyCount)
 		}
 
 		productsCreated += int(copyCount)
