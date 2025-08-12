@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	CreatePromotion(ctx context.Context, arg CreatePromotionParams) (ShopPromotion, error)
 	CreateShop(ctx context.Context, arg CreateShopParams) (Shop, error)
+	CreateShopAddress(ctx context.Context, arg CreateShopAddressParams) (pgtype.UUID, error)
 	DeletePromotion(ctx context.Context, id pgtype.UUID) error
 	DeleteShop(ctx context.Context, id pgtype.UUID) error
 	GetAllPromotionsByStatus(ctx context.Context, promotionStatus NullPromotionStatus) ([]ShopPromotion, error)

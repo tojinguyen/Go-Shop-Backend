@@ -11,13 +11,14 @@ import (
 )
 
 type Config struct {
-	Server      ServerConfig      `json:"server"`
-	Database    DatabaseConfig    `json:"database"`
-	Redis       RedisConfig       `json:"redis"`
-	CORS        CORSConfig        `json:"cors"`
-	App         AppConfig         `json:"app"`
-	ShopService ShopServiceConfig `json:"shop_service"`
-	GRPC        GRPCConfig        `json:"grpc"`
+	Server        ServerConfig        `json:"server"`
+	Database      DatabaseConfig      `json:"database"`
+	Redis         RedisConfig         `json:"redis"`
+	CORS          CORSConfig          `json:"cors"`
+	App           AppConfig           `json:"app"`
+	ShopService   ShopServiceConfig   `json:"shop_service"`
+	GRPC          GRPCConfig          `json:"grpc"`
+	ShopServiceDB ShopServiceDBConfig `json:"shop_service_db"`
 }
 
 // ServerConfig holds server configuration
@@ -78,6 +79,15 @@ type GRPCConfig struct {
 	Port string `json:"port"`
 }
 
+type ShopServiceDBConfig struct {
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	DBName   string `json:"db_name"`
+	SSLMode  string `json:"ssl_mode"`
+}
+
 func (a *AppConfig) IsProduction() bool {
 	return a.Environment == "production"
 }
@@ -89,18 +99,18 @@ func LoadConfig() (*Config, error) {
 
 	config := &Config{
 		Server: ServerConfig{
-			Host:         getEnv("PRODUCT_SERVICE_SERVICE_HOST", "0.0.0.0"), // SỬA Ở ĐÂY
-			Port:         getEnv("PRODUCT_SERVICE_SERVICE_PORT", "8082"),    // SỬA Ở ĐÂY
+			Host:         getEnv("PRODUCT_SERVICE_SERVICE_HOST", "0.0.0.0"),
+			Port:         getEnv("PRODUCT_SERVICE_SERVICE_PORT", "8082"),
 			ReadTimeout:  getDurationEnv("SERVER_READ_TIMEOUT", 10*time.Second),
 			WriteTimeout: getDurationEnv("SERVER_WRITE_TIMEOUT", 10*time.Second),
 			IdleTimeout:  getDurationEnv("SERVER_IDLE_TIMEOUT", 60*time.Second),
 		},
 		Database: DatabaseConfig{
-			Host:         getEnv("PRODUCT_SERVICE_POSTGRES_HOST", "localhost"),                // SỬA Ở ĐÂY
-			Port:         getEnv("PRODUCT_SERVICE_POSTGRES_PORT_INTERNAL", "6002"),            // SỬA Ở ĐÂY
-			User:         getEnv("PRODUCT_SERVICE_POSTGRES_USER", "postgres"),                 // SỬA Ở ĐÂY
-			Password:     getEnv("PRODUCT_SERVICE_POSTGRES_PASSWORD", ""),                     // SỬA Ở ĐÂY
-			DBName:       getEnv("PRODUCT_SERVICE_POSTGRES_DB", "product_service_go_shop_db"), // SỬA Ở ĐÂY
+			Host:         getEnv("PRODUCT_SERVICE_POSTGRES_HOST", "localhost"),
+			Port:         getEnv("PRODUCT_SERVICE_POSTGRES_PORT_INTERNAL", "6002"),
+			User:         getEnv("PRODUCT_SERVICE_POSTGRES_USER", "postgres"),
+			Password:     getEnv("PRODUCT_SERVICE_POSTGRES_PASSWORD", "toai20102002"),
+			DBName:       getEnv("PRODUCT_SERVICE_POSTGRES_DB", "product_service_go_shop_db"),
 			SSLMode:      getEnv("DB_SSL_MODE", "disable"),
 			MaxOpenConns: getIntEnv("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns: getIntEnv("DB_MAX_IDLE_CONNS", 25),
@@ -113,22 +123,30 @@ func LoadConfig() (*Config, error) {
 			DB:       getIntEnv("REDIS_DB", 0),
 		},
 		CORS: CORSConfig{
-			AllowOrigins: getStringSliceEnv("PRODUCT_SERVICE_CORS_ALLOWED_ORIGINS", []string{"*"}), // SỬA Ở ĐÂY
+			AllowOrigins: getStringSliceEnv("PRODUCT_SERVICE_CORS_ALLOWED_ORIGINS", []string{"*"}),
 			AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders: []string{"*"},
 		},
 		App: AppConfig{
-			Name:        getEnv("PRODUCT_SERVICE_SERVICE_NAME", "product-service"), // SỬA Ở ĐÂY
+			Name:        getEnv("PRODUCT_SERVICE_SERVICE_NAME", "product-service"),
 			Version:     getEnv("APP_VERSION", "1.0.0"),
 			Environment: getEnv("ENVIRONMENT", "development"),
 			LogLevel:    getEnv("LOG_LEVEL", "info"),
 		},
 		ShopService: ShopServiceConfig{
-			Address: getEnv("SHOP_SERVICE_GRPC_ADDRESS", "shop-service:50051"), // SỬA Ở ĐÂY: Dùng biến môi trường mới và đúng service name
+			Address: getEnv("SHOP_SERVICE_GRPC_ADDRESS", "shop-service:50051"),
 		},
 		GRPC: GRPCConfig{
 			Host: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
 			Port: getEnv("PRODUCT_SERVICE_GRPC_PORT", "50051"),
+		},
+		ShopServiceDB: ShopServiceDBConfig{
+			Host:     getEnv("SHOP_SERVICE_POSTGRES_HOST", "localhost"),
+			Port:     getEnv("SHOP_SERVICE_POSTGRES_PORT", "6001"),
+			User:     getEnv("SHOP_SERVICE_POSTGRES_USER", "postgres"),
+			Password: getEnv("SHOP_SERVICE_POSTGRES_PASSWORD", "toai20102002"),
+			DBName:   getEnv("SHOP_SERVICE_POSTGRES_DB", "shop_service_go_shop_db"),
+			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		},
 	}
 
