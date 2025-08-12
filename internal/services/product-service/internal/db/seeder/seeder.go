@@ -8,15 +8,14 @@ import (
 
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/toji-dev/go-shop/internal/pkg/converter"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/db/sqlc"
 )
 
 type Seeder struct {
 	productDB *pgxpool.Pool
 	shopDB    *pgxpool.Pool
-	queries   *sqlc.Queries
 	ctx       context.Context
 }
 
@@ -24,12 +23,11 @@ func NewSeeder(productDB, shopDB *pgxpool.Pool) *Seeder {
 	return &Seeder{
 		productDB: productDB,
 		shopDB:    shopDB,
-		queries:   sqlc.New(productDB),
 		ctx:       context.Background(),
 	}
 }
 
-// fetchShopIDs lấy danh sách ID của các shop từ DB của shop-service
+// fetchShopIDs vẫn giữ nguyên
 func (s *Seeder) fetchShopIDs() ([]uuid.UUID, error) {
 	log.Println("Fetching shop IDs from shop-service database...")
 	rows, err := s.shopDB.Query(s.ctx, "SELECT id FROM shops")
@@ -55,7 +53,7 @@ func (s *Seeder) fetchShopIDs() ([]uuid.UUID, error) {
 	return shopIDs, nil
 }
 
-// SeedProducts tạo dữ liệu giả cho sản phẩm với logic đã được cải tiến
+// SeedProducts đã được tối ưu hóa với pgx.CopyFrom
 func (s *Seeder) SeedProducts(count int) {
 	shopIDs, err := s.fetchShopIDs()
 	if err != nil {
@@ -67,65 +65,94 @@ func (s *Seeder) SeedProducts(count int) {
 		return
 	}
 
-	log.Printf("🌱 Seeding %d products with improved logic...", count)
+	log.Printf("🌱 Seeding %d products using highly optimized 'COPY' protocol...", count)
 
-	// [XÓA BỎ] Mảng trạng thái ngẫu nhiên đã được loại bỏ.
-	// productStatuses := []sqlc.ProductStatus{ ... }
-
-	for i := 0; i < count; i++ {
-		// Chọn ngẫu nhiên một shop
-		shopID := shopIDs[rand.Intn(len(shopIDs))]
-
-		// =======================================================
-		// [LOGIC MỚI] Xác định trạng thái và số lượng sản phẩm một cách logic
-		// =======================================================
-		var quantity int32
-		var status sqlc.ProductStatus
-
-		// Phân phối trạng thái sản phẩm để dữ liệu thực tế hơn
-		stateChance := rand.Intn(100) // Tạo số ngẫu nhiên từ 0-99
-
-		switch {
-		case stateChance < 80: // 80% trường hợp: Sản phẩm đang hoạt động và có hàng
-			quantity = int32(rand.Intn(1000) + 10) // Số lượng tồn kho từ 10 đến 1009
-			status = sqlc.ProductStatusACTIVE
-		case stateChance < 95: // 15% trường hợp: Sản phẩm không hoạt động (người bán tạm ẩn)
-			quantity = int32(rand.Intn(500)) // Có thể có hoặc không có hàng
-			status = sqlc.ProductStatusINACTIVE
-		default: // 5% trường hợp còn lại: Hết hàng
-			quantity = 0
-			status = sqlc.ProductStatusOUTOFSTOCK
-		}
-		// =======================================================
-
-		// Tạo dữ liệu sản phẩm giả
-		productDesc := faker.Paragraph()
-		price, _ := faker.RandomInt(10000, 5000000, 1) // Giá từ 10k đến 5tr
-
-		params := sqlc.CreateProductParams{
-			ShopID:             converter.UUIDToPgUUID(shopID),
-			ProductName:        faker.Sentence(),
-			ThumbnailUrl:       converter.StringToPgText(nil), // Có thể thêm URL ảnh giả ở đây
-			ProductDescription: converter.StringToPgText(&productDesc),
-			Price:              converter.Float64ToPgNumeric(float64(price[0])),
-			Currency:           "VND",
-			Quantity:           quantity, // [THAY ĐỔI] Sử dụng số lượng đã được quyết định ở trên
-			ReserveQuantity:    0,        // Sản phẩm mới tạo chưa có ai đặt trước
-			ProductStatus:      status,   // [THAY ĐỔI] Sử dụng trạng thái logic
-		}
-
-		_, err := s.queries.CreateProduct(s.ctx, params)
-		if err != nil {
-			log.Printf("Failed to create product for shop %s: %v", shopID, err)
-			continue // Bỏ qua sản phẩm này và tiếp tục
-		}
-
-		log.Printf("Successfully created product %d for shop %s", i+1, shopID)
-
-		if (i+1)%100 == 0 {
-			log.Printf("... seeded %d/%d products", i+1, count)
-		}
+	// [TỐI ƯU HÓA] Định nghĩa tên các cột sẽ được chèn.
+	// Thứ tự phải khớp với thứ tự các giá trị trong mỗi row.
+	columnNames := []string{
+		"shop_id",
+		"product_name",
+		"thumbnail_url",
+		"product_description",
+		"category_id",
+		"price",
+		"currency",
+		"quantity",
+		"reserve_quantity",
+		"product_status",
 	}
 
-	log.Println("🎉 Product seeding complete.")
+	const batchSize = 1000 // Có thể tăng lên 5000 hoặc 10000 để nhanh hơn nữa
+	productsCreated := 0
+
+	for i := 0; i < count; i += batchSize {
+		batchEnd := i + batchSize
+		if batchEnd > count {
+			batchEnd = count
+		}
+
+		log.Printf("Preparing batch %d-%d...", i+1, batchEnd)
+
+		// [TỐI ƯU HÓA] Tạo một slice chứa các hàng dữ liệu cho batch này.
+		rows := make([][]interface{}, 0, batchSize)
+
+		for j := i; j < batchEnd; j++ {
+			var quantity int32
+			var status sqlc.ProductStatus
+			stateChance := rand.Intn(100)
+
+			switch {
+			case stateChance < 80:
+				quantity = int32(rand.Intn(1000) + 10)
+				status = sqlc.ProductStatusACTIVE
+			case stateChance < 95:
+				quantity = int32(rand.Intn(500))
+				status = sqlc.ProductStatusINACTIVE
+			default:
+				quantity = 0
+				status = sqlc.ProductStatusOUTOFSTOCK
+			}
+
+			shopID := shopIDs[rand.Intn(len(shopIDs))]
+			productDesc := faker.Paragraph()
+			price, _ := faker.RandomInt(10000, 5000000, 1)
+
+			// [TỐI ƯU HÓA] Thêm một hàng dữ liệu vào slice.
+			// Lưu ý: Thứ tự phải khớp với `columnNames` đã định nghĩa ở trên.
+			rows = append(rows, []interface{}{
+				shopID,
+				faker.Sentence(),
+				nil, // thumbnail_url
+				productDesc,
+				nil, // category_id
+				float64(price[0]),
+				"VND",
+				quantity,
+				0, // reserve_quantity
+				status,
+			})
+		}
+
+		// [TỐI ƯU HÓA] Sử dụng CopyFrom để chèn toàn bộ batch vào DB.
+		copyCount, err := s.productDB.CopyFrom(
+			s.ctx,
+			pgx.Identifier{"products"},
+			columnNames,
+			pgx.CopyFromRows(rows),
+		)
+
+		if err != nil {
+			log.Printf("❌ Error processing batch %d-%d: %v. Skipping this batch.", i+1, batchEnd, err)
+			continue
+		}
+
+		if int(copyCount) != len(rows) {
+			log.Printf("⚠️ Mismatch count for batch %d-%d: expected %d, got %d. Some rows might not have been inserted.", i+1, batchEnd, len(rows), copyCount)
+		}
+
+		productsCreated += int(copyCount)
+		log.Printf("✅ Successfully seeded batch %d-%d. Total seeded: %d/%d", i+1, batchEnd, productsCreated, count)
+	}
+
+	log.Printf("🎉 Product seeding complete. Total products created: %d", productsCreated)
 }
