@@ -55,7 +55,7 @@ func (s *Seeder) fetchShopIDs() ([]uuid.UUID, error) {
 	return shopIDs, nil
 }
 
-// SeedProducts tạo dữ liệu giả cho sản phẩm
+// SeedProducts tạo dữ liệu giả cho sản phẩm với logic đã được cải tiến
 func (s *Seeder) SeedProducts(count int) {
 	shopIDs, err := s.fetchShopIDs()
 	if err != nil {
@@ -67,17 +67,36 @@ func (s *Seeder) SeedProducts(count int) {
 		return
 	}
 
-	log.Printf("🌱 Seeding %d products...", count)
+	log.Printf("🌱 Seeding %d products with improved logic...", count)
 
-	productStatuses := []sqlc.ProductStatus{
-		sqlc.ProductStatusACTIVE,
-		sqlc.ProductStatusINACTIVE,
-		sqlc.ProductStatusOUTOFSTOCK,
-	}
+	// [XÓA BỎ] Mảng trạng thái ngẫu nhiên đã được loại bỏ.
+	// productStatuses := []sqlc.ProductStatus{ ... }
 
 	for i := 0; i < count; i++ {
 		// Chọn ngẫu nhiên một shop
 		shopID := shopIDs[rand.Intn(len(shopIDs))]
+
+		// =======================================================
+		// [LOGIC MỚI] Xác định trạng thái và số lượng sản phẩm một cách logic
+		// =======================================================
+		var quantity int32
+		var status sqlc.ProductStatus
+
+		// Phân phối trạng thái sản phẩm để dữ liệu thực tế hơn
+		stateChance := rand.Intn(100) // Tạo số ngẫu nhiên từ 0-99
+
+		switch {
+		case stateChance < 80: // 80% trường hợp: Sản phẩm đang hoạt động và có hàng
+			quantity = int32(rand.Intn(1000) + 10) // Số lượng tồn kho từ 10 đến 1009
+			status = sqlc.ProductStatusACTIVE
+		case stateChance < 95: // 15% trường hợp: Sản phẩm không hoạt động (người bán tạm ẩn)
+			quantity = int32(rand.Intn(500)) // Có thể có hoặc không có hàng
+			status = sqlc.ProductStatusINACTIVE
+		default: // 5% trường hợp còn lại: Hết hàng
+			quantity = 0
+			status = sqlc.ProductStatusOUTOFSTOCK
+		}
+		// =======================================================
 
 		// Tạo dữ liệu sản phẩm giả
 		productDesc := faker.Paragraph()
@@ -86,12 +105,13 @@ func (s *Seeder) SeedProducts(count int) {
 		params := sqlc.CreateProductParams{
 			ShopID:             converter.UUIDToPgUUID(shopID),
 			ProductName:        faker.Sentence(),
-			ThumbnailUrl:       converter.StringToPgText(nil),
+			ThumbnailUrl:       converter.StringToPgText(nil), // Có thể thêm URL ảnh giả ở đây
 			ProductDescription: converter.StringToPgText(&productDesc),
 			Price:              converter.Float64ToPgNumeric(float64(price[0])),
 			Currency:           "VND",
-			Quantity:           int32(rand.Intn(1000) + 1), // Số lượng từ 1 đến 1000
-			ProductStatus:      productStatuses[rand.Intn(len(productStatuses))],
+			Quantity:           quantity, // [THAY ĐỔI] Sử dụng số lượng đã được quyết định ở trên
+			ReserveQuantity:    0,        // Sản phẩm mới tạo chưa có ai đặt trước
+			ProductStatus:      status,   // [THAY ĐỔI] Sử dụng trạng thái logic
 		}
 
 		_, err := s.queries.CreateProduct(s.ctx, params)
