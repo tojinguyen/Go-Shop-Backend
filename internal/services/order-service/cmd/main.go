@@ -89,8 +89,8 @@ func runGrpcServer(cfg *config.Config, orderRepo repository.OrderRepository) {
 func startMetricsServer() {
 	metricsRouter := gin.New()
 	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	log.Println("Starting metrics server on :9100")
-	if err := metricsRouter.Run(":9100"); err != nil {
+	log.Println("Starting metrics server on 0.0.0.0:9100")
+	if err := metricsRouter.Run("0.0.0.0:9100"); err != nil {
 		log.Fatalf("Failed to start metrics server: %v", err)
 	}
 }
