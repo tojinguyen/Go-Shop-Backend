@@ -74,6 +74,8 @@ services:
     networks:
       - go-shop-network
     restart: unless-stopped
+    labels:
+      - "prometheus.scrape=true"
 
   # PostgreSQL Database User Service
   postgres-user-service:
@@ -114,6 +116,8 @@ services:
     networks:
       - go-shop-network
     restart: unless-stopped
+    labels:
+      - "prometheus.scrape=true"
 
   # PostgreSQL Database User Service
   postgres-shop-service:
@@ -154,6 +158,8 @@ services:
     networks:
       - go-shop-network
     restart: unless-stopped
+    labels:
+      - "prometheus.scrape=true"
 
   # PostgreSQL Database User Service
   postgres-product-service:
@@ -194,6 +200,8 @@ services:
     networks:
       - go-shop-network
     restart: unless-stopped
+    labels:
+      - "prometheus.scrape=true"
 
   # PostgreSQL Database for Cart Service
   postgres-cart-service:
@@ -234,6 +242,8 @@ services:
     networks:
       - go-shop-network
     restart: unless-stopped
+    labels:
+      - "prometheus.scrape=true"
 
   # PostgreSQL Database for Order Service
   postgres-order-service:
