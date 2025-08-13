@@ -1,23 +1,51 @@
 # monitoring/prometheus.yml
 
 global:
-  scrape_interval: 15s # Tần suất cạo metrics mặc định
+  scrape_interval: 15s
+  evaluation_interval: 15s
 
 scrape_configs:
-  # Job 1: Giám sát chính Prometheus
+  # Job 1: Giám sát chính Prometheus (không thay đổi)
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  # Job 2: Giám sát các Go microservices (user, shop, product)
-  - job_name: 'go-services'
-    static_configs:
-      - targets:
-          - 'user-service:9100'    # Sẽ expose metrics trên port 9100
-          - 'shop-service:9100'    # Sẽ expose metrics trên port 9100
-          - 'product-service:9100' # Sẽ expose metrics trên port 9100
+  # Job 2: Tự động giám sát các Go microservices thông qua Docker Service Discovery
+  # Prometheus sẽ tự tìm các container có label "prometheus.scrape=true"
+  - job_name: 'go-microservices'
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+    relabel_configs:
+      # Chỉ cạo (scrape) những container có label `prometheus.scrape=true`
+      - source_labels: [__meta_docker_container_label_prometheus_scrape]
+        action: keep
+        regex: true
+      # Ánh xạ label `com.docker.compose.service` thành label `job` trong Prometheus
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: job
+        action: replace
+      # Sử dụng IP nội bộ của container và port 9100 để scrape
+      - source_labels: [__meta_docker_container_network_ip]
+        target_label: __address__
+        replacement: "${1}:9100"
 
-  # Job 5: Giám sát các database PostgreSQL thông qua exporter
+  # Job 3: Giám sát Kong API Gateway qua Prometheus plugin
+  # Cần kích hoạt plugin `prometheus` trên Kong (xem hướng dẫn ở docker-compose.yml)
+  - job_name: 'kong-gateway'
+    static_configs:
+      - targets: ['kong-gateway:8001'] # Scrape trên cổng admin của Kong
+
+  # Job 4: Giám sát Redis thông qua Redis Exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Job 5: Giám sát các database PostgreSQL thông qua Postgres Exporter
   - job_name: 'postgres'
     static_configs:
-      - targets: ['postgres-exporter:9187'] # Port mặc định của postgres-exporter
+      - targets: ['postgres-exporter:9187']
+  
+  # Job 6: Giám sát Kafka thông qua Kafka Exporter (Tùy chọn, nhưng rất hữu ích)
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka-exporter:9308']

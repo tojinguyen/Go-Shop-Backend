@@ -6,7 +6,6 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/handlers"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/middleware"
-	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 // SetupRoutes sets up all the routes for the user service
@@ -22,9 +21,6 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 
 	// Initialize router
 	router := gin.New()
-
-	p := ginprometheus.NewPrometheus("gin")
-	p.Use(router)
 
 	// Global middleware
 	router.Use(gin.Logger())

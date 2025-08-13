@@ -17,7 +17,6 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.37.0
 	github.com/toji-dev/go-shop/internal/pkg v0.0.0-00010101000000-000000000000
 	github.com/toji-dev/go-shop/proto/gen/go v0.0.0-00010101000000-000000000000
-	github.com/zsais/go-gin-prometheus v1.0.0
 	golang.org/x/crypto v0.39.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6

@@ -13,7 +13,6 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/toji-dev/go-shop/internal/pkg v0.0.0-00010101000000-000000000000
 	github.com/toji-dev/go-shop/proto/gen/go v0.0.0-00010101000000-000000000000
-	github.com/zsais/go-gin-prometheus v1.0.0
 	google.golang.org/grpc v1.73.0
 )
 
@@ -45,7 +44,6 @@ require (
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/redis/go-redis/v9 v9.11.0 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	golang.org/x/arch v0.18.0 // indirect
