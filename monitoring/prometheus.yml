@@ -17,16 +17,6 @@ scrape_configs:
           - 'shop-service:9100'    # Sẽ expose metrics trên port 9100
           - 'product-service:9100' # Sẽ expose metrics trên port 9100
 
-  # Job 3: Giám sát Nginx API Gateway thông qua exporter
-  - job_name: 'nginx'
-    static_configs:
-      - targets: ['nginx-exporter:9113'] # Port mặc định của nginx-exporter
-
-  # Job 4: Giám sát Redis thông qua exporter
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['redis-exporter:9121'] # Port mặc định của redis-exporter
-      
   # Job 5: Giám sát các database PostgreSQL thông qua exporter
   - job_name: 'postgres'
     static_configs:

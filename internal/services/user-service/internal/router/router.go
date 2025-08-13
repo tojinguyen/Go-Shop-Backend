@@ -1,8 +1,6 @@
 package router
 
 import (
-	"strings"
-
 	"github.com/gin-gonic/gin"
 	common_middleware "github.com/toji-dev/go-shop/internal/pkg/middleware"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
@@ -33,44 +31,6 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	router.Use(gin.Recovery())
 	router.Use(common_middleware.ErrorHandler())
 
-	// CORS middleware with configuration
-	router.Use(func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-
-		// Set allowed origins from config
-		for _, allowedOrigin := range cfg.CORS.AllowedOrigins {
-			if allowedOrigin == "*" {
-				c.Header("Access-Control-Allow-Origin", "*")
-				break
-			} else if allowedOrigin == origin {
-				c.Header("Access-Control-Allow-Origin", origin)
-				break
-			}
-		}
-
-		// Set other CORS headers from config
-		c.Header("Access-Control-Allow-Methods", strings.Join(cfg.CORS.AllowedMethods, ", "))
-		c.Header("Access-Control-Allow-Headers", strings.Join(cfg.CORS.AllowedHeaders, ", "))
-
-		// Set credentials header if configured
-		if cfg.CORS.AllowCredentials {
-			c.Header("Access-Control-Allow-Credentials", "true")
-		}
-
-		// Set max age for preflight cache
-		c.Header("Access-Control-Max-Age", "86400") // 24 hours
-
-		// Add expose headers for client access
-		c.Header("Access-Control-Expose-Headers", "Authorization, Content-Length, X-CSRF-Token")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	})
-
 	// Initialize handler factory
 	handlerFactory := handlers.NewHandlerFactory(serviceContainer)
 
@@ -82,11 +42,6 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 
 	// Get AuthService for enhanced middleware
 	authService := handlerFactory.GetAuthService()
-
-	// Health check endpoint with detailed health information
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, "pong")
-	})
 
 	// API versioning
 	v1 := router.Group("/api/v1")
