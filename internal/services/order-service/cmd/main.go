@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/config"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/order-service/internal/dependency-container"
 	grpc_server "github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/server"
@@ -42,6 +43,8 @@ func main() {
 
 	// Start inbox processing worker
 	inboxWorker := worker.NewInboxWorker(dependencyContainer.GetInboxEventUsecase())
+
+	go startMetricsServer()
 
 	go kafkaConsumer.StartAllKafkaConsumer()
 	go inboxWorker.Start()
@@ -81,4 +84,13 @@ func runGrpcServer(cfg *config.Config, orderRepo repository.OrderRepository) {
 	}
 
 	log.Printf("gRPC server listening at %v", lis.Addr())
+}
+
+func startMetricsServer() {
+	metricsRouter := gin.New()
+	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	log.Println("Starting metrics server on :9100")
+	if err := metricsRouter.Run(":9100"); err != nil {
+		log.Fatalf("Failed to start metrics server: %v", err)
+	}
 }

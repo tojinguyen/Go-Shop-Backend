@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/config"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/cart-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/router"
@@ -31,6 +32,8 @@ func main() {
 
 	defer dependencyContainer.Close()
 
+	go startMetricsServer()
+
 	g := gin.New()
 	g.Use(gin.Recovery())
 	g.Use(gin.Logger())
@@ -51,4 +54,13 @@ func main() {
 
 	<-quit
 	log.Println("Shutting down shop service...")
+}
+
+func startMetricsServer() {
+	metricsRouter := gin.New()
+	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	log.Println("Starting metrics server on :9100")
+	if err := metricsRouter.Run(":9100"); err != nil {
+		log.Fatalf("Failed to start metrics server: %v", err)
+	}
 }
