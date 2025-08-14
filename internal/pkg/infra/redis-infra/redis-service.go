@@ -69,6 +69,13 @@ func NewRedisService(host, port string, password string, db int) *RedisService {
 		Addr:     redisAddr,
 		Password: password,
 		DB:       db,
+		PoolSize: 250,
+		// Giữ một số kết nối "nhàn rỗi" để sẵn sàng phục vụ request mới ngay lập tức.
+		MinIdleConns: 50,
+		// Thời gian chờ tối đa để lấy một kết nối từ pool.
+		PoolTimeout: 30 * time.Second,
+		// Thời gian tối đa một kết nối có thể ở trạng thái nhàn rỗi trong pool.
+		ConnMaxIdleTime: 10 * time.Minute,
 	})
 
 	return &RedisService{

@@ -3,11 +3,13 @@ package services
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
+	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
@@ -16,11 +18,16 @@ import (
 
 type UserService struct {
 	userProfileRepo repository.UserProfileRepository
+	redisService    redis_infra.RedisServiceInterface
 }
 
-func NewUserService(userProfileRepo repository.UserProfileRepository) *UserService {
+func NewUserService(
+	userProfileRepo repository.UserProfileRepository,
+	redisService redis_infra.RedisServiceInterface,
+) *UserService {
 	return &UserService{
 		userProfileRepo: userProfileRepo,
+		redisService:    redisService,
 	}
 }
 
@@ -85,9 +92,26 @@ func (s *UserService) CreateProfile(ctx *gin.Context, req dto.CreateUserProfileR
 }
 
 func (s *UserService) GetProfile(ctx *gin.Context, userID string) (domain.UserProfile, error) {
+	cacheKey := fmt.Sprintf("user_profile:%s", userID)
+	// 1. Kiểm tra cache trước
+	var cachedProfile domain.UserProfile
+	err := s.redisService.GetJSON(cacheKey, &cachedProfile)
+	if err == nil {
+		log.Printf("Cache HIT for user ID: %s", userID)
+		return cachedProfile, nil
+	}
+
+	log.Printf("Cache MISS for user ID: %s. Fetching from DB.", userID)
+
 	profile, err := s.userProfileRepo.GetUserProfileByID(ctx, userID)
 	if err != nil {
 		return domain.UserProfile{}, err
+	}
+
+	err = s.redisService.SetJSON(cacheKey, profile, 1*time.Minute)
+	if err != nil {
+		// Ghi log lỗi cache nhưng không làm hỏng request
+		log.Printf("Warning: Failed to set cache for user ID %s: %v", userID, err)
 	}
 	return *profile, nil
 }
@@ -166,9 +190,20 @@ func (s *UserService) DeleteProfile(ctx *gin.Context, userID string) error {
 }
 
 func (s *UserService) GetProfileByID(ctx *gin.Context, userID string) (domain.UserProfile, error) {
+	cacheKey := fmt.Sprintf("user_profile:%s", userID)
+	// 1. Kiểm tra cache trước
+	var cachedProfile domain.UserProfile
+	err := s.redisService.GetJSON(cacheKey, &cachedProfile)
+	if err == nil {
+		log.Printf("Cache HIT for user ID: %s", userID)
+		return cachedProfile, nil
+	}
+
+	log.Printf("Cache MISS for user ID: %s. Fetching from DB.", userID)
+
 	// Validate UUID format
-	_, err := uuid.Parse(userID)
-	if err != nil {
+	_, errParse := uuid.Parse(userID)
+	if errParse != nil {
 		return domain.UserProfile{}, fmt.Errorf("invalid user ID format")
 	}
 
@@ -177,5 +212,12 @@ func (s *UserService) GetProfileByID(ctx *gin.Context, userID string) (domain.Us
 	if err != nil {
 		return domain.UserProfile{}, fmt.Errorf("user not found")
 	}
+
+	err = s.redisService.SetJSON(cacheKey, profile, 1*time.Minute)
+	if err != nil {
+		// Ghi log lỗi cache nhưng không làm hỏng request
+		log.Printf("Warning: Failed to set cache for user ID %s: %v", userID, err)
+	}
+
 	return *profile, nil
 }

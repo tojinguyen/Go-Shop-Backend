@@ -48,12 +48,12 @@ proto: proto-gen proto-tidy ## Generate all Protobuf/gRPC code and tidy modules
 # Database Seeding
 # ===================================================================
 
-# Lệnh để seed 50,000 users với phân bố thực tế
+# Lệnh để seed 50,0000 users với phân bố thực tế
 .PHONY: seed-users
 seed-users:
-	@echo "Seeding user-service database with 50,000 users (realistic e-commerce distribution)..."
+	@echo "Seeding user-service database with 50,0000 users (realistic e-commerce distribution)..."
 	@echo "Distribution: ~87% customers, ~10% sellers, ~2.5% shippers, ~0.5% admins"
-	@cd internal/services/user-service && go run ./cmd/seeder/main.go -total=50000
+	@cd internal/services/user-service && go run ./cmd/seeder/main.go -total=500000
 	@echo "50K users seeding complete!"
 
 # Lệnh để seed 1000 shops

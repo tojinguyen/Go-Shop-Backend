@@ -16,7 +16,10 @@ type ProfileHandler struct {
 
 func NewProfileHandler(sc container.ServiceContainer) *ProfileHandler {
 	return &ProfileHandler{
-		userService: services.NewUserService(sc.GetUserProfileRepo()),
+		userService: services.NewUserService(
+			sc.GetUserProfileRepo(),
+			sc.GetRedis(),
+		),
 	}
 }
 
