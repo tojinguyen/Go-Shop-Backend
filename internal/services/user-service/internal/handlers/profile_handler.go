@@ -1,10 +1,7 @@
 package handlers
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/toji-dev/go-shop/internal/pkg/constant"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
@@ -104,8 +101,6 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 }
 
 func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
-	start := time.Now()
-
 	// Get user ID from URL parameters
 	userID := c.Param("id")
 	if userID == "" {
@@ -148,8 +143,6 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 			UpdatedAt:        userProfile.UpdatedAt,
 		}
 
-		requestCount.WithLabelValues("/users/profile/:id", c.Request.Method).Inc()
-		requestLatency.WithLabelValues("/users/profile/:id").Observe(time.Since(start).Seconds())
 		response.Success(c, "Profile retrieved successfully", userResponse)
 	} else {
 		// Return limited public profile information
@@ -161,8 +154,6 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 			CreatedAt: userProfile.CreatedAt,
 		}
 
-		requestCount.WithLabelValues("/users/profile/:id", c.Request.Method).Inc()
-		requestLatency.WithLabelValues("/users/profile/:id").Observe(time.Since(start).Seconds())
 		response.Success(c, "Public profile retrieved successfully", publicResponse)
 	}
 }
@@ -194,30 +185,4 @@ func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
 		constant.ContextKeyUserID: userIDStr,
 		"status":                  "deleted",
 	})
-}
-
-var (
-	requestCount = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "goshop",
-			Name:      "http_requests_total",
-			Help:      "Tổng số request nhận được",
-		},
-		[]string{"endpoint", "method"},
-	)
-
-	requestLatency = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: "goshop",
-			Name:      "request_latency_seconds",
-			Help:      "Thời gian xử lý request",
-			Buckets:   prometheus.DefBuckets,
-		},
-		[]string{"endpoint"},
-	)
-)
-
-func init() {
-	prometheus.MustRegister(requestCount)
-	prometheus.MustRegister(requestLatency)
 }

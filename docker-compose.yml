@@ -75,7 +75,7 @@ services:
       - go-shop-network
     restart: unless-stopped
     expose:
-    - "9100"
+      - "9100:9100"
     labels:
       - "prometheus.scrape=true"
       - "prometheus.port=9100"
