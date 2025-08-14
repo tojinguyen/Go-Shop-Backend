@@ -2,10 +2,11 @@ package redis_infra
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
+	json "github.com/json-iterator/go"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -124,6 +125,10 @@ func (r *RedisService) SetJSON(key string, value interface{}, expiration time.Du
 func (r *RedisService) GetJSON(key string, dest interface{}) error {
 	data, err := r.client.Get(r.ctx, key).Result()
 	if err != nil {
+		if err == redis.Nil {
+			log.Printf("Cache miss for key: %s", key)
+			return redis.Nil
+		}
 		return err
 	}
 	return json.Unmarshal([]byte(data), dest)
