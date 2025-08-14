@@ -23,7 +23,14 @@ func SetupRoutes(serviceContainer container.ServiceContainer) *gin.Engine {
 	// Initialize router
 	router := gin.New()
 
-	p := ginprometheus.NewPrometheus("gin")
+	p := ginprometheus.NewPrometheus("go")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.FullPath()
+		if url == "" {
+			url = "unknown"
+		}
+		return url
+	}
 	p.Use(router)
 
 	// Global middleware

@@ -21,7 +21,14 @@ func Init(router *gin.Engine, dependencyContainer *dependency_container.Dependen
 	router.Use(gin.Logger())
 	router.Use(common_middleware.ErrorHandler())
 
-	p := ginprometheus.NewPrometheus("gin")
+	p := ginprometheus.NewPrometheus("go")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.FullPath()
+		if url == "" {
+			url = "unknown"
+		}
+		return url
+	}
 	p.Use(router)
 
 	router.GET("/ping", func(c *gin.Context) {

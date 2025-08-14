@@ -5,6 +5,7 @@ import (
 	common_middleware "github.com/toji-dev/go-shop/internal/pkg/middleware"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/order-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/middleware"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 func Init(router *gin.Engine, dependencyContainer *dependency_container.DependencyContainer) {
@@ -15,6 +16,16 @@ func Init(router *gin.Engine, dependencyContainer *dependency_container.Dependen
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
+
+	p := ginprometheus.NewPrometheus("go")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.FullPath()
+		if url == "" {
+			url = "unknown"
+		}
+		return url
+	}
+	p.Use(router)
 
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
