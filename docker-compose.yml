@@ -19,6 +19,7 @@ services:
       KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
       JWT_SECRET_KEY: ${JWT_SECRET_KEY} 
       JWT_ISSUER: ${JWT_ISSUER}
+      KONG_NGINX_WORKER_PROCESSES: "auto" 
     networks:
       - go-shop-network
     ports:
