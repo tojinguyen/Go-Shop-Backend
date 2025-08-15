@@ -10,6 +10,12 @@ _comment: "Declarative configuration for Go-Shop API Gateway"
 services:
   - name: user-service
     url: http://user-service:8080
+    connect_timeout: 5000  # ms
+    read_timeout: 10000    # ms
+    write_timeout: 10000   # ms
+    retries: 3
+    protocol: http
+
   - name: shop-service
     url: http://shop-service:8081
   - name: product-service
