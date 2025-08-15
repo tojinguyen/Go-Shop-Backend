@@ -18,9 +18,9 @@ type CreateProductRequest struct {
 }
 
 type GetProductsByShopQuery struct {
-	ShopID uuid.UUID
-	Page   int
-	Limit  int
+	ShopID uuid.UUID `json:"shop_id" binding:"required,uuid"`
+	Page   int       `json:"page" binding:"required,gte=1"`
+	Limit  int       `json:"limit" binding:"required,gte=1,lte=100"`
 }
 
 type UpdateProductRequest struct {

@@ -29,10 +29,6 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 		serviceContainer.GetShopServiceAdapter(),
 	)
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, "pong")
-	})
-
 	v1 := r.Group("/api/v1")
 	{
 		products := v1.Group(("/products"))

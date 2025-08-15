@@ -3,11 +3,9 @@ package handler
 import (
 	"log"
 	"math"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/domain/product"
@@ -48,26 +46,13 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 }
 
 func (h *ProductHandler) GetProducts(c *gin.Context) {
-	// 1. Lấy shopID từ URL (giả sử route là /shops/:shopId/products)
-	shopIDStr := c.Param("shopId")
-	shopID, err := uuid.Parse(shopIDStr)
-	if err != nil {
-		response.BadRequest(c, "INVALID_SHOP_ID", "Invalid shop ID format", err.Error())
+	var req dto.GetProductsByShopQuery
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "INVALID_QUERY", "Invalid query parameters", err.Error())
 		return
 	}
 
-	// 2. Lấy tham số phân trang từ query string
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-
-	// 3. Tạo query object và gọi service
-	query := dto.GetProductsByShopQuery{
-		ShopID: shopID,
-		Page:   page,
-		Limit:  limit,
-	}
-
-	paginatedResult, err := h.productService.GetProductsByShop(c.Request.Context(), query)
+	paginatedResult, err := h.productService.GetProductsByShop(c.Request.Context(), req)
 	if err != nil {
 		response.InternalServerError(c, "GET_PRODUCTS_FAILED", err.Error())
 		return
@@ -82,10 +67,10 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 
 	// 5. Tạo metadata cho phân trang
 	meta := response.MetaInfo{
-		Page:       page,
-		PerPage:    limit,
+		Page:       req.Page,
+		PerPage:    req.Limit,
 		Total:      paginatedResult.TotalCount,
-		TotalPages: int(math.Ceil(float64(paginatedResult.TotalCount) / float64(limit))),
+		TotalPages: int(math.Ceil(float64(paginatedResult.TotalCount) / float64(req.Limit))),
 	}
 
 	// 6. Trả về response hoàn chỉnh

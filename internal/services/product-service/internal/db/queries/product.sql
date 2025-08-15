@@ -22,13 +22,13 @@ WHERE id = $1 AND delete_at IS NULL;
 
 -- name: GetListProductsByShop :many
 SELECT * FROM products
-WHERE shop_id = $1 AND deleted_at IS NULL
+WHERE shop_id = $1 AND delete_at IS NULL
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: CountProductsByShop :one
 SELECT count(*) FROM products
-WHERE shop_id = $1 AND deleted_at IS NULL;
+WHERE shop_id = $1 AND delete_at IS NULL;
 
 -- name: UpdateProduct :one
 UPDATE products
@@ -42,16 +42,16 @@ SET
   thumbnail_url = $8,
   product_status = $9,
   updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND delete_at IS NULL
 RETURNING *;
 
 -- name: SoftDeleteProduct :exec
 UPDATE products
 SET
-  deleted_at = NOW(),
+  delete_at = NOW(),
   product_status = 'DISCONTINUED', -- Hoặc một trạng thái xóa khác
   updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL;
+WHERE id = $1 AND delete_at IS NULL;
 
 -- name: GetProductsByIDs :many
 SELECT * FROM products
