@@ -63,9 +63,9 @@ seed-shops:
 	@cd internal/services/shop-service && go run ./cmd/seeder/main.go -shops=100000
 	@echo "Shop service seeding complete."
 
-# Lệnh để seed 5,000,000 products
+# Lệnh để seed 10,000,000 products
 .PHONY: seed-products
 seed-products:
-	@echo "Seeding product-service database with 5000000 products..."
-	@cd internal/services/product-service && go run ./cmd/seeder/main.go -products=5000000
+	@echo "Seeding product-service database with 10000000 products..."
+	@cd internal/services/product-service && go run ./cmd/seeder/main.go -products=10000000
 	@echo "Product service seeding complete."
