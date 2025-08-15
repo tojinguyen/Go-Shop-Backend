@@ -47,7 +47,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 
 func (h *ProductHandler) GetProducts(c *gin.Context) {
 	var req dto.GetProductsByShopQuery
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindQuery(&req); err != nil {
 		response.BadRequest(c, "INVALID_QUERY", "Invalid query parameters", err.Error())
 		return
 	}
