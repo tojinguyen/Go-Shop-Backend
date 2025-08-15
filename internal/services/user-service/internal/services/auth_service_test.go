@@ -3,6 +3,7 @@ package services_test
 import (
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -91,17 +92,30 @@ func TestAuthService_Login_WithExpect(t *testing.T) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("correctPassword123!"), bcrypt.DefaultCost)
 
 	testCases := []struct {
-		name          string
-		request       dto.LoginRequest
-		setupMocks    func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService)
-		expectedResp  *dto.AuthResponse
+		name       string
+		request    dto.LoginRequest
+		setupMocks func(
+			mockRepo *repo_mocks.UserAccountRepository,
+			mockJWT *jwt_mocks.JwtService,
+			mockRedis *redis_mocks.RedisServiceInterface, // <-- Thêm mockRedis vào đây
+		)
+		expectedResp  dto.AuthResponse // <-- Sửa lại thành con trỏ để dễ so sánh
 		expectError   bool
 		expectedError string
 	}{
 		{
 			name:    "Success - Valid login credentials",
 			request: dto.LoginRequest{Email: "user@example.com", Password: "correctPassword123!"},
-			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService) {
+			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService, mockRedis *redis_mocks.RedisServiceInterface) {
+				// === PHẦN SỬA LỖI BẮT ĐẦU TẠI ĐÂY ===
+				// 1. Dạy mockRedis cách phản ứng với Increment
+				mockRedis.EXPECT().Increment("rate_limit:login:user@example.com").Return(int64(1), nil).Once()
+				// 2. Dạy mockRedis cách phản ứng với SetTTL (được gọi khi Increment trả về 1)
+				mockRedis.EXPECT().SetTTL("rate_limit:login:user@example.com", mock.AnythingOfType("time.Duration")).Return(nil).Once()
+				// 3. Dạy mockRedis cách phản ứng với Delete (sau khi login thành công)
+				mockRedis.EXPECT().Delete("rate_limit:login:user@example.com").Return(nil).Once()
+				// === PHẦN SỬA LỖI KẾT THÚC ===
+
 				user := &domain.UserAccount{
 					Id:             "user-123",
 					Email:          "user@example.com",
@@ -115,7 +129,7 @@ func TestAuthService_Login_WithExpect(t *testing.T) {
 				mockJWT.EXPECT().GenerateAccessToken(tokenInput).Return("fake-access-token", nil).Once()
 				mockJWT.EXPECT().GenerateRefreshToken(tokenInput).Return("fake-refresh-token", nil).Once()
 			},
-			expectedResp: &dto.AuthResponse{
+			expectedResp: dto.AuthResponse{ // <-- Không cần con trỏ nữa
 				AccessToken:  "fake-access-token",
 				RefreshToken: "fake-refresh-token",
 				TokenType:    "Bearer",
@@ -129,7 +143,11 @@ func TestAuthService_Login_WithExpect(t *testing.T) {
 		{
 			name:    "Error - User not found",
 			request: dto.LoginRequest{Email: "notfound@example.com", Password: "password"},
-			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService) {
+			setupMocks: func(mockRepo *repo_mocks.UserAccountRepository, mockJWT *jwt_mocks.JwtService, mockRedis *redis_mocks.RedisServiceInterface) {
+				// Dạy mockRedis cách phản ứng với Increment
+				mockRedis.EXPECT().Increment("rate_limit:login:notfound@example.com").Return(int64(1), nil).Once()
+				mockRedis.EXPECT().SetTTL("rate_limit:login:notfound@example.com", mock.Anything).Return(nil).Once()
+
 				mockRepo.EXPECT().GetUserAccountByEmail(mock.Anything, "notfound@example.com").Return(nil, sql.ErrNoRows).Once()
 			},
 			expectError:   true,
@@ -142,10 +160,17 @@ func TestAuthService_Login_WithExpect(t *testing.T) {
 			// --- ARRANGE ---
 			mockUserRepo := new(repo_mocks.UserAccountRepository)
 			mockJWT := new(jwt_mocks.JwtService)
-			tc.setupMocks(mockUserRepo, mockJWT)
+			mockRedis := new(redis_mocks.RedisServiceInterface) // <-- Khởi tạo mockRedis
+			tc.setupMocks(mockUserRepo, mockJWT, mockRedis)
 
 			authService := services.NewAuthService(
-				mockUserRepo, mockJWT, new(redis_mocks.RedisServiceInterface), new(email_mocks.EmailService), &config.Config{},
+				mockUserRepo, mockJWT, mockRedis, new(email_mocks.EmailService), &config.Config{
+					// Cung cấp config cho rate limit để test case chạy đúng
+					RateLimit: config.RateLimitConfig{
+						LoginMaxAttempts:   5,
+						LoginWindowMinutes: 1 * time.Minute,
+					},
+				},
 			)
 
 			// --- ACT ---
@@ -157,11 +182,12 @@ func TestAuthService_Login_WithExpect(t *testing.T) {
 				assert.Contains(t, err.Error(), tc.expectedError)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, *tc.expectedResp, response)
+				assert.Equal(t, tc.expectedResp, response)
 			}
 
 			mockUserRepo.AssertExpectations(t)
 			mockJWT.AssertExpectations(t)
+			mockRedis.AssertExpectations(t) // <-- Đừng quên kiểm tra mockRedis
 		})
 	}
 }
