@@ -3,7 +3,6 @@ package services
 import (
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,13 +20,6 @@ import (
 type UserService struct {
 	userProfileRepo repository.UserProfileRepository
 	redisService    redis_infra.RedisServiceInterface
-	// In-memory cache để giảm Redis network calls
-	memoryCache sync.Map
-	// Mutex để tránh cache stampede
-	cacheMutex sync.RWMutex
-	// Cache metrics
-	cacheHits   int64
-	cacheMisses int64
 }
 
 // CachedProfile struct để lưu trữ profile với timestamp
@@ -44,10 +36,6 @@ func NewUserService(
 	return &UserService{
 		userProfileRepo: userProfileRepo,
 		redisService:    redisService,
-		memoryCache:     sync.Map{},
-		cacheMutex:      sync.RWMutex{},
-		cacheHits:       0,
-		cacheMisses:     0,
 	}
 }
 
@@ -207,7 +195,6 @@ func (s *UserService) UpdateProfile(ctx *gin.Context, req dto.UpdateUserProfileR
 	}
 
 	// Invalidate memory cache
-	s.memoryCache.Delete(userIDStr)
 	log.Printf("Invalidated both Redis and memory cache for user ID: %s", userIDStr)
 
 	return *profile, nil
@@ -235,54 +222,16 @@ func (s *UserService) GetProfileByID(ctx *gin.Context, userID string) (domain.Us
 		return domain.UserProfile{}, fmt.Errorf("invalid user ID format")
 	}
 
-	// 1. Kiểm tra in-memory cache trước (nhanh nhất)
-	if cached, ok := s.memoryCache.Load(userID); ok {
-		cachedProfile := cached.(CachedProfile)
-		if time.Now().Before(cachedProfile.ExpiresAt) {
-			s.cacheHits++
-			log.Printf("Memory Cache HIT for user ID: %s", userID)
-			return cachedProfile.Profile, nil
-		}
-		// Expired, remove from memory cache
-		s.memoryCache.Delete(userID)
-	}
-
-	// 2. Sử dụng mutex để tránh cache stampede
-	s.cacheMutex.Lock()
-	defer s.cacheMutex.Unlock()
-
-	// Double-check memory cache sau khi có lock
-	if cached, ok := s.memoryCache.Load(userID); ok {
-		cachedProfile := cached.(CachedProfile)
-		if time.Now().Before(cachedProfile.ExpiresAt) {
-			s.cacheHits++
-			log.Printf("Memory Cache HIT (double-check) for user ID: %s", userID)
-			return cachedProfile.Profile, nil
-		}
-		s.memoryCache.Delete(userID)
-	}
-
 	cacheKey := fmt.Sprintf("user_profile:%s", userID)
 
 	// 3. Kiểm tra Redis cache
 	var cachedProfile domain.UserProfile
 	err := s.redisService.GetJSON(cacheKey, &cachedProfile)
 	if err == nil {
-		s.cacheHits++
 		log.Printf("Redis Cache HIT for user ID: %s", userID)
-
-		// Lưu vào memory cache để lần sau nhanh hơn
-		memCache := CachedProfile{
-			Profile:   cachedProfile,
-			CachedAt:  time.Now(),
-			ExpiresAt: time.Now().Add(5 * time.Minute), // Memory cache 5 phút
-		}
-		s.memoryCache.Store(userID, memCache)
-
 		return cachedProfile, nil
 	}
 
-	s.cacheMisses++
 	if err == redis.Nil {
 		log.Printf("Cache MISS for user ID: %s. Fetching from DB.", userID)
 	} else {
@@ -301,51 +250,5 @@ func (s *UserService) GetProfileByID(ctx *gin.Context, userID string) (domain.Us
 		log.Printf("Warning: Failed to set Redis cache for user ID %s: %v", userID, err)
 	}
 
-	// 6. Cache trong memory với TTL 5 phút
-	memCache := CachedProfile{
-		Profile:   *profile,
-		CachedAt:  time.Now(),
-		ExpiresAt: time.Now().Add(5 * time.Minute),
-	}
-	s.memoryCache.Store(userID, memCache)
-
-	// 7. Log cache statistics
-	totalRequests := s.cacheHits + s.cacheMisses
-	if totalRequests%100 == 0 { // Log every 100 requests
-		hitRatio := float64(s.cacheHits) / float64(totalRequests) * 100
-		log.Printf("Cache Stats: Hits=%d, Misses=%d, Hit Ratio=%.2f%%",
-			s.cacheHits, s.cacheMisses, hitRatio)
-	}
-
 	return *profile, nil
-}
-
-// GetCacheStats trả về thống kê cache performance
-func (s *UserService) GetCacheStats() map[string]interface{} {
-	totalRequests := s.cacheHits + s.cacheMisses
-	hitRatio := float64(0)
-	if totalRequests > 0 {
-		hitRatio = float64(s.cacheHits) / float64(totalRequests) * 100
-	}
-
-	// Count memory cache entries
-	memoryCacheSize := 0
-	s.memoryCache.Range(func(key, value interface{}) bool {
-		memoryCacheSize++
-		return true
-	})
-
-	return map[string]interface{}{
-		"cache_hits":        s.cacheHits,
-		"cache_misses":      s.cacheMisses,
-		"total_requests":    totalRequests,
-		"hit_ratio_percent": hitRatio,
-		"memory_cache_size": memoryCacheSize,
-	}
-}
-
-// ClearMemoryCache xóa tất cả memory cache
-func (s *UserService) ClearMemoryCache() {
-	s.memoryCache = sync.Map{}
-	log.Printf("Memory cache cleared")
 }
