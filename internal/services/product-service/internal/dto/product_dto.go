@@ -2,8 +2,6 @@ package dto
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type CreateProductRequest struct {
@@ -18,9 +16,9 @@ type CreateProductRequest struct {
 }
 
 type GetProductsByShopQuery struct {
-	ShopID uuid.UUID `form:"shop_id" binding:"required,uuid"`
-	Page   int       `form:"page" binding:"required,gte=1"`
-	Limit  int       `form:"limit" binding:"required,gte=1,lte=100"`
+	ShopID string `form:"shop_id" binding:"required,uuid"`
+	Page   int    `form:"page" binding:"required,gte=1"`
+	Limit  int    `form:"limit" binding:"required,gte=1,lte=100"`
 }
 
 type UpdateProductRequest struct {

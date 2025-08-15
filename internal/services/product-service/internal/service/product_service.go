@@ -129,7 +129,13 @@ func (s *ProductService) GetProductsByShop(ctx context.Context, query dto.GetPro
 		query.Limit = 20
 	}
 
-	products, total, err := s.productRepo.GetByShopID(ctx, query.ShopID, query.Limit, (query.Page-1)*query.Limit)
+	// Parse shopID string to UUID
+	shopID, err := uuid.Parse(query.ShopID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid shop ID format: %w", err)
+	}
+
+	products, total, err := s.productRepo.GetByShopID(ctx, shopID, query.Limit, (query.Page-1)*query.Limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get products by shop: %w", err)
 	}
