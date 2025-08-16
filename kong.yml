@@ -20,6 +20,12 @@ services:
     url: http://shop-service:8081
   - name: product-service
     url: http://product-service:8082
+    connect_timeout: 5000  # ms
+    read_timeout: 10000    # ms
+    write_timeout: 10000   # ms
+    retries: 3
+    protocol: http
+
   - name: cart-service
     url: http://cart-service:8083
   - name: order-service
@@ -90,6 +96,3 @@ routes:
 # =======================================================
 consumers:
   - username: go-shop-consumer
-    jwt_secrets:
-      - key: "go-shop-platform" 
-        secret: 17e0f626f13454cbc22fcd6a3a44d5d2 
