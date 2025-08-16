@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/config"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/payment-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/payment-service/internal/router"
@@ -32,11 +33,22 @@ func main() {
 	// Initialize Gin router
 	r := gin.Default()
 
+	go startMetricsServer()
+
 	// Setup routes
 	router.Init(r, dependencyContainer)
 
 	// Start server
 	if err := r.Run(cfg.Server.GetServerAddress()); err != nil {
 		fmt.Printf("Failed to start server: %v", err)
+	}
+}
+
+func startMetricsServer() {
+	metricsRouter := gin.New()
+	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	log.Println("Starting metrics server on 0.0.0.0:9100")
+	if err := metricsRouter.Run("0.0.0.0:9100"); err != nil {
+		log.Fatalf("Failed to start metrics server: %v", err)
 	}
 }

@@ -122,17 +122,20 @@ func (s *ProductService) GetProductByID(ctx context.Context, id string) (*produc
 }
 
 func (s *ProductService) GetProductsByShop(ctx context.Context, query dto.GetProductsByShopQuery) (*PaginatedProducts, error) {
-	// 1. Validation logic cho phân trang (đặt ở đây hoặc handler đều được)
 	if query.Page <= 0 {
 		query.Page = 1
 	}
-	if query.Limit <= 0 || query.Limit > 100 { // Giới hạn tối đa 100 sản phẩm/trang
+	if query.Limit <= 0 || query.Limit > 100 {
 		query.Limit = 20
 	}
 
-	// 2. Điều phối Repository để lấy dữ liệu
-	// Repository sẽ trả về cả danh sách sản phẩm và tổng số lượng
-	products, total, err := s.productRepo.GetByShopID(ctx, query.ShopID, query.Limit, (query.Page-1)*query.Limit)
+	// Parse shopID string to UUID
+	shopID, err := uuid.Parse(query.ShopID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid shop ID format: %w", err)
+	}
+
+	products, total, err := s.productRepo.GetByShopID(ctx, shopID, query.Limit, (query.Page-1)*query.Limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get products by shop: %w", err)
 	}

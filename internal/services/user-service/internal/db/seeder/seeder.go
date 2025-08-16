@@ -17,16 +17,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Seeder đóng gói kết nối database và các queries.
+// [SỬA LỖI] Thêm bộ đếm cho email và phone để đảm bảo tính duy nhất
 type Seeder struct {
-	db  *pgxpool.Pool
-	ctx context.Context
-	// [SỬA LỖI] Sử dụng atomic counter để đảm bảo tính duy nhất khi chạy song song trong tương lai
+	db           *pgxpool.Pool
+	ctx          context.Context
 	emailCounter *uint64
 	phoneCounter *uint64
 }
 
-// NewSeeder tạo một Seeder instance mới.
+// [SỬA LỖI] Khởi tạo Seeder với các bộ đếm
 func NewSeeder(db *pgxpool.Pool) *Seeder {
 	var initialEmail uint64 = 1
 	var initialPhone uint64 = 900000000 // Bắt đầu từ số điện thoại 0900000000
@@ -80,6 +79,7 @@ func (s *Seeder) seedUserBatch(typeName string, count int, role constant.UserRol
 		log.Fatalf("Failed to hash password: %v", err)
 	}
 
+	// [TỐI ƯU HÓA] Tạo sẵn một bộ dữ liệu tên để tránh gọi faker trong vòng lặp lớn
 	const sampleSize = 200
 	preGeneratedNames := make([]string, sampleSize)
 	for i := 0; i < sampleSize; i++ {
@@ -143,7 +143,7 @@ func (s *Seeder) seedUserBatch(typeName string, count int, role constant.UserRol
 					addressesRows = append(addressesRows, []interface{}{
 						uuid.New(),
 						userID,
-						addrIdx == 0,
+						addrIdx == 0, // Cái đầu tiên là default
 						faker.GetRealAddress().Address,
 						faker.GetRealAddress().State,
 						faker.GetRealAddress().City,
@@ -209,24 +209,15 @@ func (s *Seeder) seedUserBatch(typeName string, count int, role constant.UserRol
 	}
 }
 
-// SeedUsers, SeedAddressesForUsers, SeedShipperProfiles giờ đây không còn cần thiết và có thể được xóa đi
-// hoặc giữ lại như các wrapper rỗng để tránh lỗi biên dịch ở các chỗ gọi khác.
-
-// SeedUsers (Hàm cũ) - Giờ đây chỉ là wrapper để tương thích.
+// Các hàm cũ giờ không cần thiết nữa nhưng giữ lại để không gây lỗi nếu có chỗ khác gọi
 func (s *Seeder) SeedUsers(count int, role constant.UserRole) ([]sqlc.CreateUserAccountRow, error) {
 	s.seedUserBatch(string(role), count, role, true, role == constant.UserRoleShipper)
 	return []sqlc.CreateUserAccountRow{}, nil
 }
 
-// SeedAddressesForUsers (Hàm cũ) - Không làm gì cả.
-func (s *Seeder) SeedAddressesForUsers(users []sqlc.CreateUserAccountRow) {
-	// Logic đã được tích hợp vào seedUserBatch.
-}
+func (s *Seeder) SeedAddressesForUsers(users []sqlc.CreateUserAccountRow) {}
 
-// SeedShipperProfiles (Hàm cũ) - Không làm gì cả.
-func (s *Seeder) SeedShipperProfiles(users []sqlc.CreateUserAccountRow) {
-	// Logic đã được tích hợp vào seedUserBatch.
-}
+func (s *Seeder) SeedShipperProfiles(users []sqlc.CreateUserAccountRow) {}
 
 // PrintSeedingStatistics in ra thống kê sau khi seed
 func (s *Seeder) PrintSeedingStatistics(total, customers, sellers, shippers, admins int) {

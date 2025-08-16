@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/toji-dev/go-shop/internal/pkg/constant"
+	redis_mocks "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra/mocks"
 	user_constant "github.com/toji-dev/go-shop/internal/services/user-service/internal/constant"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
@@ -50,9 +51,10 @@ func TestUserService_CreateProfile(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockRepo := new(repo_mocks.UserProfileRepository)
+			mockRedis := new(redis_mocks.RedisServiceInterface)
 			tc.setupMocks(mockRepo)
 
-			userService := services.NewUserService(mockRepo)
+			userService := services.NewUserService(mockRepo, mockRedis)
 
 			ctx := createTestGinContext()
 			ctx.Set(constant.ContextKeyUserID, "550e8400-e29b-41d4-a716-446655440000")

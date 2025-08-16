@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"sync"
+	"time"
 
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
@@ -53,7 +55,6 @@ func (s *Seeder) fetchShopIDs() ([]uuid.UUID, error) {
 	return shopIDs, nil
 }
 
-// SeedProducts đã được tối ưu hóa với pre-generation và pgx.CopyFrom
 func (s *Seeder) SeedProducts(count int) {
 	shopIDs, err := s.fetchShopIDs()
 	if err != nil {
@@ -61,104 +62,114 @@ func (s *Seeder) SeedProducts(count int) {
 	}
 	if len(shopIDs) == 0 {
 		log.Println("⚠️ No shops found in shop-service DB. Please seed shops first.")
-		log.Println("Run: make seed-shops")
 		return
 	}
 
-	log.Printf("🌱 Seeding %d products using highly optimized 'COPY' protocol and pre-generation...", count)
+	log.Printf("🌱 Seeding %d products with multi-goroutine COPY FROM...", count)
 
-	// [TỐI ƯU HÓA] Bước 1: Tạo sẵn một bộ dữ liệu mẫu để tránh gọi faker trong vòng lặp lớn
-	log.Println("Pre-generating sample data...")
-	const sampleSize = 200 // Tạo 200 mẫu tên và mô tả
-	preGeneratedNames := make([]string, sampleSize)
-	preGeneratedDescriptions := make([]string, sampleSize)
+	// ----- Pre-generate sample data -----
+	const sampleSize = 1000
+	preNames := make([]string, sampleSize)
+	preDescs := make([]string, sampleSize)
 	for i := 0; i < sampleSize; i++ {
-		preGeneratedNames[i] = faker.Sentence()
-		preGeneratedDescriptions[i] = faker.Paragraph()
-	}
-	log.Println("Sample data generated.")
-
-	// Định nghĩa tên các cột sẽ được chèn.
-	columnNames := []string{
-		"shop_id",
-		"product_name",
-		"product_description",
-		"price",
-		"currency",
-		"quantity",
-		"reserve_quantity",
-		"product_status",
+		preNames[i] = faker.Sentence()
+		preDescs[i] = faker.Paragraph()
 	}
 
-	const batchSize = 1000 // Tăng batch size để hiệu quả hơn
-	productsCreated := 0
+	// Rand pool để tránh global lock
+	var rndPool = sync.Pool{
+		New: func() interface{} {
+			return rand.New(rand.NewSource(time.Now().UnixNano()))
+		},
+	}
 
-	for i := 0; i < count; i += batchSize {
-		batchEnd := i + batchSize
-		if batchEnd > count {
-			batchEnd = count
-		}
+	// Cấu hình batch và worker
+	const batchSize = 5000
+	numWorkers := 4 // Nên ≤ pool size của DB
 
-		rows := make([][]interface{}, 0, batchSize)
+	jobs := make(chan [2]int, numWorkers)
+	var wg sync.WaitGroup
+	var totalCreated int64
+	var mu sync.Mutex
 
-		// [TỐI ƯU HÓA] Bước 2: Tạo dữ liệu cho batch từ các mẫu đã có, cực kỳ nhanh
-		for j := i; j < batchEnd; j++ {
-			var quantity int32
-			var status sqlc.ProductStatus
-			stateChance := rand.Intn(100)
+	// Worker goroutine
+	for w := 0; w < numWorkers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			rnd := rndPool.Get().(*rand.Rand)
+			defer rndPool.Put(rnd)
 
-			switch {
-			case stateChance < 80:
-				quantity = int32(rand.Intn(1000) + 10)
-				status = sqlc.ProductStatusACTIVE
-			case stateChance < 95:
-				quantity = int32(rand.Intn(500))
-				status = sqlc.ProductStatusINACTIVE
-			default:
-				quantity = 0
-				status = sqlc.ProductStatusOUTOFSTOCK
+			for rng := range jobs {
+				start, end := rng[0], rng[1]
+
+				rows := make([][]interface{}, 0, batchSize)
+				for j := start; j < end; j++ {
+					stateChance := rnd.Intn(100)
+					var qty int32
+					var status sqlc.ProductStatus
+
+					switch {
+					case stateChance < 80:
+						qty = int32(rnd.Intn(1000) + 10)
+						status = sqlc.ProductStatusACTIVE
+					case stateChance < 95:
+						qty = int32(rnd.Intn(500))
+						status = sqlc.ProductStatusINACTIVE
+					default:
+						qty = 0
+						status = sqlc.ProductStatusOUTOFSTOCK
+					}
+
+					price := rnd.Intn(4990001) + 10000
+					shopID := shopIDs[rnd.Intn(len(shopIDs))]
+
+					rows = append(rows, []interface{}{
+						shopID,
+						preNames[rnd.Intn(sampleSize)],
+						preDescs[rnd.Intn(sampleSize)],
+						float64(price),
+						"VND",
+						qty,
+						0,
+						status,
+					})
+				}
+
+				// COPY FROM batch
+				copyCount, err := s.productDB.CopyFrom(
+					s.ctx,
+					pgx.Identifier{"products"},
+					[]string{
+						"shop_id", "product_name", "product_description",
+						"price", "currency", "quantity", "reserve_quantity", "product_status",
+					},
+					pgx.CopyFromRows(rows),
+				)
+				if err != nil {
+					log.Printf("❌ Error batch %d-%d: %v", start+1, end, err)
+					continue
+				}
+
+				mu.Lock()
+				totalCreated += int64(copyCount)
+				mu.Unlock()
+
+				log.Printf("✅ Batch %d-%d done. Total: %d/%d", start+1, end, totalCreated, count)
 			}
-
-			shopID := shopIDs[rand.Intn(len(shopIDs))]
-			// Sử dụng math/rand thay vì faker.RandomInt để nhanh hơn
-			price := rand.Intn(4990001) + 10000 // Giá từ 10,000 đến 5,000,000
-
-			// Lấy dữ liệu từ bộ nhớ thay vì tạo mới
-			productName := preGeneratedNames[rand.Intn(sampleSize)]
-			productDesc := preGeneratedDescriptions[rand.Intn(sampleSize)]
-
-			rows = append(rows, []interface{}{
-				shopID,
-				productName,
-				productDesc,
-				float64(price),
-				"VND",
-				quantity,
-				0, // reserve_quantity
-				status,
-			})
-		}
-
-		// [TỐI ƯU HÓA] Bước 3: Sử dụng CopyFrom để chèn toàn bộ batch
-		copyCount, err := s.productDB.CopyFrom(
-			s.ctx,
-			pgx.Identifier{"products"},
-			columnNames,
-			pgx.CopyFromRows(rows),
-		)
-
-		if err != nil {
-			log.Printf("❌ Error processing batch %d-%d: %v. Skipping this batch.", i+1, batchEnd, err)
-			continue
-		}
-
-		if int(copyCount) != len(rows) {
-			log.Printf("⚠️ Mismatch count for batch %d-%d: expected %d, got %d.", i+1, batchEnd, len(rows), copyCount)
-		}
-
-		productsCreated += int(copyCount)
-		log.Printf("✅ Successfully seeded batch %d-%d. Total seeded: %d/%d", i+1, batchEnd, productsCreated, count)
+		}()
 	}
 
-	log.Printf("🎉 Product seeding complete. Total products created: %d", productsCreated)
+	// Gửi job vào channel
+	for i := 0; i < count; i += batchSize {
+		end := i + batchSize
+		if end > count {
+			end = count
+		}
+		jobs <- [2]int{i, end}
+	}
+	close(jobs)
+
+	wg.Wait()
+	log.Printf("🎉 Done seeding. Total: %d products", totalCreated)
 }

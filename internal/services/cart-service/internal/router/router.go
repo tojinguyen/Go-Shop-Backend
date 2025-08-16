@@ -1,8 +1,6 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/cart-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/handler"
@@ -19,15 +17,15 @@ func SetupRoutes(r *gin.Engine, dependencyContainer *dependency_container.Depend
 		gin.SetMode(gin.DebugMode)
 	}
 
-	p := ginprometheus.NewPrometheus("gin")
+	p := ginprometheus.NewPrometheus("go")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.FullPath()
+		if url == "" {
+			url = "unknown"
+		}
+		return url
+	}
 	p.Use(r)
-
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "ok",
-			"service": "cart-service",
-		})
-	})
 
 	cartHandler := handler.NewCartHandler(dependencyContainer)
 	cartItemHandler := handler.NewCartItemHandler(dependencyContainer)
