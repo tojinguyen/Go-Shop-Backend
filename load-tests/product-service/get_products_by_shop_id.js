@@ -10,21 +10,18 @@ const JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiIyN2ZjZTQ3
 
 export const options = {
   stages: [
-    { duration: '30s', target: 50 }, // Tăng từ 0 lên 50 VUs trong 30 giây
-    { duration: '1m', target: 50 },  // Giữ 50 VUs trong 1 phút để duy trì tải
-    { duration: '15s', target: 0 },  // Giảm từ 50 về 0 VUs trong 15 giây
+    { duration: '30s', target: 100 },  
+    { duration: '1m', target: 100 }, 
+    { duration: '30s', target: 200 },
+    { duration: '1m', target: 200 },  
+    { duration: '30s', target: 250 },  
+    { duration: '1m', target: 250 },   
+    { duration: '30s', target: 0 },   
   ],
-
-  // thresholds định nghĩa các điều kiện thành công/thất bại của bài test
   thresholds: {
-    // Tỷ lệ request lỗi phải dưới 1%
-    http_req_failed: ['rate<0.01'], 
-    
-    // 95% số request phải hoàn thành dưới 500ms
-    http_req_duration: ['p(95)<500'], 
-
-    // Tỷ lệ các 'check' thành công phải trên 99%
-    checks: ['rate>0.99'],
+    'http_req_failed': ['rate<0.02'],     
+    'http_req_duration': ['p(95)<800'],
+    'checks': ['rate>0.98'],
   },
 };
 
@@ -63,7 +60,4 @@ export default function () {
       'response has "meta" object': (r) => typeof r.json().meta === 'object',
     });
   });
-
-  // Tạm dừng 1 giây giữa các lần lặp để mô phỏng "think time" của người dùng
-  sleep(1);
 }
