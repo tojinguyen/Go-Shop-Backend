@@ -183,6 +183,7 @@ services:
       POSTGRES_USER: ${PRODUCT_SERVICE_POSTGRES_USER}
       POSTGRES_PASSWORD: ${PRODUCT_SERVICE_POSTGRES_PASSWORD}
       POSTGRES_DB: ${PRODUCT_SERVICE_POSTGRES_DB}
+      POSTGRES_MAX_CONNECTIONS: ${DB_MAX_OPEN_CONNS}
     volumes:
       - product_postgres_data:/var/lib/postgresql/data
     networks:

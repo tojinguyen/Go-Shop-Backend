@@ -5,11 +5,10 @@ const BASE_URL = 'http://localhost:80';
 
 const SHOP_ID = '786f4635-b1d7-4437-b86c-0bca872adf5e'; 
 
-const JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiIyN2ZjZTQ3YS0yYmM1LTQ3ZWUtOTMwZi1jNjEwODM2YmQ5ZTAiLCJFbWFpbCI6InRvYWluZ3V5ZW5qb2JAZ21haWwuY29tIiwiUm9sZSI6ImN1c3RvbWVyIiwiZXhwIjoxNzU1MzY4NjI4LCJpYXQiOjE3NTUyODIyMjgsImlzcyI6ImdvLXNob3AtcGxhdGZvcm0iLCJuYmYiOjE3NTUyODIyMjh9.oeoFzynj2BZkswl50ouQCzS_A7PBacWIL3lIpSrcTbE'; 
+const JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiIyN2ZjZTQ3YS0yYmM1LTQ3ZWUtOTMwZi1jNjEwODM2YmQ5ZTAiLCJFbWFpbCI6InRvYWluZ3V5ZW5qb2JAZ21haWwuY29tIiwiUm9sZSI6ImN1c3RvbWVyIiwiZXhwIjoxNzU1MzY5ODE4LCJpYXQiOjE3NTUyODM0MTgsImlzcyI6ImdvLXNob3AtcGxhdGZvcm0iLCJuYmYiOjE3NTUyODM0MTh9.MZCCE_eBgfwcMnfWXIxYchDFSrD1zupvyxrESlhyb_c'; 
 
 
 export const options = {
-  // stages xác định các giai đoạn tăng và giảm tải
   stages: [
     { duration: '30s', target: 50 }, // Tăng từ 0 lên 50 VUs trong 30 giây
     { duration: '1m', target: 50 },  // Giữ 50 VUs trong 1 phút để duy trì tải
@@ -74,34 +73,6 @@ export default function () {
 // ====================================================================================
 /*
 ### Các bước để chạy bài test:
-
-**Bước 1: Lấy một `shop_id` hợp lệ**
-   - Kết nối vào database của `shop-service` (ví dụ: dùng DBeaver, TablePlus, hoặc psql).
-   - Chạy câu lệnh SQL sau để lấy một ID ngẫu nhiên:
-     ```sql
-     SELECT id FROM shops LIMIT 1;
-     ```
-   - Copy giá trị ID này và dán vào biến `SHOP_ID` ở trên.
-
-**Bước 2: Lấy một `JWT Token` hợp lệ**
-   - Kết nối vào database của `user-service`.
-   - Lấy email của một user (ví dụ: một `seller`):
-     ```sql
-     SELECT email FROM user_accounts WHERE user_role = 'seller' LIMIT 1;
-     ```
-   - Mật khẩu mặc định khi seed là `Password123!`.
-   - Sử dụng `curl` hoặc Postman để gửi request đăng nhập và lấy token:
-     ```bash
-     curl -X POST 'http://localhost:80/api/v1/auth/login' \
-     -H 'Content-Type: application/json' \
-     --data-raw '{
-         "email": "EMAIL_BẠN_VỪA_LẤY_ĐƯỢC",
-         "password": "Password123!"
-     }' | jq -r '.data.access_token'
-     ```
-     (Lưu ý: bạn cần cài `jq` để trích xuất token tự động)
-   - Copy token nhận được và dán vào biến `JWT_TOKEN` ở trên.
-
 **Bước 3: Chạy k6 test**
    - Mở terminal ở thư mục gốc của dự án.
    - Chạy lệnh:
