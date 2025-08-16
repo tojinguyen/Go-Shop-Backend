@@ -67,22 +67,3 @@ export default function () {
   // Tạm dừng 1 giây giữa các lần lặp để mô phỏng "think time" của người dùng
   sleep(1);
 }
-
-// ====================================================================================
-// D. HƯỚNG DẪN SỬ DỤNG
-// ====================================================================================
-/*
-### Các bước để chạy bài test:
-**Bước 3: Chạy k6 test**
-   - Mở terminal ở thư mục gốc của dự án.
-   - Chạy lệnh:
-     ```bash
-     k6 run load-tests/product-service/get_products_by_shop_id.js
-     ```
-
-**Bước 4: Phân tích kết quả**
-   - k6 sẽ hiển thị kết quả chi tiết sau khi chạy xong, bao gồm:
-     - Số lượng request thành công/thất bại.
-     - Thời gian phản hồi trung bình, p(95), p(99).
-     - Kết quả của các `thresholds` bạn đã định nghĩa.
-*/
