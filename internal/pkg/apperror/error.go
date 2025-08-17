@@ -139,3 +139,19 @@ func NewRateLimitExceeded(message string) *AppError {
 		Message: message,
 	}
 }
+
+func NewTokenExpired(message string) *AppError {
+	return &AppError{
+		Type:    TypeUnauthorized,
+		Code:    CodeTokenExpired,
+		Message: message,
+	}
+}
+
+func NewTokenInvalid(message string) *AppError {
+	return &AppError{
+		Type:    TypeUnauthorized,
+		Code:    CodeTokenInvalid,
+		Message: message,
+	}
+}
