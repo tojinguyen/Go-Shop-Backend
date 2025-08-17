@@ -26,13 +26,13 @@ const products = new SharedArray('products', function () {
 
 export const options = {
   stages: [
-    { duration: '30s', target: 50 }, 
-    { duration: '1m', target: 50 },
+    { duration: '30s', target: 200 }, 
+    { duration: '1m', target: 200 },
     { duration: '15s', target: 0 }, 
   ],
   thresholds: {
     'http_req_failed': ['rate<0.01'],      // Tỷ lệ lỗi dưới 1%
-    'http_req_duration': ['p(95)<100'],    // 95% request phải dưới 0.2 giây (API ghi thường chậm hơn đọc)
+    'http_req_duration': ['p(95)<100'],    // 95% request phải dưới 0.1 giây (API ghi thường chậm hơn đọc)
     'checks': ['rate>0.99'],
   },
 };
