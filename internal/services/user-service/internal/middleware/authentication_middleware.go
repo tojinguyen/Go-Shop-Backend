@@ -160,7 +160,7 @@ func AuthMiddlewareWithBlacklist(jwtSvc jwtService.JwtService, authService inter
 		c.Set(constant.ContextKeyUserEmail, claims.Email)
 		c.Set(constant.ContextKeyUserRole, claims.Role)
 		c.Set("user_claims", claims)
-		c.Set("token", token) // Store token for potential use in handlers
+		c.Set("token", token)
 
 		c.Next()
 	}
