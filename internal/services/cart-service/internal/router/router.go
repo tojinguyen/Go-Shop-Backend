@@ -31,10 +31,12 @@ func SetupRoutes(r *gin.Engine, dependencyContainer *dependency_container.Depend
 	cartHandler := handler.NewCartHandler(dependencyContainer)
 	cartItemHandler := handler.NewCartItemHandler(dependencyContainer)
 
+	jwtService := dependencyContainer.GetJwtService()
+
 	v1 := r.Group("/api/v1")
 	{
 		cart := v1.Group("/carts")
-		cart.Use(commonMiddleware.AuthTokenMiddleware())
+		cart.Use(commonMiddleware.AuthTokenMiddleware(jwtService))
 		cart.Use(middleware.AuthHeaderMiddleware())
 		{
 			cart.GET("", cartHandler.GetCart)
