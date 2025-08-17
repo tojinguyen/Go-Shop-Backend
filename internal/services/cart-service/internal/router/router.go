@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	commonMiddleware "github.com/toji-dev/go-shop/internal/pkg/middleware"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/cart-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/handler"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/middleware"
@@ -33,6 +34,7 @@ func SetupRoutes(r *gin.Engine, dependencyContainer *dependency_container.Depend
 	v1 := r.Group("/api/v1")
 	{
 		cart := v1.Group("/carts")
+		cart.Use(commonMiddleware.AuthTokenMiddleware())
 		cart.Use(middleware.AuthHeaderMiddleware())
 		{
 			cart.GET("", cartHandler.GetCart)

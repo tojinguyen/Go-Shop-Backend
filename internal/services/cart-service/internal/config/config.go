@@ -14,6 +14,14 @@ type Config struct {
 	Redis    RedisConfig    `mapstructure:"redis"`
 	App      AppConfig      `mapstructure:"app"`
 	Grpc     GrpcConfig     `mapstructure:"shop"`
+	Jwt      JWTConfig      `mapstructure:"jwt"`
+}
+
+type JWTConfig struct {
+	SecretKey       string        `json:"secret_key"`
+	AccessTokenTTL  time.Duration `json:"access_token_ttl"`
+	RefreshTokenTTL time.Duration `json:"refresh_token_ttl"`
+	Issuer          string        `json:"issuer"`
 }
 
 type ServerConfig struct {
@@ -88,6 +96,12 @@ func Load() (*Config, error) {
 		Grpc: GrpcConfig{
 			ProductServiceHost: getEnv("PRODUCT_SERVICE_GRPC_HOST", "localhost"),
 			ProductServicePort: getIntEnv("PRODUCT_SERVICE_GRPC_PORT", 50052),
+		},
+		Jwt: JWTConfig{
+			SecretKey:       getEnv("JWT_SECRET_KEY", "your-secret-key"),
+			AccessTokenTTL:  getDurationEnv("JWT_ACCESS_TOKEN_EXPIRY", 15*time.Minute),
+			RefreshTokenTTL: getDurationEnv("JWT_REFRESH_TOKEN_EXPIRY", 24*time.Hour),
+			Issuer:          getEnv("JWT_ISSUER", "go-shop-user-service"),
 		},
 	}
 	return cfg, nil
