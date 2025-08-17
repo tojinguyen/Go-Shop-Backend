@@ -13,10 +13,10 @@ import (
 	// Import các mock đã được mockery sinh ra
 	email_mocks "github.com/toji-dev/go-shop/internal/pkg/email/mocks"
 	redis_mocks "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra/mocks"
+	jwt_pkg "github.com/toji-dev/go-shop/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/domain"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
-	jwt_pkg "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 	jwt_mocks "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt/mocks"
 	repo_mocks "github.com/toji-dev/go-shop/internal/services/user-service/internal/repository/mocks"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/services"

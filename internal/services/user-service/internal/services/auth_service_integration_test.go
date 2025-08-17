@@ -19,18 +19,10 @@ import (
 )
 
 func TestAuthService_Register_Integration(t *testing.T) {
-	// Step 1: Setup the test database using our helper
-	// This gives us a clean, migrated database for our test.
 	dbService, cleanup := test_helpers.SetupTestDatabase(t)
-	// The cleanup function will be called automatically at the end of the test.
 	t.Cleanup(cleanup)
 
-	// Step 2: Setup dependencies for the AuthService
-	// We use the real repository connected to our test database.
-	// Other dependencies like JWT, Redis, Email can be mocked for this specific test.
 	userRepo := repository.NewUserAccountRepository(dbService)
-	// Mocks for services we are not testing directly
-	// (for a pure Register test, we don't need them, but it's good practice to have them)
 	mockJWT := &jwt_mocks.JwtService{}
 	mockRedis := &redis_mocks.RedisServiceInterface{}
 	mockEmail := &email_mocks.EmailService{}
