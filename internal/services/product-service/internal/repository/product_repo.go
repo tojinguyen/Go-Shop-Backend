@@ -109,17 +109,8 @@ func (r *pgProductRepository) GetByID(ctx context.Context, id string) (*product.
 func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID, limit, offset int) ([]*product.Product, int64, error) {
 	pgShopUUID := converter.UUIDToPgUUID(shopID)
 
-	// Sử dụng transaction để đảm bảo 2 câu query là nhất quán
-	tx, err := r.db.BeginTransaction(ctx)
-	if err != nil {
-		return nil, 0, apperror.New(apperror.CodeDatabaseError, "failed to begin transaction", apperror.TypeInternal).Wrap(err)
-	}
-	defer tx.Rollback(ctx) // Rollback nếu có lỗi xảy ra
-
-	qtx := r.queries.WithTx(tx)
-
 	// 1. Lấy tổng số sản phẩm
-	totalCount, err := qtx.CountProductsByShop(ctx, pgShopUUID)
+	totalCount, err := r.queries.CountProductsByShop(ctx, pgShopUUID)
 	if err != nil {
 		return nil, 0, apperror.New(apperror.CodeDatabaseError, "failed to count products by shop", apperror.TypeInternal).Wrap(err)
 	}
@@ -134,14 +125,9 @@ func (r *pgProductRepository) GetByShopID(ctx context.Context, shopID uuid.UUID,
 		Limit:  int32(limit),
 		Offset: int32(offset),
 	}
-	sqlcProducts, err := qtx.GetListProductsByShop(ctx, params)
+	sqlcProducts, err := r.queries.GetListProductsByShop(ctx, params)
 	if err != nil {
 		return nil, 0, apperror.New(apperror.CodeDatabaseError, "failed to get products by shop", apperror.TypeInternal).Wrap(err)
-	}
-
-	// Commit transaction
-	if err := tx.Commit(ctx); err != nil {
-		return nil, 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	// 3. Chuyển đổi kết quả sang domain models

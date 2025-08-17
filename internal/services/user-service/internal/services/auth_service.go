@@ -13,11 +13,11 @@ import (
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/email"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
+	jwtService "github.com/toji-dev/go-shop/internal/pkg/jwt"
 	timeUtils "github.com/toji-dev/go-shop/internal/pkg/time"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/db/sqlc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/dto"
-	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 )
 

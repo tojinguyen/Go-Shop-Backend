@@ -7,8 +7,9 @@ import (
 	"github.com/toji-dev/go-shop/internal/pkg/email"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
 	redis_infra "github.com/toji-dev/go-shop/internal/pkg/infra/redis-infra"
+	"github.com/toji-dev/go-shop/internal/pkg/jwt"
+	jwtService "github.com/toji-dev/go-shop/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
-	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/repository"
 )
 
@@ -106,7 +107,13 @@ func (sc *ServiceContainer) initRedis() error {
 
 // initJWT initializes JWT service
 func (sc *ServiceContainer) initJWT() {
-	sc.jwt = jwtService.NewJwtService(sc.config)
+	jwtCfg := jwt.JWTConfig{
+		SecretKey:       sc.config.JWT.SecretKey,
+		AccessTokenTTL:  sc.config.JWT.AccessTokenTTL,
+		RefreshTokenTTL: sc.config.JWT.RefreshTokenTTL,
+		Issuer:          sc.config.JWT.Issuer,
+	}
+	sc.jwt = jwtService.NewJwtService(jwtCfg)
 	log.Println("JWT service initialized")
 }
 

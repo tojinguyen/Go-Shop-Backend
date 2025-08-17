@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,26 +21,6 @@ import (
 	user_v1 "github.com/toji-dev/go-shop/proto/gen/go/user/v1"
 	"google.golang.org/grpc"
 )
-
-//	@title			User Service API
-//	@version		1.0
-//	@description	User management service for Go-Shop application
-//	@termsOfService	http://swagger.io/terms/
-
-//	@contact.name	API Support
-//	@contact.url	http://www.swagger.io/support
-//	@contact.email	support@swagger.io
-
-//	@license.name	Apache 2.0
-//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
-
-//	@host		localhost:8081
-//	@BasePath	/api/v1
-
-//	@securityDefinitions.apikey	Bearer
-//	@in							header
-//	@name						Authorization
-//	@description				Description for what is this security definition being used
 
 func main() {
 	// Load configuration
@@ -71,6 +52,10 @@ func main() {
 		WriteTimeout: serviceContainer.GetConfig().Server.WriteTimeout,
 		IdleTimeout:  serviceContainer.GetConfig().Server.IdleTimeout,
 	}
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	go startMetricsServer()
 
@@ -107,8 +92,8 @@ func main() {
 func startMetricsServer() {
 	metricsRouter := gin.New()
 	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	log.Println("Starting metrics server on :9100")
-	if err := metricsRouter.Run(":9100"); err != nil {
+	log.Println("Starting metrics server on 0.0.0.0:9100")
+	if err := metricsRouter.Run("0.0.0.0:9100"); err != nil {
 		log.Fatalf("Failed to start metrics server: %v", err)
 	}
 }

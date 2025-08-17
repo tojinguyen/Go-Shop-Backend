@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/constant"
+	jwtService "github.com/toji-dev/go-shop/internal/pkg/jwt"
 	errorConstants "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/errors"
-	jwtService "github.com/toji-dev/go-shop/internal/services/user-service/internal/pkg/jwt"
 )
 
 // AuthMiddleware creates a JWT authentication middleware
@@ -160,7 +160,7 @@ func AuthMiddlewareWithBlacklist(jwtSvc jwtService.JwtService, authService inter
 		c.Set(constant.ContextKeyUserEmail, claims.Email)
 		c.Set(constant.ContextKeyUserRole, claims.Role)
 		c.Set("user_claims", claims)
-		c.Set("token", token) // Store token for potential use in handlers
+		c.Set("token", token)
 
 		c.Next()
 	}

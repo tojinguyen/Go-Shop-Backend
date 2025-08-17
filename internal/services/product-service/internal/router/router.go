@@ -10,7 +10,14 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.DependencyContainer) *gin.Engine {
-	p := ginprometheus.NewPrometheus("gin")
+	p := ginprometheus.NewPrometheus("go")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.FullPath()
+		if url == "" {
+			url = "unknown"
+		}
+		return url
+	}
 	p.Use(r)
 
 	r.Use(gin.Logger())
@@ -21,10 +28,6 @@ func SetupRoutes(r *gin.Engine, serviceContainer *dependency_container.Dependenc
 		serviceContainer.GetRedisService(),
 		serviceContainer.GetShopServiceAdapter(),
 	)
-
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, "pong")
-	})
 
 	v1 := r.Group("/api/v1")
 	{

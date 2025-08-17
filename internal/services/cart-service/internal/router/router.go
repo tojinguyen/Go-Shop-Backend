@@ -1,9 +1,8 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	commonMiddleware "github.com/toji-dev/go-shop/internal/pkg/middleware"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/cart-service/internal/dependency-container"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/handler"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/middleware"
@@ -19,22 +18,25 @@ func SetupRoutes(r *gin.Engine, dependencyContainer *dependency_container.Depend
 		gin.SetMode(gin.DebugMode)
 	}
 
-	p := ginprometheus.NewPrometheus("gin")
+	p := ginprometheus.NewPrometheus("go")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.FullPath()
+		if url == "" {
+			url = "unknown"
+		}
+		return url
+	}
 	p.Use(r)
-
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "ok",
-			"service": "cart-service",
-		})
-	})
 
 	cartHandler := handler.NewCartHandler(dependencyContainer)
 	cartItemHandler := handler.NewCartItemHandler(dependencyContainer)
 
+	jwtService := dependencyContainer.GetJwtService()
+
 	v1 := r.Group("/api/v1")
 	{
 		cart := v1.Group("/carts")
+		cart.Use(commonMiddleware.AuthTokenMiddleware(jwtService))
 		cart.Use(middleware.AuthHeaderMiddleware())
 		{
 			cart.GET("", cartHandler.GetCart)

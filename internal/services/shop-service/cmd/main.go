@@ -4,7 +4,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -32,45 +31,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-//	@title			Shop Service API
-//	@version		1.0
-//	@description	Shop management service for Go-Shop application
-//	@termsOfService	http://swagger.io/terms/
-
-//	@contact.name	API Support
-//	@contact.url	http://www.swagger.io/support
-//	@contact.email	support@swagger.io
-
-//	@license.name	Apache 2.0
-//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
-
-//	@host		localhost:8082
-//	@BasePath	/api/v1
-
-//	@securityDefinitions.apikey	Bearer
-//	@in							header
-//	@name						Authorization
-//	@description				Description for what is this security definition being used
-
-// generateSwaggerDocs automatically generates swagger documentation
-func generateSwaggerDocs() {
-	log.Println("🔄 Generating swagger documentation...")
-
-	cmd := exec.Command("swag", "init", "-g", "cmd/main.go", "-o", "docs")
-	cmd.Dir = "."
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("⚠️ Warning: Failed to generate swagger docs: %v\nOutput: %s", err, output)
-		log.Println("📝 Please ensure 'swag' is installed: go install github.com/swaggo/swag/cmd/swag@latest")
-	} else {
-		log.Println("✅ Swagger documentation generated successfully")
-	}
-}
-
 func main() {
-	// Auto-generate swagger docs
-	generateSwaggerDocs()
 
 	// Load configuration
 	cfg, err := config.LoadConfig()
@@ -109,7 +70,14 @@ func main() {
 	// Create Gin router
 	r := gin.Default()
 
-	p := ginprometheus.NewPrometheus("gin")
+	p := ginprometheus.NewPrometheus("go")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.FullPath()
+		if url == "" {
+			url = "unknown"
+		}
+		return url
+	}
 	p.Use(r)
 
 	// Add middleware
@@ -129,8 +97,6 @@ func main() {
 
 		c.Next()
 	})
-
-	// r.GET("/metrics", prometheusHandler())
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -239,8 +205,8 @@ func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository, pro
 func startMetricsServer() {
 	metricsRouter := gin.New()
 	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	log.Println("Starting metrics server on :9100")
-	if err := metricsRouter.Run(":9100"); err != nil {
+	log.Println("Starting metrics server on 0.0.0.0:9100")
+	if err := metricsRouter.Run("0.0.0.0:9100"); err != nil {
 		log.Fatalf("Failed to start metrics server: %v", err)
 	}
 }

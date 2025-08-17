@@ -2,10 +2,11 @@ package redis_infra
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
+	json "github.com/json-iterator/go"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -69,6 +70,13 @@ func NewRedisService(host, port string, password string, db int) *RedisService {
 		Addr:     redisAddr,
 		Password: password,
 		DB:       db,
+		PoolSize: 250,
+		// Giữ một số kết nối "nhàn rỗi" để sẵn sàng phục vụ request mới ngay lập tức.
+		MinIdleConns: 50,
+		// Thời gian chờ tối đa để lấy một kết nối từ pool.
+		PoolTimeout: 30 * time.Second,
+		// Thời gian tối đa một kết nối có thể ở trạng thái nhàn rỗi trong pool.
+		ConnMaxIdleTime: 10 * time.Minute,
 	})
 
 	return &RedisService{
@@ -117,6 +125,10 @@ func (r *RedisService) SetJSON(key string, value interface{}, expiration time.Du
 func (r *RedisService) GetJSON(key string, dest interface{}) error {
 	data, err := r.client.Get(r.ctx, key).Result()
 	if err != nil {
+		if err == redis.Nil {
+			log.Printf("Cache miss for key: %s", key)
+			return redis.Nil
+		}
 		return err
 	}
 	return json.Unmarshal([]byte(data), dest)

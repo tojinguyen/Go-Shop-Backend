@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/config"
 	dependency_container "github.com/toji-dev/go-shop/internal/services/order-service/internal/dependency-container"
 	grpc_server "github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/server"
@@ -27,6 +30,17 @@ func main() {
 	}
 	fmt.Println("Starting order-service...")
 
+	jaegerAgentHost := "jaeger:4317"
+	tp, err := tracing.InitTracerProvider(cfg.App.Name, jaegerAgentHost)
+	if err != nil {
+		log.Fatalf("failed to initialize tracer provider: %v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
 	// Initialize dependency container
 	dependencyContainer := dependency_container.NewDependencyContainer(cfg)
 
@@ -42,6 +56,8 @@ func main() {
 
 	// Start inbox processing worker
 	inboxWorker := worker.NewInboxWorker(dependencyContainer.GetInboxEventUsecase())
+
+	go startMetricsServer()
 
 	go kafkaConsumer.StartAllKafkaConsumer()
 	go inboxWorker.Start()
@@ -81,4 +97,13 @@ func runGrpcServer(cfg *config.Config, orderRepo repository.OrderRepository) {
 	}
 
 	log.Printf("gRPC server listening at %v", lis.Addr())
+}
+
+func startMetricsServer() {
+	metricsRouter := gin.New()
+	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	log.Println("Starting metrics server on 0.0.0.0:9100")
+	if err := metricsRouter.Run("0.0.0.0:9100"); err != nil {
+		log.Fatalf("Failed to start metrics server: %v", err)
+	}
 }

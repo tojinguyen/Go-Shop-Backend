@@ -13,7 +13,7 @@ import (
 
 const countProductsByShop = `-- name: CountProductsByShop :one
 SELECT count(*) FROM products
-WHERE shop_id = $1 AND deleted_at IS NULL
+WHERE shop_id = $1 AND delete_at IS NULL
 `
 
 func (q *Queries) CountProductsByShop(ctx context.Context, shopID pgtype.UUID) (int64, error) {
@@ -93,7 +93,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 
 const getListProductsByShop = `-- name: GetListProductsByShop :many
 SELECT id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at FROM products
-WHERE shop_id = $1 AND deleted_at IS NULL
+WHERE shop_id = $1 AND delete_at IS NULL
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -262,10 +262,10 @@ func (q *Queries) GetProductsByIDsForUpdate(ctx context.Context, productIds []pg
 const softDeleteProduct = `-- name: SoftDeleteProduct :exec
 UPDATE products
 SET
-  deleted_at = NOW(),
+  delete_at = NOW(),
   product_status = 'DISCONTINUED', -- Hoặc một trạng thái xóa khác
   updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND delete_at IS NULL
 `
 
 func (q *Queries) SoftDeleteProduct(ctx context.Context, id pgtype.UUID) error {
@@ -310,7 +310,7 @@ SET
   thumbnail_url = $8,
   product_status = $9,
   updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND delete_at IS NULL
 RETURNING id, shop_id, product_name, thumbnail_url, product_description, category_id, price, currency, quantity, reserve_quantity, product_status, sold_count, rating_avg, total_reviews, created_at, delete_at, updated_at
 `
 

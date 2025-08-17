@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/response"
@@ -42,7 +44,7 @@ func (h *CartItemHandler) UpdateItemsInCart(c *gin.Context) {
 		if apperror.GetType(err) == apperror.TypeNotFound {
 			response.NotFound(c, string(apperror.CodeNotFound), "Product not found")
 		} else {
-			response.InternalServerError(c, string(apperror.CodeInternal), "Failed to add item to cart")
+			response.InternalServerError(c, string(apperror.CodeInternal), fmt.Sprintf("Failed to add item to cart: %v", err))
 		}
 		return
 	}

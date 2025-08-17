@@ -12,6 +12,7 @@ import (
 
 	product_grpc "github.com/toji-dev/go-shop/internal/services/product-service/internal/grpc"
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
 	"github.com/gin-gonic/gin"
@@ -86,8 +87,8 @@ func main() {
 func startMetricsServer() {
 	metricsRouter := gin.New()
 	metricsRouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	log.Println("Starting metrics server on :9100")
-	if err := metricsRouter.Run(":9100"); err != nil {
+	log.Println("Starting metrics server on 0.0.0.0:9100")
+	if err := metricsRouter.Run("0.0.0.0:9100"); err != nil {
 		log.Fatalf("Failed to start metrics server: %v", err)
 	}
 }
@@ -99,7 +100,9 @@ func runGrpcServer(cfg *config.Config, productRepo repository.ProductRepository)
 	if err != nil {
 		log.Fatalf("failed to listen for grpc on port %s: %v", cfg.GRPC.Host, err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	grpcServer := product_grpc.NewProductGRPCServer(productRepo)
 	product_v1.RegisterProductServiceServer(s, grpcServer)
 	log.Printf("gRPC server listening at %v", lis.Addr())

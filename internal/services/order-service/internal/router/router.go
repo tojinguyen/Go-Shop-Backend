@@ -17,19 +17,20 @@ func Init(router *gin.Engine, dependencyContainer *dependency_container.Dependen
 		gin.SetMode(gin.DebugMode)
 	}
 
+	p := ginprometheus.NewPrometheus("go")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.FullPath()
+		if url == "" {
+			url = "unknown"
+		}
+		return url
+	}
+	p.Use(router)
+
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
 	router.Use(common_middleware.ErrorHandler())
-
-	p := ginprometheus.NewPrometheus("gin")
-	p.Use(router)
-
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "ok",
-			"service": "order-service",
-		})
-	})
+	router.Use(common_middleware.OtelTracingMiddleware(cfg.App.Name))
 
 	orderHandler := dependencyContainer.GetOrderHandler()
 

@@ -48,24 +48,24 @@ proto: proto-gen proto-tidy ## Generate all Protobuf/gRPC code and tidy modules
 # Database Seeding
 # ===================================================================
 
-# Lệnh để seed 50,000 users với phân bố thực tế
+# Lệnh để seed 500,000 users với phân bố thực tế
 .PHONY: seed-users
 seed-users:
-	@echo "Seeding user-service database with 50,000 users (realistic e-commerce distribution)..."
+	@echo "Seeding user-service database with 50,0000 users (realistic e-commerce distribution)..."
 	@echo "Distribution: ~87% customers, ~10% sellers, ~2.5% shippers, ~0.5% admins"
-	@cd internal/services/user-service && go run ./cmd/seeder/main.go -total=50000
+	@cd internal/services/user-service && go run ./cmd/seeder/main.go -total=500000
 	@echo "50K users seeding complete!"
 
-# Lệnh để seed 1000 shops
+# Lệnh để seed 100,000 shops
 .PHONY: seed-shops
 seed-shops:
-	@echo "Seeding shop-service database with 1000 shops..."
-	@cd internal/services/shop-service && go run ./cmd/seeder/main.go -shops=1000
+	@echo "Seeding shop-service database with 100000 shops..."
+	@cd internal/services/shop-service && go run ./cmd/seeder/main.go -shops=100000
 	@echo "Shop service seeding complete."
 
-# Lệnh để seed 1000 products
+# Lệnh để seed 10,000,000 products
 .PHONY: seed-products
 seed-products:
-	@echo "Seeding product-service database with 10000 products..."
-	@cd internal/services/product-service && go run ./cmd/seeder/main.go -products=10000
+	@echo "Seeding product-service database with 10000000 products..."
+	@cd internal/services/product-service && go run ./cmd/seeder/main.go -products=10000000
 	@echo "Product service seeding complete."

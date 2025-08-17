@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	"github.com/toji-dev/go-shop/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/config"
 	grpc "github.com/toji-dev/go-shop/internal/services/cart-service/internal/grpc/adapter"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/repository"
@@ -24,6 +25,7 @@ type DependencyContainer struct {
 	cartUseCase     usecase.CartUseCase
 	cartItemUseCase usecase.CartItemUseCase
 	product_adapter grpc.ProductServiceAdapter
+	jwt             jwt.JwtService
 }
 
 func (sc *DependencyContainer) GetConfig() *config.Config {
@@ -70,6 +72,9 @@ func NewDependencyContainer(cfg *config.Config) (*DependencyContainer, error) {
 
 	// Initialize use cases
 	container.initUseCases()
+
+	// Initialize JWT service
+	container.initJwtService()
 
 	return container, nil
 }
@@ -149,6 +154,27 @@ func (sc *DependencyContainer) initGrpcServiceAdapter() error {
 	sc.product_adapter = adapter
 	log.Println("Product service adapter initialized")
 	return nil
+}
+
+func (sc *DependencyContainer) initJwtService() error {
+	jwtCfg := jwt.JWTConfig{
+		SecretKey:       sc.config.Jwt.SecretKey,
+		AccessTokenTTL:  sc.config.Jwt.AccessTokenTTL,
+		RefreshTokenTTL: sc.config.Jwt.RefreshTokenTTL,
+		Issuer:          sc.config.Jwt.Issuer,
+	}
+	sc.jwt = jwt.NewJwtService(jwtCfg)
+	log.Println("JWT service initialized")
+	return nil
+}
+
+func (sc *DependencyContainer) GetJwtService() jwt.JwtService {
+	if sc.jwt == nil {
+		if err := sc.initJwtService(); err != nil {
+			return nil
+		}
+	}
+	return sc.jwt
 }
 
 func (sc *DependencyContainer) GetProductServiceAdapter() (grpc.ProductServiceAdapter, error) {

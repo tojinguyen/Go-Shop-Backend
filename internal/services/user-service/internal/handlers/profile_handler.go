@@ -14,25 +14,15 @@ type ProfileHandler struct {
 	userService *services.UserService
 }
 
-// NewProfileHandler creates a new profile handler
 func NewProfileHandler(sc container.ServiceContainer) *ProfileHandler {
 	return &ProfileHandler{
-		userService: services.NewUserService(sc.GetUserProfileRepo()),
+		userService: services.NewUserService(
+			sc.GetUserProfileRepo(),
+			sc.GetRedis(),
+		),
 	}
 }
 
-// CreateProfile creates a new user profile
-// @Summary Create user profile
-// @Description Create a new user profile with detailed information
-// @Tags profile
-// @Accept json
-// @Produce json
-// @Param request body dto.CreateUserProfileRequest true "Create profile request"
-// @Success 200 {object} map[string]interface{} "Profile created successfully"
-// @Failure 400 {object} map[string]interface{} "Bad Request"
-// @Failure 409 {object} map[string]interface{} "User already exists"
-// @Failure 500 {object} map[string]interface{} "Internal Server Error"
-// @Router /profile [post]
 func (h *ProfileHandler) CreateProfile(c *gin.Context) {
 	// Bind the request body to CreateUserRequest
 	var req dto.CreateUserProfileRequest
@@ -69,17 +59,6 @@ func (h *ProfileHandler) CreateProfile(c *gin.Context) {
 	response.Success(c, "Profile created successfully", userProfileResponse)
 }
 
-// GetProfile returns the current user's profile
-// @Summary Get current user profile
-// @Description Get the authenticated user's profile information
-// @Tags profile
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} map[string]interface{} "Profile retrieved successfully"
-// @Failure 401 {object} map[string]interface{} "Unauthorized"
-// @Failure 500 {object} map[string]interface{} "Internal Server Error"
-// @Router /profile [get]
 func (h *ProfileHandler) GetProfile(c *gin.Context) {
 	userIDRaw, exists := c.Get(constant.ContextKeyUserID)
 	if !exists {
@@ -102,19 +81,6 @@ func (h *ProfileHandler) GetProfile(c *gin.Context) {
 	response.Success(c, "Profile retrieved successfully", userProfile)
 }
 
-// UpdateProfile updates the current user's profile
-// @Summary Update user profile
-// @Description Update the authenticated user's profile information
-// @Tags profile
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param request body dto.UpdateUserProfileRequest true "Update profile request"
-// @Success 200 {object} map[string]interface{} "Profile updated successfully"
-// @Failure 400 {object} map[string]interface{} "Bad Request"
-// @Failure 404 {object} map[string]interface{} "User not found"
-// @Failure 500 {object} map[string]interface{} "Internal Server Error"
-// @Router /profile [put]
 func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	// Bind the request body to UpdateUserRequest
 	var req dto.UpdateUserProfileRequest
@@ -137,18 +103,6 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	response.Success(c, "Profile retrieved successfully", updatedProfile)
 }
 
-// GetProfileByID gets a user profile by ID
-// @Summary Get user profile by ID
-// @Description Get a user's profile by their ID (public or private view based on authentication)
-// @Tags profile
-// @Accept json
-// @Produce json
-// @Param id path string true "User ID"
-// @Success 200 {object} map[string]interface{} "Profile retrieved successfully"
-// @Failure 400 {object} map[string]interface{} "Bad Request"
-// @Failure 404 {object} map[string]interface{} "User not found"
-// @Failure 500 {object} map[string]interface{} "Internal Server Error"
-// @Router /profile/{id} [get]
 func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 	// Get user ID from URL parameters
 	userID := c.Param("id")
@@ -191,6 +145,7 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 			CreatedAt:        userProfile.CreatedAt,
 			UpdatedAt:        userProfile.UpdatedAt,
 		}
+
 		response.Success(c, "Profile retrieved successfully", userResponse)
 	} else {
 		// Return limited public profile information
@@ -201,22 +156,11 @@ func (h *ProfileHandler) GetProfileByID(c *gin.Context) {
 			Role:      userProfile.Role,
 			CreatedAt: userProfile.CreatedAt,
 		}
+
 		response.Success(c, "Public profile retrieved successfully", publicResponse)
 	}
 }
 
-// DeleteProfile deletes the current user's profile
-// @Summary Delete user profile
-// @Description Delete the authenticated user's profile permanently
-// @Tags profile
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} map[string]interface{} "Profile deleted successfully"
-// @Failure 401 {object} map[string]interface{} "Unauthorized"
-// @Failure 404 {object} map[string]interface{} "User not found"
-// @Failure 500 {object} map[string]interface{} "Internal Server Error"
-// @Router /profile [delete]
 func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
 	userIDRaw, exists := c.Get(constant.ContextKeyUserID)
 	if !exists {
@@ -242,6 +186,6 @@ func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
 
 	response.Success(c, "Profile deleted successfully", map[string]string{
 		constant.ContextKeyUserID: userIDStr,
-		"status":  "deleted",
+		"status":                  "deleted",
 	})
 }
