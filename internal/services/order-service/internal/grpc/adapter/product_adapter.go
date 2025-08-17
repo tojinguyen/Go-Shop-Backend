@@ -5,6 +5,7 @@ import (
 	"log"
 
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -25,7 +26,12 @@ type grpcProductAdapter struct {
 
 func NewGrpcProductAdapter(productServiceAddr string) (ProductServiceAdapter, error) {
 	log.Printf("Connecting to product service at %s", productServiceAddr)
-	conn, err := grpc.NewClient(productServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		productServiceAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
+
 	if err != nil {
 		log.Printf("Failed to connect to product service: %v", err)
 		return nil, err

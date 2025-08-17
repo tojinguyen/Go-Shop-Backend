@@ -41,6 +41,22 @@ services:
       retries: 10
     restart: on-failure
  
+   # =======================================================
+  # TRACING & OBSERVABILITY
+  # =======================================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.53 
+    container_name: ${PROJECT_NAME:-go-shop}-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OTLP gRPC receiver
+      - "4318:4318"    # OTLP HTTP receiver
+    networks:
+      - go-shop-network
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
   # Infrastructure services
   redis-cache:
     image: ${REDIS_IMAGE:-redis:7-alpine}
