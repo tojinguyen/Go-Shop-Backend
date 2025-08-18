@@ -16,6 +16,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
+	_ "net/http/pprof"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/product-service/internal/config"
@@ -55,6 +57,13 @@ func main() {
 		WriteTimeout: dependencyContainer.GetConfig().Server.WriteTimeout,
 		IdleTimeout:  dependencyContainer.GetConfig().Server.IdleTimeout,
 	}
+
+	go func() {
+		log.Println("Starting pprof server on :6062")
+		if err := http.ListenAndServe("localhost:6062", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
+		}
+	}()
 
 	jaegerAgentHost := "jaeger:4317" // Dùng tên service trong Docker network
 	tp, err := tracing.InitTracerProvider(cfg.App.Name, jaegerAgentHost)

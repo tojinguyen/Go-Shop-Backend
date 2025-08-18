@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"strconv"
+
+	_ "net/http/pprof"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -38,6 +41,13 @@ func main() {
 	defer func() {
 		if err := tp.Shutdown(context.Background()); err != nil {
 			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
+	go func() {
+		log.Println("Starting pprof server on :6064")
+		if err := http.ListenAndServe("localhost:6064", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
 		}
 	}()
 

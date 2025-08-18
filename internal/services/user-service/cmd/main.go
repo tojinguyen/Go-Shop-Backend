@@ -36,6 +36,13 @@ func main() {
 		cfg.Debug()
 	}
 
+	go func() {
+		log.Println("Starting pprof server on :6060")
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
+		}
+	}()
+
 	jaegerAgentHost := "jaeger:4317"
 	tp, err := tracing.InitTracerProvider(cfg.App.Name, jaegerAgentHost)
 	if err != nil {

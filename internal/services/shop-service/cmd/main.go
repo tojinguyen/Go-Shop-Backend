@@ -8,6 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
@@ -50,6 +53,13 @@ func main() {
 	defer func() {
 		if err := tp.Shutdown(context.Background()); err != nil {
 			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
+	go func() {
+		log.Println("Starting pprof server on :6061")
+		if err := http.ListenAndServe("localhost:6061", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
 		}
 	}()
 

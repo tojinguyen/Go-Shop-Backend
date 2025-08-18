@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -34,6 +37,13 @@ func main() {
 	r := gin.Default()
 
 	go startMetricsServer()
+
+	go func() {
+		log.Println("Starting pprof server on :6065")
+		if err := http.ListenAndServe("localhost:6065", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
+		}
+	}()
 
 	// Setup routes
 	router.Init(r, dependencyContainer)
