@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	product_grpc "github.com/toji-dev/go-shop/internal/services/product-service/internal/grpc"
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -54,6 +55,17 @@ func main() {
 		WriteTimeout: dependencyContainer.GetConfig().Server.WriteTimeout,
 		IdleTimeout:  dependencyContainer.GetConfig().Server.IdleTimeout,
 	}
+
+	jaegerAgentHost := "jaeger:4317" // Dùng tên service trong Docker network
+	tp, err := tracing.InitTracerProvider(cfg.App.Name, jaegerAgentHost)
+	if err != nil {
+		log.Fatalf("failed to initialize tracer provider: %v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
 
 	go startMetricsServer()
 

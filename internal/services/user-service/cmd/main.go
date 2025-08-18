@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	user_grpc "github.com/toji-dev/go-shop/internal/services/user-service/internal/grpc"
@@ -34,6 +35,17 @@ func main() {
 	if cfg.App.IsDevelopment() {
 		cfg.Debug()
 	}
+
+	jaegerAgentHost := "jaeger:4317"
+	tp, err := tracing.InitTracerProvider(cfg.App.Name, jaegerAgentHost)
+	if err != nil {
+		log.Fatalf("failed to initialize tracer provider: %v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
 
 	// Initialize service container
 	serviceContainer, err := container.NewServiceContainer(cfg)
