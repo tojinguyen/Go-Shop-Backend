@@ -19,6 +19,7 @@ import (
 	user_grpc "github.com/toji-dev/go-shop/internal/services/user-service/internal/grpc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
 	user_v1 "github.com/toji-dev/go-shop/proto/gen/go/user/v1"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -105,7 +106,9 @@ func runGrpcServer(cfg *config.Config, serviceContainer *container.ServiceContai
 	if err != nil {
 		log.Fatalf("failed to listen for grpc on port %s: %v", cfg.GRPC.Host, err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	grpcServer := user_grpc.NewUserGRPCServer(serviceContainer.GetAddressRepo())
 	user_v1.RegisterUserServiceServer(s, grpcServer)
 	log.Printf("gRPC server listening at %v", lis.Addr())

@@ -6,6 +6,7 @@ import (
 
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	user_v1 "github.com/toji-dev/go-shop/proto/gen/go/user/v1"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -22,7 +23,11 @@ type grpcUserAdapter struct {
 
 func NewGrpcUserAdapter(userServiceAddr string) (UserServiceAdapter, error) {
 	log.Printf("Connecting to user service at %s", userServiceAddr)
-	conn, err := grpc.NewClient(userServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		userServiceAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		log.Printf("Failed to connect to user service: %v", err)
 		return nil, err
