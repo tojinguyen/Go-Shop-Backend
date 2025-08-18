@@ -31,6 +31,7 @@ func Init(router *gin.Engine, dependencyContainer *dependency_container.Dependen
 	router.Use(gin.Logger())
 	router.Use(common_middleware.ErrorHandler())
 	router.Use(common_middleware.OtelTracingMiddleware(cfg.App.Name))
+	router.Use(common_middleware.AuthTokenMiddleware(dependencyContainer.GetJwtService()))
 
 	orderHandler := dependencyContainer.GetOrderHandler()
 

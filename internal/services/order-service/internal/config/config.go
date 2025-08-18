@@ -19,6 +19,7 @@ type Config struct {
 	UserServiceAdapter    ExternalServiceConfig `mapstructure:"user_service_adapter"`
 	GRPC                  GrpcConfig            `mapstructure:"grpc"`
 	Kafka                 KafkaConfig           `mapstructure:"kafka"`
+	Jwt                   JWTConfig             `mapstructure:"jwt"`
 }
 
 type ServerConfig struct {
@@ -66,6 +67,13 @@ type ExternalServiceConfig struct {
 
 type KafkaConfig struct {
 	Brokers []string `mapstructure:"brokers"`
+}
+
+type JWTConfig struct {
+	SecretKey       string        `json:"secret_key"`
+	AccessTokenTTL  time.Duration `json:"access_token_ttl"`
+	RefreshTokenTTL time.Duration `json:"refresh_token_ttl"`
+	Issuer          string        `json:"issuer"`
 }
 
 func (a *AppConfig) IsProduction() bool {
@@ -117,6 +125,12 @@ func Load() (*Config, error) {
 		},
 		Kafka: KafkaConfig{
 			Brokers: getSliceEnv("KAFKA_BROKERS", []string{"localhost:9092"}),
+		},
+		Jwt: JWTConfig{
+			SecretKey:       getEnv("JWT_SECRET_KEY", "your-secret-key"),
+			AccessTokenTTL:  getDurationEnv("JWT_ACCESS_TOKEN_EXPIRY", 15*time.Minute),
+			RefreshTokenTTL: getDurationEnv("JWT_REFRESH_TOKEN_EXPIRY", 24*time.Hour),
+			Issuer:          getEnv("JWT_ISSUER", "go-shop-user-service"),
 		},
 	}
 	return cfg, nil
