@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/toji-dev/go-shop/internal/pkg/middleware"
 	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	product_grpc "github.com/toji-dev/go-shop/internal/services/product-service/internal/grpc"
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
@@ -122,6 +123,10 @@ func runGrpcServer(cfg *config.Config, productRepo repository.ProductRepository)
 		log.Fatalf("failed to listen for grpc on port %s: %v", cfg.GRPC.Host, err)
 	}
 	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middleware.PprofGRPCInterceptor(), // Thêm interceptor của chúng ta
+			// Các interceptor khác nếu có...
+		),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 	grpcServer := product_grpc.NewProductGRPCServer(productRepo)
