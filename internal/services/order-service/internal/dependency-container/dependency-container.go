@@ -5,6 +5,7 @@ import (
 	"log"
 
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	"github.com/toji-dev/go-shop/internal/pkg/jwt"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/grpc/adapter"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/handler"
@@ -24,6 +25,8 @@ type DependencyContainer struct {
 	shopServiceAdapter    adapter.ShopServiceAdapter
 	productServiceAdapter adapter.ProductServiceAdapter
 	userAdapter           adapter.UserServiceAdapter
+
+	jwt jwt.JwtService
 }
 
 func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
@@ -46,6 +49,8 @@ func NewDependencyContainer(cfg *config.Config) *DependencyContainer {
 	container.initUseCases()
 
 	container.initOrderHandler()
+
+	container.initJwtService()
 
 	return container
 }
@@ -148,6 +153,18 @@ func (sc *DependencyContainer) initUserServiceAdapter() error {
 	return nil
 }
 
+func (sc *DependencyContainer) initJwtService() error {
+	jwtCfg := jwt.JWTConfig{
+		SecretKey:       sc.config.Jwt.SecretKey,
+		AccessTokenTTL:  sc.config.Jwt.AccessTokenTTL,
+		RefreshTokenTTL: sc.config.Jwt.RefreshTokenTTL,
+		Issuer:          sc.config.Jwt.Issuer,
+	}
+	sc.jwt = jwt.NewJwtService(jwtCfg)
+	log.Println("JWT service initialized")
+	return nil
+}
+
 func (sc *DependencyContainer) GetOrderHandler() handler.OrderHandler {
 	return sc.orderHandler
 }
@@ -174,4 +191,8 @@ func (sc *DependencyContainer) GetInboxEventUsecase() usecase.InboxEventUseCase 
 
 func (sc *DependencyContainer) GetInboxEventRepository() repository.InboxEventRepository {
 	return sc.inboxEventRepo
+}
+
+func (sc *DependencyContainer) GetJwtService() jwt.JwtService {
+	return sc.jwt
 }
