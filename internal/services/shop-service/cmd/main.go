@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	"github.com/toji-dev/go-shop/internal/pkg/middleware"
 	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
 	promotion_api "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/api"
@@ -209,6 +210,9 @@ func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository, pro
 		log.Fatalf("failed to listen for grpc on port %s: %v", config.GRPC.Host, err)
 	}
 	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middleware.PprofGRPCInterceptor(),
+		),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 	grpcServer := shop_grpc.NewShopGRPCServer(shopRepo, promotionRepo)

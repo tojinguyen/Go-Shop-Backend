@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/toji-dev/go-shop/internal/pkg/middleware"
 	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
@@ -126,6 +127,9 @@ func runGrpcServer(cfg *config.Config, serviceContainer *container.ServiceContai
 		log.Fatalf("failed to listen for grpc on port %s: %v", cfg.GRPC.Host, err)
 	}
 	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middleware.PprofGRPCInterceptor(),
+		),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 	grpcServer := user_grpc.NewUserGRPCServer(serviceContainer.GetAddressRepo())
