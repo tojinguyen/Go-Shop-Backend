@@ -28,6 +28,7 @@ import (
 	shop_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
 	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/shop/v1"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -96,15 +97,6 @@ func main() {
 		}
 
 		c.Next()
-	})
-
-	// Health check endpoint
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "ok",
-			"service": "shop-service",
-			"version": cfg.App.Version,
-		})
 	})
 
 	// Initialize feature handlers
@@ -193,7 +185,9 @@ func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository, pro
 	if err != nil {
 		log.Fatalf("failed to listen for grpc on port %s: %v", config.GRPC.Host, err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	grpcServer := shop_grpc.NewShopGRPCServer(shopRepo, promotionRepo)
 	shop_v1.RegisterShopServiceServer(s, grpcServer)
 	log.Printf("gRPC server listening at %v", lis.Addr())
