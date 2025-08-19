@@ -46,7 +46,7 @@ func main() {
 
 	go func() {
 		log.Println("Starting pprof server on :6064")
-		if err := http.ListenAndServe("localhost:6064", nil); err != nil {
+		if err := http.ListenAndServe("0.0.0.0:6064", nil); err != nil {
 			log.Printf("Pprof server failed to start: %v", err)
 		}
 	}()
