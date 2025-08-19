@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "net/http/pprof"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toji-dev/go-shop/internal/services/cart-service/internal/config"
@@ -31,6 +33,13 @@ func main() {
 	}
 
 	defer dependencyContainer.Close()
+
+	go func() {
+		log.Println("Starting pprof server on :6063")
+		if err := http.ListenAndServe("localhost:6063", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
+		}
+	}()
 
 	go startMetricsServer()
 

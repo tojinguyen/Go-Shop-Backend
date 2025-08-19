@@ -14,7 +14,7 @@ require (
 	github.com/toji-dev/go-shop/internal/pkg v0.0.0-00010101000000-000000000000
 	github.com/toji-dev/go-shop/proto/gen/go v0.0.0-00010101000000-000000000000
 	github.com/zsais/go-gin-prometheus v1.0.1
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0
 	google.golang.org/grpc v1.74.2
 )
 

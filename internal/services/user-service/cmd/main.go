@@ -14,11 +14,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/toji-dev/go-shop/internal/pkg/middleware"
+	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/config"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/container"
 	user_grpc "github.com/toji-dev/go-shop/internal/services/user-service/internal/grpc"
 	"github.com/toji-dev/go-shop/internal/services/user-service/internal/router"
 	user_v1 "github.com/toji-dev/go-shop/proto/gen/go/user/v1"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -33,6 +36,24 @@ func main() {
 	if cfg.App.IsDevelopment() {
 		cfg.Debug()
 	}
+
+	go func() {
+		log.Println("Starting pprof server on :6060")
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
+		}
+	}()
+
+	jaegerAgentHost := "jaeger:4317"
+	tp, err := tracing.InitTracerProvider(cfg.App.Name, jaegerAgentHost)
+	if err != nil {
+		log.Fatalf("failed to initialize tracer provider: %v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
 
 	// Initialize service container
 	serviceContainer, err := container.NewServiceContainer(cfg)
@@ -105,7 +126,12 @@ func runGrpcServer(cfg *config.Config, serviceContainer *container.ServiceContai
 	if err != nil {
 		log.Fatalf("failed to listen for grpc on port %s: %v", cfg.GRPC.Host, err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middleware.PprofGRPCInterceptor(),
+		),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	grpcServer := user_grpc.NewUserGRPCServer(serviceContainer.GetAddressRepo())
 	user_v1.RegisterUserServiceServer(s, grpcServer)
 	log.Printf("gRPC server listening at %v", lis.Addr())

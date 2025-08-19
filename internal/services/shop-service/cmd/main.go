@@ -1,15 +1,21 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	postgresql_infra "github.com/toji-dev/go-shop/internal/pkg/infra/postgreql-infra"
+	"github.com/toji-dev/go-shop/internal/pkg/middleware"
+	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	"github.com/toji-dev/go-shop/internal/services/shop-service/internal/config"
 	promotion_api "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/api"
 	createpromotion "github.com/toji-dev/go-shop/internal/services/shop-service/internal/features/promotion/commands/create_promotion"
@@ -28,6 +34,7 @@ import (
 	shop_repo "github.com/toji-dev/go-shop/internal/services/shop-service/internal/repository/shop"
 	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/shop/v1"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -38,6 +45,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	jaegerAgentHost := "jaeger:4317"
+	tp, err := tracing.InitTracerProvider(cfg.App.Name, jaegerAgentHost)
+	if err != nil {
+		log.Fatalf("failed to initialize tracer provider: %v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
+	go func() {
+		log.Println("Starting pprof server on :6061")
+		if err := http.ListenAndServe("localhost:6061", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
+		}
+	}()
 
 	// Initialize database
 	dbConfig := &postgresql_infra.DatabaseConfig{
@@ -96,15 +121,6 @@ func main() {
 		}
 
 		c.Next()
-	})
-
-	// Health check endpoint
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "ok",
-			"service": "shop-service",
-			"version": cfg.App.Version,
-		})
 	})
 
 	// Initialize feature handlers
@@ -193,7 +209,12 @@ func runGrpcServer(config *config.Config, shopRepo shop_repo.ShopRepository, pro
 	if err != nil {
 		log.Fatalf("failed to listen for grpc on port %s: %v", config.GRPC.Host, err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middleware.PprofGRPCInterceptor(),
+		),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	grpcServer := shop_grpc.NewShopGRPCServer(shopRepo, promotionRepo)
 	shop_v1.RegisterShopServiceServer(s, grpcServer)
 	log.Printf("gRPC server listening at %v", lis.Addr())

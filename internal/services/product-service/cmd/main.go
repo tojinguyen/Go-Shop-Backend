@@ -10,10 +10,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/toji-dev/go-shop/internal/pkg/middleware"
+	"github.com/toji-dev/go-shop/internal/pkg/tracing"
 	product_grpc "github.com/toji-dev/go-shop/internal/services/product-service/internal/grpc"
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+
+	_ "net/http/pprof"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -54,6 +58,24 @@ func main() {
 		WriteTimeout: dependencyContainer.GetConfig().Server.WriteTimeout,
 		IdleTimeout:  dependencyContainer.GetConfig().Server.IdleTimeout,
 	}
+
+	go func() {
+		log.Println("Starting pprof server on :6062")
+		if err := http.ListenAndServe("localhost:6062", nil); err != nil {
+			log.Printf("Pprof server failed to start: %v", err)
+		}
+	}()
+
+	jaegerAgentHost := "jaeger:4317" // Dùng tên service trong Docker network
+	tp, err := tracing.InitTracerProvider(cfg.App.Name, jaegerAgentHost)
+	if err != nil {
+		log.Fatalf("failed to initialize tracer provider: %v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
 
 	go startMetricsServer()
 
@@ -101,6 +123,10 @@ func runGrpcServer(cfg *config.Config, productRepo repository.ProductRepository)
 		log.Fatalf("failed to listen for grpc on port %s: %v", cfg.GRPC.Host, err)
 	}
 	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middleware.PprofGRPCInterceptor(), // Thêm interceptor của chúng ta
+			// Các interceptor khác nếu có...
+		),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 	grpcServer := product_grpc.NewProductGRPCServer(productRepo)
