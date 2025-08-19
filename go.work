@@ -1,0 +1,12 @@
+go 1.24.6
+
+use (
+	./internal/pkg
+	./internal/services/cart-service
+	./internal/services/order-service
+	./internal/services/payment-service
+	./internal/services/product-service
+	./internal/services/shop-service
+	./internal/services/user-service
+	./proto/gen/go
+)
