@@ -51,7 +51,7 @@ func (h *orderHandler) CreateOrder(c *gin.Context) {
 
 	orderResponse := toOrderResponse(order)
 
-	response.Success(c, "Order created successfully", orderResponse)
+	response.Created(c, "Order created successfully", orderResponse)
 }
 
 func (h *orderHandler) GetOrderByID(c *gin.Context) {
