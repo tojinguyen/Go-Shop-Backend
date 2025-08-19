@@ -1,6 +1,6 @@
 module github.com/toji-dev/go-shop/internal/services/user-service
 
-go 1.24.3
+go 1.24.6
 
 toolchain go1.24.5
 
@@ -119,10 +119,4 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-)
-
-replace (
-	github.com/toji-dev/go-shop => ../../../
-	github.com/toji-dev/go-shop/internal/pkg => ../../pkg
-	github.com/toji-dev/go-shop/proto/gen/go => ../../../proto/gen/go
 )
