@@ -8,25 +8,23 @@ RUN apk update && apk upgrade && \
     rm -rf /var/cache/apk/*
 
 # Set working directory
-WORKDIR /app
+WORKDIR /build
 
-# Copy shared pkg directory first
-COPY internal/pkg ../../pkg
+# Copy entire source code first before downloading dependencies
+# Required because of replace directives in go.mod
+COPY . .
 
-# Copy proto directory
-COPY proto ../../proto
-
-# Copy go mod and sum files from the service directory
-COPY internal/services/shop-service/go.mod internal/services/shop-service/go.sum ./
-
-# Download dependencies
+# Move to service directory and download dependencies
+WORKDIR /build/internal/services/shop-service
 RUN go mod download
 
-# Copy source code from the service directory
-COPY internal/services/shop-service/ .
-
+# --- Build ---
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags='-w -s -extldflags "-static"' \
+    -a -installsuffix cgo \
+    -trimpath \
+    -o shop-service ./cmd/main.go
 
 # Production stage
 FROM alpine:latest
@@ -41,10 +39,10 @@ RUN adduser -D -s /bin/sh shopuser
 WORKDIR /root/
 
 # Copy the binary from builder stage
-COPY --from=builder /app/main .
+COPY --from=builder /build/internal/services/shop-service/shop-service .
 
 # Copy any configuration files if needed
-COPY --from=builder /app/internal/config/ ./internal/config/
+COPY --from=builder /build/internal/services/shop-service/internal/config/ ./internal/config/
 
 # Change ownership to non-root user
 RUN chown -R shopuser:shopuser /root
@@ -58,5 +56,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Command to run the application
-CMD ["./main"]
+CMD ["./shop-service"]
 
