@@ -266,6 +266,8 @@ services:
     container_name: ${PROJECT_NAME:-go-shop}-order-service
     env_file:
       - .env
+    ports:
+      - "6064:6064"
     depends_on:
       postgres-order-service:
         condition: service_healthy
