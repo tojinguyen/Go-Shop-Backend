@@ -26,11 +26,11 @@ const orderData = new SharedArray('order-data', function () {
 export const options = {
   // Định nghĩa các giai đoạn của bài test (tăng tải, giữ tải, giảm tải)
   stages: [
-    { duration: '30s', target: 50 },    // Tăng dần lên 50 người dùng ảo trong 30 giây
-    { duration: '1m', target: 50 },     // Giữ 50 người dùng ảo trong 1 phút
-    { duration: '30s', target: 100 },   // Tăng lên 100 người dùng ảo trong 30 giây
-    { duration: '1m', target: 100 },    // Giữ 100 người dùng ảo trong 1 phút
-    { duration: '30s', target: 0 },     // Giảm về 0 người dùng trong 30 giây
+    { duration: '10s', target: 50 },    
+    { duration: '30s', target: 50 },    
+    { duration: '15s', target: 100 },   
+    { duration: '30s', target: 100 },   
+    { duration: '10s', target: 0 },    
   ],
   // Định nghĩa các ngưỡng performance (pass/fail)
   thresholds: {
