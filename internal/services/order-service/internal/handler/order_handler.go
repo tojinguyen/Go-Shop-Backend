@@ -43,7 +43,7 @@ func (h *orderHandler) CreateOrder(c *gin.Context) {
 		return
 	}
 
-	order, err := h.orderUsecase.CreateOrder(c, userId.(string), request)
+	order, err := h.orderUsecase.CreateOrder(c.Request.Context(), userId.(string), request)
 	if err != nil {
 		response.InternalServerError(c, string(apperror.CodeInternal), fmt.Sprintf("Failed to create order: %s", err.Error()))
 		return

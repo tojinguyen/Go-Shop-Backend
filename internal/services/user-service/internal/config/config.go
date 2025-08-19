@@ -144,7 +144,7 @@ func Load() (*Config, error) {
 			AllowCredentials: getBoolEnvWithDefault("CORS_ALLOW_CREDENTIALS", true),
 		},
 		App: AppConfig{
-			Name:        getEnvWithDefault("APP_NAME", "Go-Shop User Service"),
+			Name:        getEnvWithDefault("APP_NAME", "user-service"),
 			Version:     getEnvWithDefault("APP_VERSION", "1.0.0"),
 			Environment: getEnvWithDefault("APP_ENV", "development"),
 			Debug:       getBoolEnvWithDefault("APP_DEBUG", true),

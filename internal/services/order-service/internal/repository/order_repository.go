@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/pkg/converter"
@@ -16,7 +15,7 @@ import (
 )
 
 type OrderRepository interface {
-	CreateOrder(ctx *gin.Context, order *domain.Order) (*domain.Order, error)
+	CreateOrder(ctx context.Context, order *domain.Order) (*domain.Order, error)
 	UpdateOrderStatus(ctx context.Context, orderID string, status sqlc.OrderStatus) (*domain.Order, error)
 	GetStaleOrders(ctx context.Context, olderThan time.Time, limit int) ([]*domain.Order, error)
 	GetOrderByID(ctx context.Context, orderID string) (*domain.Order, error)
@@ -40,7 +39,7 @@ func NewOrderRepository(db *postgresql_infra.PostgreSQLService) OrderRepository 
 	}
 }
 
-func (r *orderRepository) CreateOrder(ctx *gin.Context, order *domain.Order) (*domain.Order, error) {
+func (r *orderRepository) CreateOrder(ctx context.Context, order *domain.Order) (*domain.Order, error) {
 	tx, err := r.db.BeginTransaction(ctx)
 	if err != nil {
 		return nil, apperror.NewInternal(fmt.Sprintf("failed to begin transaction: %v", err))

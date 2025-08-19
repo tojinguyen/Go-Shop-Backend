@@ -8,7 +8,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toji-dev/go-shop/internal/pkg/apperror"
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/db/sqlc"
@@ -22,7 +21,7 @@ import (
 )
 
 type OrderUsecase interface {
-	CreateOrder(ctx *gin.Context, userId string, req dto.CreateOrderRequest) (*domain.Order, error)
+	CreateOrder(ctx context.Context, userId string, req dto.CreateOrderRequest) (*domain.Order, error)
 	HandleRefundSucceededEvent(ctx context.Context, key, value []byte) error // Deprecated: Use InboxEventUseCase instead
 }
 
@@ -37,7 +36,7 @@ func NewOrderUsecase(orderRepo repository.OrderRepository, shopServiceAdapter ad
 	return &orderUsecase{orderRepo: orderRepo, shopServiceAdapter: shopServiceAdapter, productServiceAdapter: productServiceAdapter, userAdapter: userAdapter}
 }
 
-func (u *orderUsecase) CreateOrder(ctx *gin.Context, userId string, req dto.CreateOrderRequest) (*domain.Order, error) {
+func (u *orderUsecase) CreateOrder(ctx context.Context, userId string, req dto.CreateOrderRequest) (*domain.Order, error) {
 	// --- STAGE 1: VALIDATION ---
 	// Validate shop, address, and product info before creating anything
 	if err := u.validatePrerequisites(ctx, &req); err != nil {
@@ -211,7 +210,7 @@ func (u *orderUsecase) HandleRefundSucceededEvent(ctx context.Context, key, valu
 }
 
 // Validate data with business rules before creating an order
-func (u *orderUsecase) validatePrerequisites(ctx *gin.Context, req *dto.CreateOrderRequest) error {
+func (u *orderUsecase) validatePrerequisites(ctx context.Context, req *dto.CreateOrderRequest) error {
 	// Validate shop existence
 	isShopExists, err := u.shopServiceAdapter.CheckShopExists(ctx, req.ShopID)
 	if err != nil {
