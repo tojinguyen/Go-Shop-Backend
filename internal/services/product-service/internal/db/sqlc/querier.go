@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	BulkUpdateProductReserveStock(ctx context.Context, arg BulkUpdateProductReserveStockParams) error
 	CountProductsByShop(ctx context.Context, shopID pgtype.UUID) (int64, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	GetListProductsByShop(ctx context.Context, arg GetListProductsByShopParams) ([]Product, error)

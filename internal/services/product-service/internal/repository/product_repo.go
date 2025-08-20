@@ -304,43 +304,46 @@ func (r *pgProductRepository) ReserveStock(ctx context.Context, orderID, shopID 
 	}
 
 	// BƯỚC 4: THỰC HIỆN CẬP NHẬT
+	updateParams := sqlc.BulkUpdateProductReserveStockParams{
+		ProductIds:        make([]pgtype.UUID, 0, len(items)),
+		ReserveQuantities: make([]int32, 0, len(items)),
+	}
+
 	for _, item := range items {
 		product := productMap[item.ProductId]
 		newReserveQuantity := product.ReserveQuantity + item.Quantity
 
-		_, err := qtx.UpdateProductStock(ctx, sqlc.UpdateProductStockParams{
-			ID:              product.ID,
-			Quantity:        product.Quantity,
-			ReserveQuantity: newReserveQuantity,
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to update stock for product %s: %w", item.ProductId, err)
-		}
+		updateParams.ProductIds = append(updateParams.ProductIds, product.ID)
+		updateParams.ReserveQuantities = append(updateParams.ReserveQuantities, newReserveQuantity)
 	}
 
-	// BƯỚC 5: COMMIT GIAO DỊCH
-	// Nếu mọi thứ thành công, commit để lưu lại tất cả các thay đổi.
-	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("failed to commit stock reservation transaction: %w", err)
+	if err := qtx.BulkUpdateProductReserveStock(ctx, updateParams); err != nil {
+		return nil, fmt.Errorf("failed to bulk update product stock: %w", err)
 	}
 
-	// Bước 6: Ghi lại thông tin order vào bảng reservation
+	// BƯỚC 5: GHI LẠI THÔNG TIN RESERVATION
 	orderUUID, err := uuid.Parse(orderID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid order ID format: %w", err)
 	}
-
 	shopUUID, err := uuid.Parse(shopID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid shop ID format: %w", err)
+	}
 
-	err = r.queries.ReserveOrder(ctx, sqlc.ReserveOrderParams{
+	err = qtx.ReserveOrder(ctx, sqlc.ReserveOrderParams{
 		OrderID:           converter.UUIDToPgUUID(orderUUID),
 		ShopID:            converter.UUIDToPgUUID(shopUUID),
 		ReservationStatus: sqlc.ReservationStatus(product.ProductReservationStatusReserved),
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to add reservation for order %s: %w", orderID, err)
+	}
+
+	// BƯỚC 6: COMMIT GIAO DỊCH
+	// Nếu mọi thứ thành công, commit để lưu lại tất cả các thay đổi.
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit stock reservation transaction: %w", err)
 	}
 
 	log.Println("Stock reservation transaction committed successfully.")

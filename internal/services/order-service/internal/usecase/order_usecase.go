@@ -18,6 +18,9 @@ import (
 	"github.com/toji-dev/go-shop/internal/services/order-service/internal/repository"
 	product_v1 "github.com/toji-dev/go-shop/proto/gen/go/product/v1"
 	shop_v1 "github.com/toji-dev/go-shop/proto/gen/go/shop/v1"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 type OrderUsecase interface {
@@ -37,11 +40,25 @@ func NewOrderUsecase(orderRepo repository.OrderRepository, shopServiceAdapter ad
 }
 
 func (u *orderUsecase) CreateOrder(ctx context.Context, userId string, req dto.CreateOrderRequest) (*domain.Order, error) {
+	tracer := otel.Tracer("order-service.usecase")
+	ctx, span := tracer.Start(ctx, "CreateOrder.UseCase")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("user.id", userId),
+		attribute.String("shop.id", req.ShopID),
+		attribute.Int("order.item_count", len(req.Items)),
+	)
+
 	// --- STAGE 1: VALIDATION ---
 	// Validate shop, address, and product info before creating anything
+	_, validationSpan := tracer.Start(ctx, "ValidatePrerequisites")
 	if err := u.validatePrerequisites(ctx, &req); err != nil {
+		validationSpan.SetStatus(codes.Error, err.Error()) // Ghi nhận lỗi vào span
+		validationSpan.End()
 		return nil, err
 	}
+	validationSpan.End()
 
 	log.Printf("Order request: %+v\n", req)
 	log.Printf("User ID: %d", len(req.Items))
@@ -58,15 +75,20 @@ func (u *orderUsecase) CreateOrder(ctx context.Context, userId string, req dto.C
 		quantityMap[item.ProductID] = int32(item.Quantity)
 	}
 
+	_, productInfoSpan := tracer.Start(ctx, "GetProductsInfo_gRPC")
 	productsInfo, err := u.productServiceAdapter.GetProductsInfo(ctx, &product_v1.GetProductsInfoRequest{
 		ProductIds: productIDs,
 	})
 
 	if err != nil || !productsInfo.Valid || productsInfo.Products == nil || len(productsInfo.Products) != len(req.Items) {
+		productInfoSpan.SetStatus(codes.Error, "One or more products are invalid")
+		productInfoSpan.End()
 		return nil, apperror.NewBadRequest("One or more products are invalid or unavailable", err)
 	}
+	productInfoSpan.End()
 
 	// --- STAGE 2: CALCULATION & ORDER CREATION (order_status: PENDING) ---
+	_, calculationSpan := tracer.Start(ctx, "CalculateTotalsAndPromotions")
 	orderID := uuid.New().String()
 	totalAmount := 0.0
 	orderItems := make([]domain.OrderItem, len(productsInfo.Products))
@@ -113,6 +135,13 @@ func (u *orderUsecase) CreateOrder(ctx context.Context, userId string, req dto.C
 
 	log.Printf("Final price after promotion: %.2f (Discount: %.2f)", finalPrice, discountAmount)
 
+	calculationSpan.SetAttributes(
+		attribute.Float64("order.total_amount", totalAmount),
+		attribute.Float64("order.discount_amount", discountAmount),
+		attribute.Float64("order.final_price", finalPrice),
+	)
+	calculationSpan.End()
+
 	// Create the order with PENDING status FIRST
 	pendingOrder := &domain.Order{
 		ID:                orderID,
@@ -131,6 +160,7 @@ func (u *orderUsecase) CreateOrder(ctx context.Context, userId string, req dto.C
 	createdOrder, err := u.orderRepo.CreateOrder(ctx, pendingOrder)
 
 	if err != nil {
+		span.SetStatus(codes.Error, "Failed to create initial order record")
 		return nil, apperror.NewInternal(fmt.Sprintf("Failed to create initial order record: %s", err.Error()))
 	}
 
@@ -149,13 +179,18 @@ func (u *orderUsecase) CreateOrder(ctx context.Context, userId string, req dto.C
 		Products: reserveItems,
 	}
 
+	_, reserveSpan := tracer.Start(ctx, "ReserveProducts_gRPC")
+
 	reserveResp, err := u.productServiceAdapter.ReserveProducts(ctx, reserveReq)
 
 	if err != nil {
+		reserveSpan.SetStatus(codes.Error, err.Error())
+		reserveSpan.End()
 		log.Printf("CRITICAL: ReserveProducts call failed for order %s. Marking as FAILED. Error: %v", orderID, err)
 		u.orderRepo.UpdateOrderStatus(ctx, orderID, sqlc.OrderStatusFAILED)
 		return nil, apperror.NewDependencyFailure(fmt.Sprintf("Failed to reserve products: %s", err.Error()))
 	}
+	reserveSpan.End()
 
 	// --- STAGE 4: FINALIZE ORDER (SAGA - COMMIT/ROLLBACK) ---
 	if !reserveResp.Success {
@@ -181,6 +216,7 @@ func (u *orderUsecase) CreateOrder(ctx context.Context, userId string, req dto.C
 	}
 	finalOrder.Items = createdOrder.Items
 
+	span.AddEvent("Order successfully created and stock reserved")
 	return finalOrder, nil
 }
 

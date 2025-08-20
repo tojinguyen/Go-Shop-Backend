@@ -85,3 +85,15 @@ FROM (
         CAST(unnest(@quantities::int[]) as integer) as quantity
 ) AS p
 WHERE products.id = p.id AND products.delete_at IS NULL;
+
+-- name: BulkUpdateProductReserveStock :exec
+UPDATE products
+SET
+    reserve_quantity = p.new_reserve_quantity,
+    updated_at = NOW()
+FROM (
+    SELECT
+        CAST(unnest(@product_ids::uuid[]) AS uuid) AS id,
+        CAST(unnest(@reserve_quantities::int[]) AS integer) AS new_reserve_quantity
+) AS p
+WHERE products.id = p.id;

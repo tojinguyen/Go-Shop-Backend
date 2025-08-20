@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -60,6 +61,10 @@ func (s *PostgreSQLService) connect() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse database config: %w", err)
 	}
+
+	tracer := otelpgx.NewTracer()
+
+	poolConfig.ConnConfig.Tracer = tracer
 
 	// Set connection pool settings
 	poolConfig.MaxConns = int32(s.config.MaxOpenConns)

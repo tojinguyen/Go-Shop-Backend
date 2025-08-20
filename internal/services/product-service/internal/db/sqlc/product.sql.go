@@ -11,6 +11,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const bulkUpdateProductReserveStock = `-- name: BulkUpdateProductReserveStock :exec
+UPDATE products
+SET
+    reserve_quantity = p.new_reserve_quantity,
+    updated_at = NOW()
+FROM (
+    SELECT
+        CAST(unnest($1::uuid[]) AS uuid) AS id,
+        CAST(unnest($2::int[]) AS integer) AS new_reserve_quantity
+) AS p
+WHERE products.id = p.id
+`
+
+type BulkUpdateProductReserveStockParams struct {
+	ProductIds        []pgtype.UUID `json:"product_ids"`
+	ReserveQuantities []int32       `json:"reserve_quantities"`
+}
+
+func (q *Queries) BulkUpdateProductReserveStock(ctx context.Context, arg BulkUpdateProductReserveStockParams) error {
+	_, err := q.db.Exec(ctx, bulkUpdateProductReserveStock, arg.ProductIds, arg.ReserveQuantities)
+	return err
+}
+
 const countProductsByShop = `-- name: CountProductsByShop :one
 SELECT count(*) FROM products
 WHERE shop_id = $1 AND delete_at IS NULL

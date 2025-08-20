@@ -17,16 +17,14 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 - Đăng ký, đăng nhập (JWT)
 - Đổi mật khẩu 
 - Đăng xuất 
-- Phân quyền (Admin, Seller, Customer, Shipper)
+- Phân quyền (Seller, Customer, Shipper)
 - CRUD profile
 - Địa chỉ giao hàng (Nhiều địa chỉ)
-
 
 ### Shop Service
 - CRUD shop
 - Xử lý đơn hàng và order fulfillment
-- Báo cáo doanh thu và analytics theo shop 
-- Quản lý khuyến mãi, tạo discount campaigns 
+- Quản lý khuyến mãi
 
 ### Product Service
 - CRUD product
@@ -39,28 +37,12 @@ Nền tảng thương mại điện tử và giao hàng được xây dựng the
 ### Order Service
 - Tạo đơn hàng mới từ giỏ hàng 
 - Lấy thông tin giỏ hàng
-- Quản lý trạng thái đơn hàng (pending, confirmed, shipped, delivered, cancelled)
+- Quản lý trạng thái đơn hàng 
 
 ### Payment Service
 - Xử lý thanh toán (E-wallet)
 - Tích hợp payment gateway (Momo)
 - Payment history
-
-### Review Service
-- Đánh giá sản phẩm và vendor/shop
-- Đánh giá delivery service
-- Upload hình ảnh và video review
-- Quản lý comments và rating
-- Verified purchase reviews
-
-### Search & Recommendation Service
-- Gợi ý sản phẩm khi người dùng đăng nhập (tương tác hành vi người dùng)
-- Advanced search với filters
-- Auto-complete và search suggestions
-- Personalized recommendations
-- Recently viewed products
-- Trending products 
-- Price comparison và similar products
 
 ## 🔗 Thiết kế API
 
@@ -170,31 +152,6 @@ POST   /api/v1/payments/refund
 # Transaction History
 GET    /api/v1/payments/history
 GET    /api/v1/payments/receipts/{id}
-```
-
-### Search & Recommendation APIs
-```
-# Search
-GET    /api/v1/search?q={query}                   // Tìm kiếm cơ bản
-GET    /api/v1/search/suggestions?q={query}       // Gợi ý khi người dùng gõ
-
-# Personalized Recommendations
-GET    /api/v1/recommendations/products           // Gợi ý sản phẩm (theo hành vi đơn giản)
-
-# Trending & Popular
-GET    /api/v1/trending/products                  // Sản phẩm đang hot
-```
-
-### Review & Rating APIs
-```
-# Product Reviews
-GET    /api/v1/products/{id}/reviews      // Lấy danh sách review theo sản phẩm
-POST   /api/v1/products/{id}/reviews      // Gửi đánh giá mới
-
-# Shop Reviews
-GET    /api/v1/shops/{id}/reviews         // Lấy danh sách review theo shop
-POST   /api/v1/shops/{id}/reviews         // Gửi đánh giá mới cho shop
-GET    /api/v1/shops/{id}/rating-summary  // Tóm tắt đánh giá (số sao trung bình)
 ```
 
 ## 🛠️ Tech Stack
