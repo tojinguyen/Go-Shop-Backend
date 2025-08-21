@@ -45,7 +45,7 @@ RUN chown -R appuser:appgroup /home/appuser
 USER appuser
 
 # Expose port
-EXPOSE 8080
+EXPOSE 8084
 
 # Lệnh chạy ứng dụng
 ENTRYPOINT ["./order-service-binary"]

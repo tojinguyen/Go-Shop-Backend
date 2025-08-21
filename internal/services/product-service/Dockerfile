@@ -1,60 +1,51 @@
-# ===================================================================
-# STAGE 1: Build a Go binary (Giai đoạn "builder")
-# ===================================================================
+# Build stage
 FROM golang:1.24-alpine AS builder
 
-# Cài đặt các gói cần thiết
+# Install essential packages and clean cache
 RUN apk add --no-cache git ca-certificates
 
-# Đặt thư mục làm việc là thư mục gốc của service cụ thể này
-# <--- THAY ĐỔI QUAN TRỌNG: Đây là thay đổi cốt lõi
-WORKDIR /app/internal/services/product-service
+WORKDIR /build
 
-# Sao chép TOÀN BỘ mã nguồn của dự án vào.
-# Lý do cần copy toàn bộ là vì product-service có `replace` và `import` các package khác
-# trong cùng một monorepo (như `internal/pkg`).
-# Phải copy trước khi chạy go mod download vì có replace directives
-COPY . /app
+COPY go.work go.work.sum ./
 
-# Tải dependencies. Lệnh này phải chạy sau khi copy toàn bộ source code
-# vì go.mod có replace directives trỏ đến các path local
+COPY internal/pkg/go.mod internal/pkg/go.sum ./internal/pkg/
+COPY internal/services/user-service/go.mod internal/services/user-service/go.sum ./internal/services/user-service/
+COPY internal/services/shop-service/go.mod internal/services/shop-service/go.sum ./internal/services/shop-service/
+COPY internal/services/product-service/go.mod internal/services/product-service/go.sum ./internal/services/product-service/
+COPY internal/services/cart-service/go.mod internal/services/cart-service/go.sum ./internal/services/cart-service/
+COPY internal/services/order-service/go.mod internal/services/order-service/go.sum ./internal/services/order-service/
+COPY internal/services/payment-service/go.mod internal/services/payment-service/go.sum ./internal/services/payment-service/
+COPY proto/gen/go/go.mod proto/gen/go/go.sum ./proto/gen/go/
+
 RUN go mod download
 
-# Biên dịch ứng dụng Go.
-# Lệnh `go build` giờ đây rất đơn giản vì chúng ta đã ở đúng thư mục.
-# -o /app/product-service: Lưu file binary ra thư mục gốc /app để stage 2 dễ dàng lấy nó.
-# <--- THAY ĐỔI QUAN TRỌNG: Đường dẫn build đơn giản hơn nhiều
-RUN CGO_ENABLED=0 go build -o /app/product-service -ldflags="-w -s" ./cmd/main.go
+COPY . .
 
-# ===================================================================
-# STAGE 2: Create a minimal production image (Giai đoạn "production")
-# ===================================================================
+RUN CGO_ENABLED=0 go build \
+    -ldflags='-w -s' \
+    -trimpath \
+    -o /app/product-service-binary ./internal/services/product-service/cmd/main.go
+
+# Final stage - Use Alpine for better compatibility
 FROM alpine:latest
 
-# Cài đặt các gói cần thiết cho production
-RUN apk --no-cache add ca-certificates curl
+RUN apk --no-cache add ca-certificates tzdata
 
-# Tạo user không phải root để chạy ứng dụng (bảo mật hơn)
+# Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
+# Set working directory and change ownership
 WORKDIR /home/appuser
 
-# Sao chép file binary đã được build từ giai đoạn `builder`
-# <--- THAY ĐỔI QUAN TRỌNG: Đường dẫn nguồn trong `builder` đã thay đổi
-COPY --from=builder /app/product-service .
+COPY --from=builder /app/product-service-binary .
 
-# Thay đổi quyền sở hữu
 RUN chown -R appuser:appgroup /home/appuser
 
-# Chỉ định user để chạy container
+# Chuyển sang user mới
 USER appuser
 
 # Expose port
 EXPOSE 8082
 
-# HEALTHCHECK để Docker biết tình trạng "sức khỏe" của container.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:8082/health || exit 1
-
-# Lệnh chạy ứng dụng khi container khởi động
-CMD ["./product-service"]
+# Lệnh chạy ứng dụng
+ENTRYPOINT ["./product-service-binary"]

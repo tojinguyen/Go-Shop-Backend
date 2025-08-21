@@ -1,60 +1,51 @@
-# Build stage 
+# Build stage
 FROM golang:1.24-alpine AS builder
 
 # Install essential packages and clean cache
-RUN apk update && apk upgrade && \
-    apk add --no-cache git ca-certificates tzdata && \
-    update-ca-certificates && \
-    rm -rf /var/cache/apk/*
+RUN apk add --no-cache git ca-certificates
 
-# Set working directory
 WORKDIR /build
 
-# Copy entire source code first before downloading dependencies
-# Required because of replace directives in go.mod
-COPY . .
+COPY go.work go.work.sum ./
 
-# Move to service directory and download dependencies
-WORKDIR /build/internal/services/shop-service
+COPY internal/pkg/go.mod internal/pkg/go.sum ./internal/pkg/
+COPY internal/services/user-service/go.mod internal/services/user-service/go.sum ./internal/services/user-service/
+COPY internal/services/shop-service/go.mod internal/services/shop-service/go.sum ./internal/services/shop-service/
+COPY internal/services/product-service/go.mod internal/services/product-service/go.sum ./internal/services/product-service/
+COPY internal/services/cart-service/go.mod internal/services/cart-service/go.sum ./internal/services/cart-service/
+COPY internal/services/order-service/go.mod internal/services/order-service/go.sum ./internal/services/order-service/
+COPY internal/services/payment-service/go.mod internal/services/payment-service/go.sum ./internal/services/payment-service/
+COPY proto/gen/go/go.mod proto/gen/go/go.sum ./proto/gen/go/
+
 RUN go mod download
 
-# --- Build ---
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -ldflags='-w -s -extldflags "-static"' \
-    -a -installsuffix cgo \
-    -trimpath \
-    -o shop-service ./cmd/main.go
+COPY . .
 
-# Production stage
+RUN CGO_ENABLED=0 go build \
+    -ldflags='-w -s' \
+    -trimpath \
+    -o /app/shop-service-binary ./internal/services/shop-service/cmd/main.go
+
+# Final stage - Use Alpine for better compatibility
 FROM alpine:latest
 
-# Install ca-certificates and curl for HTTPS requests and health checks
-RUN apk --no-cache add ca-certificates tzdata curl
+RUN apk --no-cache add ca-certificates tzdata
 
-# Create a non-root user
-RUN adduser -D -s /bin/sh shopuser
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Set working directory
-WORKDIR /root/
+# Set working directory and change ownership
+WORKDIR /home/appuser
 
-# Copy the binary from builder stage
-COPY --from=builder /build/internal/services/shop-service/shop-service .
+COPY --from=builder /app/shop-service-binary .
 
-# Copy any configuration files if needed
-COPY --from=builder /build/internal/services/shop-service/internal/config/ ./internal/config/
+RUN chown -R appuser:appgroup /home/appuser
 
-# Change ownership to non-root user
-RUN chown -R shopuser:shopuser /root
-USER shopuser
+# Chuyển sang user mới
+USER appuser
 
-# Expose port (default 8080 or from config)
+# Expose port
 EXPOSE 8081
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
-
-# Command to run the application
-CMD ["./shop-service"]
-
+# Lệnh chạy ứng dụng
+ENTRYPOINT ["./shop-service-binary"]
