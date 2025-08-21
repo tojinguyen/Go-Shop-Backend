@@ -245,9 +245,7 @@ func (u *orderUsecase) HandleRefundSucceededEvent(ctx context.Context, key, valu
 	return nil
 }
 
-// Validate data with business rules before creating an order
 func (u *orderUsecase) validatePrerequisites(ctx context.Context, req *dto.CreateOrderRequest) error {
-	// Validate shop existence
 	isShopExists, err := u.shopServiceAdapter.CheckShopExists(ctx, req.ShopID)
 	if err != nil {
 		return apperror.NewInternal(fmt.Sprintf("Failed to check shop existence: %s", err.Error()))
@@ -257,7 +255,6 @@ func (u *orderUsecase) validatePrerequisites(ctx context.Context, req *dto.Creat
 		return apperror.NewNotFound("Shop", req.ShopID)
 	}
 
-	// Validate shipping address
 	if req.ShippingAddressID == "" {
 		log.Printf("Order creation failed: Shipping address ID is required")
 		return apperror.NewBadRequest("Address cannot be empty", errors.New("shipping_address_id is required"))
