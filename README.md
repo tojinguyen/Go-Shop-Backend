@@ -110,8 +110,6 @@ DELETE /api/v1/products/{id}
 GET    /api/v1/cart
 DELETE /api/v1/cart
 POST   /api/v1/cart/items
-POST   /api/v1/cart/apply-promotion
-DELETE /api/v1/cart/remove-promotion
 ```
 
 ### Order Management APIs
