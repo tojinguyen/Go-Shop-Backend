@@ -85,13 +85,7 @@ GET    /api/v1/shops
 POST   /api/v1/shops
 GET    /api/v1/shops/{id}
 PUT    /api/v1/shops/{id}
-DELETE /api/v1/shops/{id} - SHOP_OWNER_ONLY
-
-# Shop Orders & Fulfillment
-GET    /api/v1/shops/{id}/orders
-PUT    /api/v1/shops/{id}/orders/{order_id}/status
-POST   /api/v1/shops/{id}/orders/{order_id}/fulfill
-GET    /api/v1/shops/{id}/orders/pending
+DELETE /api/v1/shops/{id} 
 
 # Promotions & Campaigns
 GET    /api/v1/shops/{id}/promotions
@@ -126,16 +120,6 @@ DELETE /api/v1/cart/remove-promotion
 POST   /api/v1/orders
 GET    /api/v1/orders
 GET    /api/v1/orders/{id}
-
-# Order Status Management
-GET    /api/v1/orders/{id}/status-history
-PUT    /api/v1/orders/{id}/confirm
-PUT    /api/v1/orders/{id}/ship
-PUT    /api/v1/orders/{id}/deliver
-PUT    /api/v1/orders/{id}/cancel
-
-# Order Calculations
-POST   /api/v1/orders/calculate-preview
 ```
 
 ### Payment APIs
