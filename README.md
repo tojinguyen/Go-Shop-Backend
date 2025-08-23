@@ -63,7 +63,7 @@ GET    /api/v1/shops
 POST   /api/v1/shops
 GET    /api/v1/shops/{id}
 PUT    /api/v1/shops/{id}
-DELETE /api/v1/shops/{id} - SHOP_OWNER_ONLY
+DELETE /api/v1/shops/{id}
 
 # Shop Orders & Fulfillment
 GET    /api/v1/shops/{id}/orders
