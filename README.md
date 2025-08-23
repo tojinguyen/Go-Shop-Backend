@@ -6,12 +6,26 @@ The goal of Go-Shop goes beyond creating a real-world product — it also serves
 
 ## 📋 Mục lục
 
-- [Yêu cầu chức năng](#yêu-cầu-chức-năng)
-- [Thiết kế API](#thiết-kế-api)
-- [Tech Stack](#tech-stack)
-- [Microservices](#microservices)
-- [Development](#development)
-- [Deployment](#deployment)
+- [Giới thiệu](#go-shop--microservices-e-commerce-platform)
+- [Mục lục](#-mục-lục)
+- [Yêu cầu chức năng](#-functional-requirements)
+- [Thiết kế API](#-thiết-kế-api)
+  - [Authentication APIs](#authentication-apis)
+  - [User Management APIs](#user-management-apis)
+  - [Shop Management APIs](#shop-management-apis)
+  - [Product Catalog APIs](#product-catalog-apis)
+  - [Cart APIs](#cart-apis)
+  - [Order Management APIs](#order-management-apis)
+  - [Payment APIs](#payment-apis)
+- [Tech Stack](#-tech-stack)
+  - [Backend](#-backend)
+  - [Infrastructure](#-infrastructure)
+  - [Development Tools](#-development-tools)
+  - [Data Management](#-data-management)
+  - [Security & Cross-cutting Concerns](#-security--cross-cutting-concerns)
+- [Architecture Overview](#-architecture-overview)
+- [Roadmap](#-roadmap)
+- [License](#-license)
 
 ## 🎯 Functional Requirements
 
@@ -136,12 +150,12 @@ POST   /api/v1/payments/refund
 - **Authorization**: Role-Based Access Control (RBAC) enforced at service layer  
 - **Distributed Tracing**: End-to-end request tracing across REST & gRPC via OpenTelemetry + Jaeger 
 
-# 🏗 Architecture Overview
+## 🏗 Architecture Overview
 
 ![Architecture Diagram](./docs/images/go_shop_architecture.png)
 
 
-# 📈 Roadmap
+## 📈 Roadmap
 
 - [x] Phase 1: Core services (User, Shop, Product, Cart, Order)  
 - [x] Phase 2: Payment integration  
