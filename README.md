@@ -63,8 +63,15 @@ GET    /api/v1/shops
 POST   /api/v1/shops
 GET    /api/v1/shops/{id}
 PUT    /api/v1/shops/{id}
-DELETE /api/v1/shops/{id} 
+DELETE /api/v1/shops/{id} - SHOP_OWNER_ONLY
 
+# Shop Orders & Fulfillment
+GET    /api/v1/shops/{id}/orders
+PUT    /api/v1/shops/{id}/orders/{order_id}/status
+POST   /api/v1/shops/{id}/orders/{order_id}/fulfill
+GET    /api/v1/shops/{id}/orders/pending
+
+# Promotions & Campaigns
 GET    /api/v1/shops/{id}/promotions
 POST   /api/v1/shops/{id}/promotions
 GET    /api/v1/shops/{id}/promotions/{promo_id}
@@ -86,8 +93,6 @@ DELETE /api/v1/products/{id}
 GET    /api/v1/cart
 DELETE /api/v1/cart
 POST   /api/v1/cart/items
-POST   /api/v1/cart/apply-promotion
-DELETE /api/v1/cart/remove-promotion
 ```
 
 ### Order Management APIs
