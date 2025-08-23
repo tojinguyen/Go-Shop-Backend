@@ -134,7 +134,11 @@ POST   /api/v1/payments/refund
 - **API Gateway**: Kong as unified entry point for all requests  
 - **Authentication**: JWT, user context propagated via headers  
 - **Authorization**: Role-Based Access Control (RBAC) enforced at service layer  
-- **Distributed Tracing**: End-to-end request tracing across REST & gRPC via OpenTelemetry + Jaeger    
+- **Distributed Tracing**: End-to-end request tracing across REST & gRPC via OpenTelemetry + Jaeger 
+
+# 🏗 Architecture Overview
+
+![Architecture Diagram](./docs/images/go_shop_architecture.png)
 
 
 # 📈 Roadmap
