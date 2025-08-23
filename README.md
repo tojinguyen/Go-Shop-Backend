@@ -4,12 +4,12 @@ Go-Shop is an open-source project that builds a fully functional e-commerce plat
 
 The goal of Go-Shop goes beyond creating a real-world product — it also serves as a reference architecture for the Go developer community, providing high-quality source code and documentation for those who want to learn and implement complex microservices systems in practical environments.
 
-## 📋 Mục lục
+## 📋 Table of Contents
 
-- [Giới thiệu](#go-shop--microservices-e-commerce-platform)
-- [Mục lục](#-mục-lục)
-- [Yêu cầu chức năng](#-functional-requirements)
-- [Thiết kế API](#-thiết-kế-api)
+- [Introduction](#go-shop--microservices-e-commerce-platform)
+- [Table of Contents](#-table-of-contents)
+- [Functional Requirements](#-functional-requirements)
+- [API Design](#-api-design)
   - [Authentication APIs](#authentication-apis)
   - [User Management APIs](#user-management-apis)
   - [Shop Management APIs](#shop-management-apis)
@@ -27,6 +27,7 @@ The goal of Go-Shop goes beyond creating a real-world product — it also serves
 - [Roadmap](#-roadmap)
 - [License](#-license)
 
+
 ## 🎯 Functional Requirements
 
 - **User Management**: Auth (JWT), roles (*Seller, Customer, Shipper*), profile CRUD, multiple addresses  
@@ -36,7 +37,7 @@ The goal of Go-Shop goes beyond creating a real-world product — it also serves
 - **Order**: Create order from cart, view cart, manage order status  
 - **Payment**: E-wallet handling, MoMo integration, payment history  
 
-## 🔗 Thiết kế API
+## 🔗 API Design
 
 ### Authentication APIs
 ```
