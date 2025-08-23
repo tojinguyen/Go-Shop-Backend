@@ -65,12 +65,6 @@ GET    /api/v1/shops/{id}
 PUT    /api/v1/shops/{id}
 DELETE /api/v1/shops/{id}
 
-# Shop Orders & Fulfillment
-GET    /api/v1/shops/{id}/orders
-PUT    /api/v1/shops/{id}/orders/{order_id}/status
-POST   /api/v1/shops/{id}/orders/{order_id}/fulfill
-GET    /api/v1/shops/{id}/orders/pending
-
 # Promotions & Campaigns
 GET    /api/v1/shops/{id}/promotions
 POST   /api/v1/shops/{id}/promotions
